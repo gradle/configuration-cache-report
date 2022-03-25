@@ -5,6 +5,7 @@ plugins {
 }
 
 description = "Configuration cache problems HTML report"
+version = "1.0"
 
 repositories {
     mavenCentral()

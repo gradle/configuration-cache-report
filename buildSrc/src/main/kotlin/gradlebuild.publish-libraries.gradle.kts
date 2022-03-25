@@ -1,12 +1,3 @@
-import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.api.tasks.bundling.Jar
-import org.gradle.kotlin.dsl.`maven-publish`
-import org.gradle.kotlin.dsl.create
-import org.gradle.kotlin.dsl.getValue
-import org.gradle.kotlin.dsl.provideDelegate
-import org.gradle.kotlin.dsl.registering
-import org.gradle.kotlin.dsl.signing
-
 plugins {
     `maven-publish`
     signing
@@ -44,12 +35,13 @@ val javadocJar by tasks.registering(Jar::class) {
     archiveClassifier.set("javadoc")
 }
 
+val moduleVersion = version.toString()
 publishing {
     publications {
         create<MavenPublication>("maven") {
             groupId = "org.gradle.gradlebuild"
             artifactId = "configuration-cache-report"
-            version = "1.0"
+            version = moduleVersion
             artifact(jar)
             artifact(mapOf("source" to sourceJar, "classifier" to "source"))
             artifact(mapOf("source" to javadocJar, "classifier" to "javadoc"))
