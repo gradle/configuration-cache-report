@@ -47,6 +47,7 @@ object Check : AbstractCheck({
 
     steps {
         gradle {
+            useGradleWrapper = true
             tasks = "check"
         }
     }
@@ -79,7 +80,9 @@ object PublishToMavenCentral : AbstractCheck({
 
     steps {
         gradle {
-            tasks = "publishToSonatype closeAndReleaseSonatypeStagingRepository"
+            useGradleWrapper = true
+            tasks = ""
+            gradleParams = "publishToSonatype closeAndReleaseSonatypeStagingRepository"
         }
     }
 })
