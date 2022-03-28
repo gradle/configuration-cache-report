@@ -3,7 +3,7 @@ app for browsing and understanding problems occurred when running a
 build with configuration caching.
 
 The output of `:configuration-cache-report` is completely produced by the
-`assembleReport` task into `build/report` which then gets published to Maven Central.
+`assembleReport` task into `build/report` which then gets published to repo.grdev.net.
 It's consumed by `gradle/gradle`'s [`configuration-cache` module](https://github.com/gradle/gradle/tree/master/subprojects/configuration-cache).
 
 ## Architecture
