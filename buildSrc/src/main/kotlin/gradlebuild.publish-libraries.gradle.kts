@@ -61,7 +61,7 @@ publishing {
     }
     publications {
         create<MavenPublication>("maven") {
-            groupId = "org.gradle.internal.gradlebuild"
+            groupId = "org.gradle.buildtool.internal"
             artifactId = "configuration-cache-report"
             version = moduleVersion
             artifact(jar)
