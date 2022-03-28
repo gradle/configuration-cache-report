@@ -3,6 +3,15 @@ plugins {
     signing
 }
 
+val artifactoryUrl
+    get() = providers.environmentVariable("GRADLE_INTERNAL_REPO_URL").orNull ?: ""
+
+val artifactoryUserName
+    get() = providers.gradleProperty("artifactoryUserName").orNull
+
+val artifactoryUserPassword
+    get() = providers.gradleProperty("artifactoryUserPassword").orNull
+
 val pgpSigningKey: Provider<String> = providers.environmentVariable("PGP_SIGNING_KEY")
 val signArtifacts: Boolean = !pgpSigningKey.orNull.isNullOrEmpty()
 
@@ -37,9 +46,20 @@ val javadocJar by tasks.registering(Jar::class) {
 
 val moduleVersion = version.toString()
 publishing {
+    repositories {
+        maven {
+            name = "remote"
+            val libsType = if (moduleVersion.endsWith("-SNAPSHOT")) "snapshots" else "releases"
+            url = uri("$artifactoryUrl/libs-$libsType-local")
+            credentials {
+                username = artifactoryUserName
+                password = artifactoryUserPassword
+            }
+        }
+    }
     publications {
         create<MavenPublication>("maven") {
-            groupId = "org.gradle.gradlebuild"
+            groupId = "org.gradle.internal.gradlebuild"
             artifactId = "configuration-cache-report"
             version = moduleVersion
             artifact(jar)

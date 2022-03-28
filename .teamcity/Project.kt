@@ -66,23 +66,23 @@ object Check : AbstractCheck({
 })
 
 object PublishToMavenCentral : AbstractCheck({
-    id = RelativeId("PublishToMavenCentral")
-    uuid = "Gradle_ConfigurationCacheReport_PublishToMavenCentral"
-    name = "Publish configuration-cache-report to Maven Central"
-    description = "Publish configuration-cache-report to Maven Central"
+    id = RelativeId("Publish")
+    uuid = "Gradle_ConfigurationCacheReport_Publish"
+    name = "Publish configuration-cache-report to repo.grdev.net"
+    description = "Publish configuration-cache-report to repo.grdev.net"
 
     params {
         param("env.PGP_SIGNING_KEY", "%pgpSigningKey%")
         param("env.PGP_SIGNING_KEY_PASSPHRASE", "%pgpSigningPassphrase%")
-        param("env.ORG_GRADLE_PROJECT_sonatypeUsername", "%sonatypeUsername%")
-        param("env.ORG_GRADLE_PROJECT_sonatypePassword", "%sonatypePassword%")
+        param("env.GRADLE_INTERNAL_REPO_URL", "%gradle.internal.repository.url%")
+        param("env.ORG_GRADLE_PROJECT_artifactoryUserName", "%gradle.internal.repository.build-tool.publish.username%")
+        password("env.ORG_GRADLE_PROJECT_artifactoryUserPassword", "%gradle.internal.repository.build-tool.publish.password%")
     }
 
     steps {
         gradle {
             useGradleWrapper = true
-            tasks = ""
-            gradleParams = "publishToSonatype closeAndReleaseSonatypeStagingRepository"
+            gradleParams = "publishMavenPublicationToRemoteRepository"
         }
     }
 })
