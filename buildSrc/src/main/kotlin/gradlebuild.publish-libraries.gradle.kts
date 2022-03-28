@@ -44,7 +44,9 @@ val javadocJar by tasks.registering(Jar::class) {
     archiveClassifier.set("javadoc")
 }
 
-val moduleVersion = version.toString()
+val moduleVersion
+    get() = providers.gradleProperty("configuration-cache-report.version").get()
+
 publishing {
     repositories {
         maven {
