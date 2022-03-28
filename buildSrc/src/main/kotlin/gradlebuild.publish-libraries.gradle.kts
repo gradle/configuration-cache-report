@@ -30,7 +30,7 @@ signing {
 }
 
 val jar by tasks.registering(Jar::class) {
-    from(tasks.named("assembleReport")) { into("org/gradle/configurationcache/problems") }
+    from(tasks.named("assembleReport"))
     dependsOn("assembleReport")
 }
 
