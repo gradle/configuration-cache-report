@@ -36,3 +36,13 @@ Then make some changes and start the build again:
     $ ./gradlew :cCR:stageDevReport
 
 Hack away!
+
+## Development with `gradle/gradle` and composite build
+
+To quickly make and verify changes for `gradle/gradle` build, you can run (this assumes you have cloned `configuration-cache-report` in the same directory as `gradle`):
+
+```
+./gradlew <TheTaskToBeRunInGradleBuild> --include-build ../configuration-cache-report -Porg.gradle.dependency.verification=lenient
+```
+
+
