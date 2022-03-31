@@ -29,10 +29,7 @@ signing {
     }
 }
 
-val jar by tasks.registering(Jar::class) {
-    from(tasks.named("assembleReport"))
-    dependsOn("assembleReport")
-}
+val jar by tasks.named("jar")
 
 val sourceJar by tasks.registering(Jar::class) {
     from(layout.files("src/main/kotlin"))

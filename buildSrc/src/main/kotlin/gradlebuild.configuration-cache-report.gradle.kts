@@ -38,6 +38,11 @@ tasks.assemble {
     dependsOn(assembleReport)
 }
 
+val jar by tasks.registering(Jar::class) {
+    from(tasks.named("assembleReport"))
+    dependsOn("assemble")
+}
+
 configurations.create("configurationCacheReport") {
     isVisible = false
     isCanBeResolved = false
@@ -47,7 +52,7 @@ configurations.create("configurationCacheReport") {
         attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.DOCUMENTATION))
         attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named("configuration-cache-report"))
     }
-    outgoing.artifact(assembleReport)
+    outgoing.artifact(jar)
 }
 
 val stageDir = layout.buildDirectory.dir("stageDevReport")

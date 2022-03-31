@@ -42,7 +42,7 @@ Hack away!
 To quickly make and verify changes for `gradle/gradle` build, you can run (this assumes you have cloned `configuration-cache-report` in the same directory as `gradle`):
 
 ```
-./gradlew <TheTaskToBeRunInGradleBuild> --include-build ../configuration-cache-report -Porg.gradle.dependency.verification=lenient
+./gradlew <TheTaskToBeRunInGradleBuild> --include-build ../configuration-cache-report -Dorg.gradle.dependency.verification=lenient
 ```
 
 
