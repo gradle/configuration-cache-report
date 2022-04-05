@@ -15,7 +15,7 @@ The interface between `:configuration-cache` and
 `:configuration-cache` module from the data collected at configuration
 time.
 
-An [example file](./src/main/resources/configuration-cache-report-data.js)
+An [example file](./src/test/resources/configuration-cache-report-data.js)
 is kept for documentation and testing purposes.
 
 The app itself is built according to [the Elm
