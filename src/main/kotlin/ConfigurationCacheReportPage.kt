@@ -46,6 +46,8 @@ sealed class ProblemNode {
 
     data class Bean(val type: String) : ProblemNode()
 
+    data class SystemProperty(val name: String) : ProblemNode()
+
     data class Property(val kind: String, val name: String, val owner: String) : ProblemNode()
 
     data class BuildLogic(val location: String) : ProblemNode()
@@ -324,6 +326,10 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
             reference(node.name),
             span(" of "),
             reference(node.owner)
+        )
+        is ProblemNode.SystemProperty -> span(
+            span("system property"),
+            reference(node.name),
         )
         is ProblemNode.Task -> span(
             span("task"),
