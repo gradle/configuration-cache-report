@@ -25,15 +25,15 @@ architecture](https://guide.elm-lang.org/architecture/).
 
 Start a build on one shell:
 
-    $ ./gradlew :cCR:stageDevReport
+    $ ./gradlew stageDevReport
 
 Start `browser-sync` on another:
 
-    $ browser-sync start -s subprojects/configuration-cache-report/build/stageDevReport --startPath configuration-cache-report.html -w
+    $ browser-sync start -s build/stageDevReport --startPath configuration-cache-report.html -w
 
 Then make some changes and start the build again:
 
-    $ ./gradlew :cCR:stageDevReport
+    $ ./gradlew stageDevReport
 
 Hack away!
 
