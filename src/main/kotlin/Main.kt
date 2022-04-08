@@ -182,9 +182,9 @@ fun toImportedProblem(label: Array<JsMessageFragment>, jsProblem: JsDiagnostic) 
 
 
 private
-fun inputNodes(inputs: List<ImportedProblem>): Sequence<MutableList<ProblemNode>> =
+fun inputNodes(inputs: List<ImportedProblem>): Sequence<List<ProblemNode>> =
     inputs.asSequence().map { input ->
-        mutableListOf<ProblemNode>().apply {
+        buildList {
             val message = input.message
             val inputType = message.fragments.first().unsafeCast<PrettyText.Fragment.Text>().text.trim()
             val inputDescription = message.copy(fragments = message.fragments.drop(1))
@@ -201,9 +201,9 @@ fun inputNodes(inputs: List<ImportedProblem>): Sequence<MutableList<ProblemNode>
 
 
 private
-fun problemNodesByMessage(problems: List<ImportedProblem>): Sequence<MutableList<ProblemNode>> =
+fun problemNodesByMessage(problems: List<ImportedProblem>): Sequence<List<ProblemNode>> =
     problems.asSequence().map { problem ->
-        mutableListOf<ProblemNode>().apply {
+        buildList {
             add(problemNodeFor(problem))
             addAll(problem.trace)
             addExceptionNode(problem)
@@ -214,7 +214,7 @@ fun problemNodesByMessage(problems: List<ImportedProblem>): Sequence<MutableList
 private
 fun problemNodesByLocation(problems: List<ImportedProblem>): Sequence<List<ProblemNode>> =
     problems.asSequence().map { problem ->
-        mutableListOf<ProblemNode>().apply {
+        buildList {
             addAll(problem.trace.asReversed())
             add(problemNodeFor(problem))
             addExceptionNode(problem)
