@@ -93,6 +93,12 @@ external interface JsTraceProperty : JsTrace {
 
 
 private
+external interface JsTraceSystemProperty : JsTrace {
+    val name: String
+}
+
+
+private
 external interface JSBuildLogic : JsTrace {
     val location: String
 }
@@ -258,6 +264,9 @@ fun toProblemNode(trace: JsTrace): ProblemNode = when (trace.kind) {
     }
     "OutputProperty" -> trace.unsafeCast<JsTraceProperty>().run {
         ProblemNode.Property("output property", name, task)
+    }
+    "SystemProperty" -> trace.unsafeCast<JsTraceSystemProperty>().run {
+        ProblemNode.SystemProperty(name)
     }
     "BuildLogic" -> trace.unsafeCast<JSBuildLogic>().run {
         ProblemNode.BuildLogic(location)
