@@ -66,6 +66,12 @@ external interface JsTrace {
 
 
 private
+external interface JsTraceProject : JsTrace {
+    val path: String
+}
+
+
+private
 external interface JsTraceTask : JsTrace {
     val path: String
     val type: String
@@ -89,6 +95,13 @@ private
 external interface JsTraceProperty : JsTrace {
     val name: String
     val task: String
+}
+
+
+private
+external interface JsTracePropertyUsage : JsTrace {
+    val name: String
+    val from: String
 }
 
 
@@ -250,6 +263,9 @@ fun toPrettyText(message: Array<JsMessageFragment>) = PrettyText(
 
 private
 fun toProblemNode(trace: JsTrace): ProblemNode = when (trace.kind) {
+    "Project" -> trace.unsafeCast<JsTraceProject>().run {
+        ProblemNode.Project(path)
+    }
     "Task" -> trace.unsafeCast<JsTraceTask>().run {
         ProblemNode.Task(path, type)
     }
@@ -267,6 +283,9 @@ fun toProblemNode(trace: JsTrace): ProblemNode = when (trace.kind) {
     }
     "SystemProperty" -> trace.unsafeCast<JsTraceSystemProperty>().run {
         ProblemNode.SystemProperty(name)
+    }
+    "PropertyUsage" -> trace.unsafeCast<JsTracePropertyUsage>().run {
+        ProblemNode.Property("property", name, from)
     }
     "BuildLogic" -> trace.unsafeCast<JSBuildLogic>().run {
         ProblemNode.BuildLogic(location)
