@@ -42,6 +42,8 @@ sealed class ProblemNode {
 
     data class Info(val label: ProblemNode, val docLink: ProblemNode?) : ProblemNode()
 
+    data class Project(val path: String) : ProblemNode()
+
     data class Task(val path: String, val type: String) : ProblemNode()
 
     data class Bean(val type: String) : ProblemNode()
@@ -321,6 +323,10 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
 
     private
     fun viewNode(node: ProblemNode): View<Intent> = when (node) {
+        is ProblemNode.Project -> span(
+            span("project"),
+            reference(node.path)
+        )
         is ProblemNode.Property -> span(
             span(node.kind),
             reference(node.name),
