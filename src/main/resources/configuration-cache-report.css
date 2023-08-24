@@ -334,8 +334,6 @@ code, pre {
     font-weight: normal;
     font-stretch: normal;
     color: #686868;
-    font-size: 0.75rem;
-    line-height: 1.8;
 }
 
 *:not(pre) > code {
@@ -347,6 +345,7 @@ code, pre {
 }
 
 pre {
+    font-size: 0.75rem;
     line-height: 1.8;
     margin-top: 0;
     margin-bottom: 1.5em;
