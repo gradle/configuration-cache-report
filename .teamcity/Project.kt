@@ -39,9 +39,7 @@ object Check : AbstractCheck({
 
     triggers {
         vcs {
-            branchFilter = """
-    +:refs/heads/*
-""".trimIndent()
+            branchFilter = "+:*"
         }
     }
 
