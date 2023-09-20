@@ -266,33 +266,43 @@ fun toProblemNode(trace: JsTrace): ProblemNode = when (trace.kind) {
     "Project" -> trace.unsafeCast<JsTraceProject>().run {
         ProblemNode.Project(path)
     }
+
     "Task" -> trace.unsafeCast<JsTraceTask>().run {
         ProblemNode.Task(path, type)
     }
+
     "Bean" -> trace.unsafeCast<JsTraceBean>().run {
         ProblemNode.Bean(type)
     }
+
     "Field" -> trace.unsafeCast<JsTraceField>().run {
         ProblemNode.Property("field", name, declaringType)
     }
+
     "InputProperty" -> trace.unsafeCast<JsTraceProperty>().run {
         ProblemNode.Property("input property", name, task)
     }
+
     "OutputProperty" -> trace.unsafeCast<JsTraceProperty>().run {
         ProblemNode.Property("output property", name, task)
     }
+
     "SystemProperty" -> trace.unsafeCast<JsTraceSystemProperty>().run {
         ProblemNode.SystemProperty(name)
     }
+
     "PropertyUsage" -> trace.unsafeCast<JsTracePropertyUsage>().run {
         ProblemNode.Property("property", name, from)
     }
+
     "BuildLogic" -> trace.unsafeCast<JSBuildLogic>().run {
         ProblemNode.BuildLogic(location)
     }
+
     "BuildLogicClass" -> trace.unsafeCast<JSBuildLogicClass>().run {
         ProblemNode.BuildLogicClass(type)
     }
+
     else -> ProblemNode.Label("Gradle runtime")
 }
 
@@ -310,8 +320,77 @@ fun messageNodeFor(importedProblem: ImportedProblem) =
 
 
 private
-fun exceptionNodeFor(it: JsDiagnostic): ProblemNode? =
-    it.error?.let(ProblemNode::Exception)
+fun exceptionNodeFor(it: JsDiagnostic): ProblemNode? {
+    val rawText = it.error ?: return null
+    val errLines = rawText.lines()
+
+    return ProblemNode.ExceptionModel(
+        rawText,
+        message = errLines.first(),
+        stackTraceParts = stackTraceParts(errLines.drop(1))
+    )
+}
+
+fun isGenericCategory(s: String) =
+    s.startsWith("at java.base/") ||
+            s.startsWith("at jdk.internal") ||
+            s.startsWith("at com.sun.proxy") ||
+            s.startsWith("at groovy.lang") ||
+            s.startsWith("at org.codehaus.groovy")
+
+fun isBuildOperationCategory(s: String) =
+    s.startsWith("at org.gradle.internal.operations")
+
+fun isGradleExecutionCategory(s: String) =
+    s.startsWith("at org.gradle.execution") ||
+            s.startsWith("at org.gradle.internal.execution") ||
+            s.startsWith("at org.gradle.api.internal.tasks")
+
+fun categoryForLine(s: String): Pair<String, String?> {
+    val trimmed = s.trim()
+    val category = when {
+        isGenericCategory(trimmed) -> null
+        isBuildOperationCategory(trimmed) -> "Gradle build operation"
+        isGradleExecutionCategory(trimmed) -> "Gradle execution"
+        trimmed.startsWith("at org.gradle") -> "Gradle internal"
+        else -> ""
+    }
+
+    return trimmed to category
+}
+
+private fun stackTraceParts(stackTraceLines: List<String>): List<ProblemNode.StackTracePart> {
+    val parts = mutableListOf<ProblemNode.StackTracePart>()
+    var lastCategory: String? = null
+    val currentLines = mutableListOf<String>()
+    for ((line, category) in stackTraceLines.map(::categoryForLine)) {
+        if (category == null) {
+            currentLines += line
+        } else if (lastCategory == null) {
+            currentLines += line
+            lastCategory = category
+        } else if (category == lastCategory) {
+            currentLines += line
+        } else {
+            if (currentLines.isNotEmpty()) {
+                parts += ProblemNode.StackTracePart(
+                    lastCategory,
+                    currentLines.toList()
+                )
+            }
+            currentLines.clear()
+            currentLines += line
+            lastCategory = category
+        }
+    }
+
+    if (currentLines.isNotEmpty()) {
+        val actualCategory = lastCategory ?: ""
+        parts += ProblemNode.StackTracePart(actualCategory, currentLines)
+    }
+
+    return parts
+}
 
 
 private

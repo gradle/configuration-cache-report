@@ -14,19 +14,8 @@
  * limitations under the License.
  */
 
-import elmish.Component
-import elmish.View
-import elmish.a
-import elmish.attributes
-import elmish.br
-import elmish.code
+import elmish.*
 import elmish.div
-import elmish.empty
-import elmish.h1
-import elmish.ol
-import elmish.pre
-import elmish.small
-import elmish.span
 import elmish.tree.Tree
 import elmish.tree.TreeView
 import elmish.tree.viewSubTrees
@@ -63,6 +52,18 @@ sealed class ProblemNode {
     data class Message(val prettyText: PrettyText) : ProblemNode()
 
     data class Exception(val stackTrace: String) : ProblemNode()
+
+    data class ExceptionModel(
+        val rawText: String,
+        val message: String,
+        val stackTraceParts: List<StackTracePart>
+    ) : ProblemNode()
+
+    internal
+    data class StackTracePart(
+        val category: String,
+        val stackTraceLines: List<String>
+    )
 }
 
 
@@ -92,7 +93,8 @@ val ProblemTreeModel.childCount: Int
 
 
 internal
-object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Model, ConfigurationCacheReportPage.Intent> {
+object ConfigurationCacheReportPage :
+    Component<ConfigurationCacheReportPage.Model, ConfigurationCacheReportPage.Intent> {
 
     data class Model(
         val cacheAction: String,
@@ -130,16 +132,20 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
         is Intent.TaskTreeIntent -> model.copy(
             locationTree = TreeView.step(intent.delegate, model.locationTree)
         )
+
         is Intent.MessageTreeIntent -> model.copy(
             messageTree = TreeView.step(intent.delegate, model.messageTree)
         )
+
         is Intent.InputTreeIntent -> model.copy(
             inputTree = TreeView.step(intent.delegate, model.inputTree)
         )
+
         is Intent.Copy -> {
             window.navigator.clipboard.writeText(intent.text)
             model
         }
+
         is Intent.SetTab -> model.copy(
             tab = intent.tab
         )
@@ -291,6 +297,7 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
                             prefix = errorIcon
                         )
                     }
+
                     is ProblemNode.Warning -> {
                         treeLabel(
                             treeIntent,
@@ -300,6 +307,7 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
                             prefix = warningIcon
                         )
                     }
+
                     is ProblemNode.Info -> {
                         treeLabel(
                             treeIntent,
@@ -310,9 +318,15 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
                             suffix = suffixForInfo(labelNode, focus)
                         )
                     }
+
                     is ProblemNode.Exception -> {
                         viewException(treeIntent, focus, labelNode)
                     }
+
+                    is ProblemNode.ExceptionModel -> {
+                        viewExceptionModel(treeIntent, focus, labelNode)
+                    }
+
                     else -> {
                         treeLabel(treeIntent, focus, labelNode)
                     }
@@ -327,39 +341,48 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
             span("project"),
             reference(node.path)
         )
+
         is ProblemNode.Property -> span(
             span(node.kind),
             reference(node.name),
             span(" of "),
             reference(node.owner)
         )
+
         is ProblemNode.SystemProperty -> span(
             span("system property"),
             reference(node.name),
         )
+
         is ProblemNode.Task -> span(
             span("task"),
             reference(node.path),
             span(" of type "),
             reference(node.type)
         )
+
         is ProblemNode.Bean -> span(
             span("bean of type "),
             reference(node.type)
         )
+
         is ProblemNode.BuildLogic -> span(
             span(node.location)
         )
+
         is ProblemNode.BuildLogicClass -> span(
             span("class "),
             reference(node.type)
         )
+
         is ProblemNode.Label -> span(
             node.text
         )
+
         is ProblemNode.Message -> viewPrettyText(
             node.prettyText
         )
+
         is ProblemNode.Link -> a(
             attributes {
                 className("documentation-button")
@@ -367,6 +390,7 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
             },
             node.label
         )
+
         else -> span(
             node.toString()
         )
@@ -478,6 +502,37 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
             Tree.ViewState.Expanded -> pre(
                 attributes { className("stacktrace") },
                 node.stackTrace
+            )
+        }
+    )
+
+    private
+    fun viewExceptionModel(
+        treeIntent: (ProblemTreeIntent) -> Intent,
+        child: Tree.Focus<ProblemNode>,
+        node: ProblemNode.ExceptionModel
+    ): View<Intent> = div(
+        viewTreeButton(child, treeIntent),
+        span(node.message.substringAfter(": ")),
+        copyButton(
+            text = node.rawText,
+            tooltip = "Copy exception message to the clipboard"
+        ),
+//        copyButton(
+//            text = node.rawText,
+//            tooltip = "Copy original stacktrace to the clipboard"
+//        ),
+        when (child.tree.state) {
+            Tree.ViewState.Collapsed -> empty
+            Tree.ViewState.Expanded -> ul(
+                node.stackTraceParts.map { part ->
+                    li(
+                        if (part.category.isEmpty()) pre(
+                            attributes { className("stacktrace") },
+                            part.stackTraceLines.joinToString("\n")
+                        ) else code(part.category)
+                    )
+                }
             )
         }
     )
