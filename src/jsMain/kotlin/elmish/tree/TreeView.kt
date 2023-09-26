@@ -29,10 +29,22 @@ object TreeView {
 
     data class Model<T>(
         val tree: Tree<T>
-    )
+    ) {
+        fun updateLabelAt(
+            focus: Tree.Focus<T>,
+            update: T.() -> T
+        ): Model<T> = copy(
+            tree = focus.update {
+                copy(label = update(label))
+            }
+        )
+    }
 
     sealed class Intent<T> {
-        data class Toggle<T>(val focus: Tree.Focus<T>) : Intent<T>()
+
+        abstract val focus: Tree.Focus<T>
+
+        data class Toggle<T>(override val focus: Tree.Focus<T>) : Intent<T>()
     }
 
     fun <T> view(model: Model<T>): View<Intent<T>> =

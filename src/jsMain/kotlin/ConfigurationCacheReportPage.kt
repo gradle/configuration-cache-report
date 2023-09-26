@@ -126,11 +126,15 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
 
     sealed class Intent {
 
-        data class TaskTreeIntent(val delegate: ProblemTreeIntent) : Intent()
+        sealed class TreeIntent : Intent() {
+            abstract val delegate: ProblemTreeIntent
+        }
 
-        data class MessageTreeIntent(val delegate: ProblemTreeIntent) : Intent()
+        data class TaskTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
-        data class InputTreeIntent(val delegate: ProblemTreeIntent) : Intent()
+        data class MessageTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
+
+        data class InputTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
         data class Copy(val text: String) : Intent()
 
@@ -155,6 +159,33 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
             tab = intent.tab
         )
     }
+
+    private
+    fun Model.updateNodeAt(
+        tree: Intent.TreeIntent,
+        update: ProblemNode.() -> ProblemNode
+    ) = when (tree) {
+        is Intent.MessageTreeIntent -> copy(
+            messageTree = messageTree.updateNodeAt(tree, update)
+        )
+
+        is Intent.TaskTreeIntent -> copy(
+            locationTree = locationTree.updateNodeAt(tree, update)
+        )
+
+        is Intent.InputTreeIntent -> copy(
+            inputTree = inputTree.updateNodeAt(tree, update)
+        )
+    }
+
+    private
+    fun ProblemTreeModel.updateNodeAt(
+        tree: Intent.TreeIntent,
+        update: ProblemNode.() -> ProblemNode
+    ): TreeView.Model<ProblemNode> = updateLabelAt(
+        tree.delegate.focus,
+        update
+    )
 
     override fun view(model: Model): View<Intent> = div(
         attributes { className("report-wrapper") },
@@ -281,13 +312,13 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
     )
 
     private
-    fun viewTree(model: ProblemTreeModel, treeIntent: (ProblemTreeIntent) -> Intent): View<Intent> =
+    fun viewTree(model: ProblemTreeModel, treeIntent: (ProblemTreeIntent) -> Intent.TreeIntent): View<Intent> =
         viewTree(model.tree.focus().children, treeIntent)
 
     private
     fun viewTree(
         subTrees: Sequence<Tree.Focus<ProblemNode>>,
-        treeIntent: (ProblemTreeIntent) -> Intent,
+        treeIntent: (ProblemTreeIntent) -> Intent.TreeIntent,
         suffixForInfo: (ProblemNode.Info, Tree.Focus<ProblemNode>) -> View<Intent> = { _, _ -> empty }
     ): View<Intent> = div(
         ol(
@@ -474,7 +505,7 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
 
     private
     fun viewException(
-        treeIntent: (ProblemTreeIntent) -> Intent,
+        treeIntent: (ProblemTreeIntent) -> Intent.TreeIntent,
         child: Tree.Focus<ProblemNode>,
         node: ProblemNode.Exception
     ): View<Intent> = div(
