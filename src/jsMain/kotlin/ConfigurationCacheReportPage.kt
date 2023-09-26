@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
+import data.mapAt
 import elmish.*
-import elmish.div
 import elmish.tree.Tree
 import elmish.tree.TreeView
 import elmish.tree.viewSubTrees
@@ -62,7 +62,8 @@ sealed class ProblemNode {
     internal
     data class StackTracePart(
         val category: String,
-        val stackTraceLines: List<String>
+        val stackTraceLines: List<String>,
+        val state: Tree.ViewState
     )
 }
 
@@ -127,6 +128,8 @@ object ConfigurationCacheReportPage :
 
         data class InputTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
+        data class ToggleStackTracePart(val partIndex: Int, val location: TreeIntent) : Intent()
+
         data class Copy(val text: String) : Intent()
 
         data class SetTab(val tab: Tab) : Intent()
@@ -144,6 +147,13 @@ object ConfigurationCacheReportPage :
         is Intent.InputTreeIntent -> model.copy(
             inputTree = TreeView.step(intent.delegate, model.inputTree)
         )
+
+        is Intent.ToggleStackTracePart -> model.updateNodeAt(intent.location) {
+            require(this is ProblemNode.ExceptionModel)
+            copy(stackTraceParts = stackTraceParts.mapAt(intent.partIndex) {
+                it.copy(state = it.state.toggle())
+            })
+        }
 
         is Intent.Copy -> {
             window.navigator.clipboard.writeText(intent.text)
@@ -539,7 +549,7 @@ object ConfigurationCacheReportPage :
 
     private
     fun viewExceptionModel(
-        treeIntent: (ProblemTreeIntent) -> Intent,
+        treeIntent: (ProblemTreeIntent) -> Intent.TreeIntent,
         child: Tree.Focus<ProblemNode>,
         node: ProblemNode.ExceptionModel
     ): View<Intent> = div(
@@ -556,12 +566,23 @@ object ConfigurationCacheReportPage :
         when (child.tree.state) {
             Tree.ViewState.Collapsed -> empty
             Tree.ViewState.Expanded -> ul(
-                node.stackTraceParts.map { part ->
+                node.stackTraceParts.mapIndexed { index, part ->
                     li(
-                        if (part.category.isEmpty()) pre(
-                            attributes { className("stacktrace") },
-                            part.stackTraceLines.joinToString("\n")
-                        ) else code(part.category)
+                        when (part.state) {
+                            Tree.ViewState.Expanded -> pre(
+                                attributes { className("stacktrace") },
+                                part.stackTraceLines.joinToString("\n")
+                            )
+
+                            else -> code(
+                                attributes {
+                                    onClick {
+                                        Intent.ToggleStackTracePart(index, treeIntent(TreeView.Intent.Toggle(child)))
+                                    }
+                                },
+                                part.category
+                            )
+                        }
                     )
                 }
             )

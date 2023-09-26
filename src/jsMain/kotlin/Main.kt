@@ -375,7 +375,8 @@ private fun stackTraceParts(stackTraceLines: List<String>): List<ProblemNode.Sta
             if (currentLines.isNotEmpty()) {
                 parts += ProblemNode.StackTracePart(
                     lastCategory,
-                    currentLines.toList()
+                    currentLines.toList(),
+                    defaultViewStateFor(lastCategory)
                 )
             }
             currentLines.clear()
@@ -386,10 +387,21 @@ private fun stackTraceParts(stackTraceLines: List<String>): List<ProblemNode.Sta
 
     if (currentLines.isNotEmpty()) {
         val actualCategory = lastCategory ?: ""
-        parts += ProblemNode.StackTracePart(actualCategory, currentLines)
+        parts += ProblemNode.StackTracePart(
+            actualCategory,
+            currentLines,
+            defaultViewStateFor(actualCategory)
+        )
     }
 
     return parts
+}
+
+
+private
+fun defaultViewStateFor(lastCategory: String) = when {
+    lastCategory.isEmpty() -> Tree.ViewState.Expanded
+    else -> Tree.ViewState.Collapsed
 }
 
 
