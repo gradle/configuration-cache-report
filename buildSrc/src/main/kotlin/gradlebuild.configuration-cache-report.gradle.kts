@@ -18,9 +18,11 @@ import gradlebuild.configcachereport.tasks.VerifyDevWorkflow
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
 import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
+import org.jlleitschuh.gradle.ktlint.tasks.KtLintCheckTask
 
 plugins {
     kotlin("multiplatform")
+    id("org.gradle.kotlin-dsl.ktlint-convention")
 }
 
 kotlin {
@@ -121,3 +123,8 @@ fun projectFile(file: File) =
 
 fun projectDir(dir: File) =
     layout.projectDirectory.dir(dir.absolutePath)
+
+tasks.named<KtLintCheckTask>("runKtlintCheckOverKotlinScripts") {
+    // Only check the build files, not all *.kts files in the project
+    setIncludes(mutableListOf("*.gradle.kts"))
+}
