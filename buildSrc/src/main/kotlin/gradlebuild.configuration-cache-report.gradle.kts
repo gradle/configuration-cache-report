@@ -74,6 +74,11 @@ val assembleReport by tasks.registering(MergeReportAssets::class) {
     outputFile.set(layout.buildDirectory.file("$name/configuration-cache-report.html"))
 }
 
+fun webpackFile(fileName: String) =
+    tasks.named<KotlinWebpack>("jsBrowserProductionWebpack").flatMap {
+        it.outputDirectory.file(fileName)
+    }
+
 tasks.assemble {
     dependsOn(assembleReport)
 }
@@ -116,8 +121,3 @@ fun projectFile(file: File) =
 
 fun projectDir(dir: File) =
     layout.projectDirectory.dir(dir.absolutePath)
-
-fun webpackFile(fileName: String) =
-    tasks.named("jsBrowserProductionWebpack").map {
-        projectFile((it as KotlinWebpack).destinationDirectory.resolve(fileName))
-    }
