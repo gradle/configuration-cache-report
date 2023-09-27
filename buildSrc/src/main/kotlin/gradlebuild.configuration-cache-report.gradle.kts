@@ -15,15 +15,55 @@
  */
 import gradlebuild.configcachereport.tasks.MergeReportAssets
 import gradlebuild.configcachereport.tasks.VerifyDevWorkflow
+import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
+import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
-import org.jlleitschuh.gradle.ktlint.tasks.KtLintCheckTask
 
 plugins {
-    kotlin("js")
+    kotlin("multiplatform")
 }
 
-dependencies {
-    compileOnly(kotlin("stdlib-js"))
+kotlin {
+    js {
+        browser {
+            webpackTask(Action {
+                sourceMaps = false
+            })
+            testTask(Action {
+                enabled = false
+            })
+        }
+
+        // Creating a distribution of the JS code as a single executable file
+        binaries.executable()
+        // Also bunding all dependencies into a single file using a Gradle property:
+        // kotlin.js.ir.output.granularity=whole-program
+    }
+}
+
+rootProject.run {
+    // Move yarn.lock to the build directory, out of VCS control
+    plugins.withType<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin> {
+        configure<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension> {
+            lockFileDirectory = layout.buildDirectory.file("kotlin-js-store").get().asFile
+        }
+    }
+
+    providers.environmentVariable("YARNPKG_MIRROR_URL").orNull?.let { mirrorUrl ->
+        tasks.withType<org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask>().configureEach {
+            args += listOf("--registry", mirrorUrl)
+        }
+    }
+}
+
+tasks {
+    withType<KotlinJsCompile>().configureEach {
+        kotlinOptions {
+            allWarningsAsErrors = true
+            metaInfo = false
+            moduleKind = "plain"
+        }
+    }
 }
 
 val assembleReport by tasks.registering(MergeReportAssets::class) {
@@ -59,7 +99,7 @@ val stageDir = layout.buildDirectory.dir("stageDevReport")
 
 val stageDevReport by tasks.registering(Sync::class) {
     from(assembleReport)
-    from("src/test/resources")
+    from("src/jsTest/resources")
     into(stageDir)
 }
 
@@ -67,7 +107,7 @@ val verifyDevWorkflow by tasks.registering(VerifyDevWorkflow::class) {
     stageDirectory.set(stageDevReport.map { projectDir(it.destinationDir) })
 }
 
-tasks.named("test") {
+tasks.named("check") {
     dependsOn(verifyDevWorkflow)
 }
 
@@ -78,11 +118,6 @@ fun projectDir(dir: File) =
     layout.projectDirectory.dir(dir.absolutePath)
 
 fun webpackFile(fileName: String) =
-    tasks.named("browserProductionWebpack").map {
+    tasks.named("jsBrowserProductionWebpack").map {
         projectFile((it as KotlinWebpack).destinationDirectory.resolve(fileName))
     }
-
-tasks.named<KtLintCheckTask>("runKtlintCheckOverKotlinScripts") {
-    // Only check the build files, not all *.kts files in the project
-    setIncludes(listOf("*.gradle.kts"))
-}
