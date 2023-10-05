@@ -15,12 +15,25 @@
  */
 
 import data.mapAt
-import elmish.*
+import elmish.Component
+import elmish.View
+import elmish.a
+import elmish.attributes
+import elmish.br
+import elmish.code
+import elmish.div
+import elmish.empty
+import elmish.h1
+import elmish.li
+import elmish.ol
+import elmish.pre
+import elmish.small
+import elmish.span
 import elmish.tree.Tree
 import elmish.tree.TreeView
 import elmish.tree.viewSubTrees
+import elmish.ul
 import kotlinx.browser.window
-
 
 internal
 sealed class ProblemNode {
@@ -56,17 +69,16 @@ sealed class ProblemNode {
     data class ExceptionModel(
         val rawText: String,
         val message: String,
-        val stackTraceParts: List<StackTracePart>
+        val stackTraceParts: List<StackTracePart>,
     ) : ProblemNode()
 
     internal
     data class StackTracePart(
         val category: String,
         val stackTraceLines: List<String>,
-        val state: Tree.ViewState
+        val state: Tree.ViewState,
     )
 }
-
 
 internal
 data class PrettyText(val fragments: List<Fragment>) {
@@ -79,19 +91,15 @@ data class PrettyText(val fragments: List<Fragment>) {
     }
 }
 
-
 internal
 typealias ProblemTreeModel = TreeView.Model<ProblemNode>
-
 
 internal
 typealias ProblemTreeIntent = TreeView.Intent<ProblemNode>
 
-
 internal
 val ProblemTreeModel.childCount: Int
     get() = tree.children.size
-
 
 internal
 object ConfigurationCacheReportPage :
@@ -107,13 +115,13 @@ object ConfigurationCacheReportPage :
         val locationTree: ProblemTreeModel,
         val reportedInputs: Int,
         val inputTree: ProblemTreeModel,
-        val tab: Tab = if (totalProblems == 0) Tab.Inputs else Tab.ByMessage
+        val tab: Tab = if (totalProblems == 0) Tab.Inputs else Tab.ByMessage,
     )
 
     enum class Tab(val text: String) {
         Inputs("Build configuration inputs"),
         ByMessage("Problems grouped by message"),
-        ByLocation("Problems grouped by location")
+        ByLocation("Problems grouped by location"),
     }
 
     sealed class Intent {
@@ -137,22 +145,24 @@ object ConfigurationCacheReportPage :
 
     override fun step(intent: Intent, model: Model): Model = when (intent) {
         is Intent.TaskTreeIntent -> model.copy(
-            locationTree = TreeView.step(intent.delegate, model.locationTree)
+            locationTree = TreeView.step(intent.delegate, model.locationTree),
         )
 
         is Intent.MessageTreeIntent -> model.copy(
-            messageTree = TreeView.step(intent.delegate, model.messageTree)
+            messageTree = TreeView.step(intent.delegate, model.messageTree),
         )
 
         is Intent.InputTreeIntent -> model.copy(
-            inputTree = TreeView.step(intent.delegate, model.inputTree)
+            inputTree = TreeView.step(intent.delegate, model.inputTree),
         )
 
         is Intent.ToggleStackTracePart -> model.updateNodeAt(intent.location) {
             require(this is ProblemNode.ExceptionModel)
-            copy(stackTraceParts = stackTraceParts.mapAt(intent.partIndex) {
-                it.copy(state = it.state.toggle())
-            })
+            copy(
+                stackTraceParts = stackTraceParts.mapAt(intent.partIndex) {
+                    it.copy(state = it.state.toggle())
+                },
+            )
         }
 
         is Intent.Copy -> {
@@ -161,41 +171,41 @@ object ConfigurationCacheReportPage :
         }
 
         is Intent.SetTab -> model.copy(
-            tab = intent.tab
+            tab = intent.tab,
         )
     }
 
     private
     fun Model.updateNodeAt(
         tree: Intent.TreeIntent,
-        update: ProblemNode.() -> ProblemNode
+        update: ProblemNode.() -> ProblemNode,
     ) = when (tree) {
         is Intent.MessageTreeIntent -> copy(
-            messageTree = messageTree.updateNodeAt(tree, update)
+            messageTree = messageTree.updateNodeAt(tree, update),
         )
 
         is Intent.TaskTreeIntent -> copy(
-            locationTree = locationTree.updateNodeAt(tree, update)
+            locationTree = locationTree.updateNodeAt(tree, update),
         )
 
         is Intent.InputTreeIntent -> copy(
-            inputTree = inputTree.updateNodeAt(tree, update)
+            inputTree = inputTree.updateNodeAt(tree, update),
         )
     }
 
     private
     fun ProblemTreeModel.updateNodeAt(
         tree: Intent.TreeIntent,
-        update: ProblemNode.() -> ProblemNode
+        update: ProblemNode.() -> ProblemNode,
     ): TreeView.Model<ProblemNode> = updateLabelAt(
         tree.delegate.focus,
-        update
+        update,
     )
 
     override fun view(model: Model): View<Intent> = div(
         attributes { className("report-wrapper") },
         viewHeader(model),
-        viewProblems(model)
+        viewProblems(model),
     )
 
     private
@@ -211,8 +221,8 @@ object ConfigurationCacheReportPage :
             attributes { className("groups") },
             displayTabButton(Tab.Inputs, model.tab, model.reportedInputs),
             displayTabButton(Tab.ByMessage, model.tab, model.messageTree.childCount),
-            displayTabButton(Tab.ByLocation, model.tab, model.locationTree.childCount)
-        )
+            displayTabButton(Tab.ByLocation, model.tab, model.locationTree.childCount),
+        ),
     )
 
     private
@@ -222,7 +232,7 @@ object ConfigurationCacheReportPage :
             Tab.Inputs -> viewInputs(model.inputTree)
             Tab.ByMessage -> viewTree(model.messageTree, Intent::MessageTreeIntent)
             Tab.ByLocation -> viewTree(model.locationTree, Intent::TaskTreeIntent)
-        }
+        },
     )
 
     private
@@ -231,10 +241,10 @@ object ConfigurationCacheReportPage :
             attributes { className("inputs") },
             viewTree(
                 inputTree.tree.focus().children,
-                Intent::InputTreeIntent
+                Intent::InputTreeIntent,
             ) { _, focus ->
                 countBalloon(focus.tree.children.size)
-            }
+            },
         )
 
     private
@@ -251,15 +261,21 @@ object ConfigurationCacheReportPage :
     private
     fun Model.inputsSummary() =
         found(reportedInputs, "build configuration input").let {
-            if (reportedInputs > 0) "$it and will cause the cache to be discarded when ${itsOrTheir(reportedInputs)} value change"
-            else it
+            if (reportedInputs > 0) {
+                "$it and will cause the cache to be discarded when ${itsOrTheir(reportedInputs)} value change"
+            } else {
+                it
+            }
         }
 
     private
     fun Model.problemsSummary() =
         found(totalProblems, "problem").let {
-            if (totalProblems > reportedProblems) "$it, only the first $reportedProblems ${wasOrWere(reportedProblems)} included in this report"
-            else it
+            if (totalProblems > reportedProblems) {
+                "$it, only the first $reportedProblems ${wasOrWere(reportedProblems)} included in this report"
+            } else {
+                it
+            }
         }
 
     private
@@ -268,8 +284,11 @@ object ConfigurationCacheReportPage :
 
     private
     fun Int.toStringOrNo() =
-        if (this != 0) toString()
-        else "No"
+        if (this != 0) {
+            toString()
+        } else {
+            "No"
+        }
 
     private
     fun String.sIfPlural(count: Int) =
@@ -295,14 +314,14 @@ object ConfigurationCacheReportPage :
         },
         span(
             tab.text,
-            countBalloon(problemsCount)
-        )
+            countBalloon(problemsCount),
+        ),
     )
 
     private
     fun countBalloon(count: Int): View<Intent> = span(
         attributes { className("group-selector__count") },
-        "$count"
+        "$count",
     )
 
     private
@@ -311,9 +330,9 @@ object ConfigurationCacheReportPage :
         span("Learn more about the "),
         a(
             attributes { href(documentationLink) },
-            "Gradle Configuration Cache"
+            "Gradle Configuration Cache",
         ),
-        span(".")
+        span("."),
     )
 
     private
@@ -324,7 +343,7 @@ object ConfigurationCacheReportPage :
     fun viewTree(
         subTrees: Sequence<Tree.Focus<ProblemNode>>,
         treeIntent: (ProblemTreeIntent) -> Intent.TreeIntent,
-        suffixForInfo: (ProblemNode.Info, Tree.Focus<ProblemNode>) -> View<Intent> = { _, _ -> empty }
+        suffixForInfo: (ProblemNode.Info, Tree.Focus<ProblemNode>) -> View<Intent> = { _, _ -> empty },
     ): View<Intent> = div(
         ol(
             viewSubTrees(subTrees) { focus ->
@@ -335,7 +354,7 @@ object ConfigurationCacheReportPage :
                             focus,
                             labelNode.label,
                             labelNode.docLink,
-                            prefix = errorIcon
+                            prefix = errorIcon,
                         )
                     }
 
@@ -345,7 +364,7 @@ object ConfigurationCacheReportPage :
                             focus,
                             labelNode.label,
                             labelNode.docLink,
-                            prefix = warningIcon
+                            prefix = warningIcon,
                         )
                     }
 
@@ -356,7 +375,7 @@ object ConfigurationCacheReportPage :
                             labelNode.label,
                             labelNode.docLink,
                             prefix = squareIcon,
-                            suffix = suffixForInfo(labelNode, focus)
+                            suffix = suffixForInfo(labelNode, focus),
                         )
                     }
 
@@ -372,22 +391,22 @@ object ConfigurationCacheReportPage :
                         treeLabel(treeIntent, focus, labelNode)
                     }
                 }
-            }
-        )
+            },
+        ),
     )
 
     private
     fun viewNode(node: ProblemNode): View<Intent> = when (node) {
         is ProblemNode.Project -> span(
             span("project"),
-            reference(node.path)
+            reference(node.path),
         )
 
         is ProblemNode.Property -> span(
             span(node.kind),
             reference(node.name),
             span(" of "),
-            reference(node.owner)
+            reference(node.owner),
         )
 
         is ProblemNode.SystemProperty -> span(
@@ -399,29 +418,29 @@ object ConfigurationCacheReportPage :
             span("task"),
             reference(node.path),
             span(" of type "),
-            reference(node.type)
+            reference(node.type),
         )
 
         is ProblemNode.Bean -> span(
             span("bean of type "),
-            reference(node.type)
+            reference(node.type),
         )
 
         is ProblemNode.BuildLogic -> span(
-            span(node.location)
+            span(node.location),
         )
 
         is ProblemNode.BuildLogicClass -> span(
             span("class "),
-            reference(node.type)
+            reference(node.type),
         )
 
         is ProblemNode.Label -> span(
-            node.text
+            node.text,
         )
 
         is ProblemNode.Message -> viewPrettyText(
-            node.prettyText
+            node.prettyText,
         )
 
         is ProblemNode.Link -> a(
@@ -429,11 +448,11 @@ object ConfigurationCacheReportPage :
                 className("documentation-button")
                 href(node.href)
             },
-            node.label
+            node.label,
         )
 
         else -> span(
-            node.toString()
+            node.toString(),
         )
     }
 
@@ -444,13 +463,13 @@ object ConfigurationCacheReportPage :
         label: ProblemNode,
         docLink: ProblemNode? = null,
         prefix: View<Intent> = empty,
-        suffix: View<Intent> = empty
+        suffix: View<Intent> = empty,
     ): View<Intent> = div(
         treeButtonFor(focus, treeIntent),
         prefix,
         viewNode(label),
         docLink?.let(::viewNode) ?: empty,
-        suffix
+        suffix,
     )
 
     private
@@ -476,25 +495,25 @@ object ConfigurationCacheReportPage :
         when (child.tree.state) {
             Tree.ViewState.Collapsed -> "› "
             Tree.ViewState.Expanded -> "⌄ "
-        }
+        },
     )
 
     private
     val errorIcon = span<Intent>(
         attributes { className("error-icon") },
-        "⨉"
+        "⨉",
     )
 
     private
     val warningIcon = span<Intent>(
         attributes { className("warning-icon") },
-        "⚠️"
+        "⚠️",
     )
 
     private
     val squareIcon = span<Intent>(
         attributes { className("tree-icon") },
-        "■"
+        "■",
     )
 
     private
@@ -504,7 +523,7 @@ object ConfigurationCacheReportPage :
                 is PrettyText.Fragment.Text -> span(it.text)
                 is PrettyText.Fragment.Reference -> reference(it.name)
             }
-        }
+        },
     )
 
     private
@@ -512,8 +531,8 @@ object ConfigurationCacheReportPage :
         code(name),
         copyButton(
             text = name,
-            tooltip = "Copy reference to the clipboard"
-        )
+            tooltip = "Copy reference to the clipboard",
+        ),
     )
 
     private
@@ -523,41 +542,41 @@ object ConfigurationCacheReportPage :
             className("copy-button")
             onClick { Intent.Copy(text) }
         },
-        "📋"
+        "📋",
     )
 
     private
     fun viewException(
         treeIntent: (ProblemTreeIntent) -> Intent.TreeIntent,
         child: Tree.Focus<ProblemNode>,
-        node: ProblemNode.Exception
+        node: ProblemNode.Exception,
     ): View<Intent> = div(
         viewTreeButton(child, treeIntent),
         span("exception stack trace "),
         copyButton(
             text = node.stackTrace,
-            tooltip = "Copy original stacktrace to the clipboard"
+            tooltip = "Copy original stacktrace to the clipboard",
         ),
         when (child.tree.state) {
             Tree.ViewState.Collapsed -> empty
             Tree.ViewState.Expanded -> pre(
                 attributes { className("stacktrace") },
-                node.stackTrace
+                node.stackTrace,
             )
-        }
+        },
     )
 
     private
     fun viewExceptionModel(
         treeIntent: (ProblemTreeIntent) -> Intent.TreeIntent,
         child: Tree.Focus<ProblemNode>,
-        node: ProblemNode.ExceptionModel
+        node: ProblemNode.ExceptionModel,
     ): View<Intent> = div(
         viewTreeButton(child, treeIntent),
         span(node.message.substringAfter(": ")),
         copyButton(
             text = node.rawText,
-            tooltip = "Copy exception message to the clipboard"
+            tooltip = "Copy exception message to the clipboard",
         ),
 //        copyButton(
 //            text = node.rawText,
@@ -571,7 +590,7 @@ object ConfigurationCacheReportPage :
                         when (part.state) {
                             Tree.ViewState.Expanded -> pre(
                                 attributes { className("stacktrace") },
-                                part.stackTraceLines.joinToString("\n")
+                                part.stackTraceLines.joinToString("\n"),
                             )
 
                             else -> code(
@@ -580,13 +599,13 @@ object ConfigurationCacheReportPage :
                                         Intent.ToggleStackTracePart(index, treeIntent(TreeView.Intent.Toggle(child)))
                                     }
                                 },
-                                part.category
+                                part.category,
                             )
-                        }
+                        },
                     )
-                }
+                },
             )
-        }
+        },
     )
 
     private
