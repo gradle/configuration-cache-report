@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import data.mapAt
 import elmish.Component
 import elmish.View
 import elmish.a
@@ -72,7 +73,8 @@ sealed class ProblemNode {
     internal
     data class StackTracePart(
         val isInternal: Boolean,
-        val stackTraceLines: List<String>
+        val stackTraceLines: List<String>,
+        val state: Tree.ViewState
     )
 }
 
@@ -136,6 +138,8 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
 
         data class InputTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
+        data class ToggleStackTracePart(val partIndex: Int, val location: TreeIntent) : Intent()
+
         data class Copy(val text: String) : Intent()
 
         data class SetTab(val tab: Tab) : Intent()
@@ -151,6 +155,12 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
         is Intent.InputTreeIntent -> model.copy(
             inputTree = TreeView.step(intent.delegate, model.inputTree)
         )
+        is Intent.ToggleStackTracePart -> model.updateNodeAt(intent.location) {
+            require(this is ProblemNode.Exception)
+            copy(stackTraceParts = stackTraceParts.mapAt(intent.partIndex) {
+                it.copy(state = it.state.toggle())
+            })
+        }
         is Intent.Copy -> {
             window.navigator.clipboard.writeText(intent.text)
             model
@@ -513,7 +523,7 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
         exceptionNodeTitle(node),
         when (child.tree.state) {
             Tree.ViewState.Collapsed -> empty
-            Tree.ViewState.Expanded -> exception(node)
+            Tree.ViewState.Expanded -> exception(node) { treeIntent(TreeView.Intent.Toggle(child)) }
         }
     )
 
@@ -548,18 +558,25 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
     }
 
     private
-    fun exception(node: ProblemNode.Exception): View<Intent> {
+    fun exception(node: ProblemNode.Exception, owner: () -> Intent.TreeIntent): View<Intent> {
         return div(
             attributes { className("java-exception") },
             buildList {
                 add(exceptionMessage(node.message))
-                addAll(node.stackTraceParts.map {
-                    if (it.isInternal) {
-                        val hiddenLinesCount = it.stackTraceLines.size - 1
-                        val hiddenLinesText = "($hiddenLinesCount internal ${"line".sIfPlural(hiddenLinesCount)})"
-                        exceptionStacktracePart(it.stackTraceLines.takeLast(1), hiddenLinesText)
+                addAll(node.stackTraceParts.mapIndexed { index, part ->
+                    if (part.isInternal) {
+                        val collapsableLineCount = part.stackTraceLines.size
+                        val internalLinesToggle = internalLinesToggle(collapsableLineCount, index, part.state, owner)
+                        when (part.state) {
+                            Tree.ViewState.Collapsed -> {
+                                exceptionStacktracePart(part.stackTraceLines.takeLast(1), internalLinesToggle)
+                            }
+                            Tree.ViewState.Expanded -> {
+                                exceptionStacktracePart(part.stackTraceLines, internalLinesToggle)
+                            }
+                        }
                     } else {
-                        exceptionStacktracePart(it.stackTraceLines)
+                        exceptionStacktracePart(part.stackTraceLines)
                     }
                 })
             }
@@ -567,38 +584,58 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
     }
 
     private
+    fun internalLinesToggle(hiddenLinesCount: Int, partIndex: Int, state: Tree.ViewState, location: () -> Intent.TreeIntent): View<Intent> {
+        val hiddenLinesText = "($hiddenLinesCount internal ${"line".sIfPlural(hiddenLinesCount)} ${visibility(state)})"
+        return span(
+            attributes {
+                className("java-exception-stacktrace-internal-toggle")
+                onClick {
+                    Intent.ToggleStackTracePart(partIndex, location())
+                }
+                title("Click to ${visibilityToggleVerb(state)}")
+            },
+            hiddenLinesText
+        )
+    }
+
+    private
     fun exceptionMessage(message: String): View<Intent> {
         return ul(
-            message.lines().map { exceptionLine(it) }
-        )
-    }
-
-    private
-    fun exceptionStacktracePart(lines: List<String>, marker: String? = null): View<Intent> {
-        return ul(
-            attributes { className("java-exception-stacktrace-part") },
-            lines.mapIndexed { index, line -> exceptionLine(line, marker.takeIf { index == lines.lastIndex }) }
-        )
-    }
-
-    private
-    fun exceptionLine(line: String, marker: String? = null): View<Intent> {
-        return li(
-            code(line),
-            if (marker == null) empty
-            else {
-                span(
-                    attributes { className("java-exception-stacktrace-internal-toggle") },
-                    marker
-                )
+            message.lines().map {
+                exceptionLine(it)
             }
         )
+    }
+
+    private
+    fun exceptionStacktracePart(lines: List<String>, firstLineTail: View<Intent> = empty): View<Intent> {
+        return ul(
+            attributes { className("java-exception-stacktrace-part") },
+            lines.mapIndexed { i, line -> exceptionLine(line, if (i == 0) firstLineTail else empty) }
+        )
+    }
+
+    private
+    fun exceptionLine(line: String, lineTail: View<Intent> = empty): View<Intent> {
+        return li(code(line), lineTail)
     }
 
     private
     fun toggleVerb(state: Tree.ViewState): String = when (state) {
         Tree.ViewState.Collapsed -> "expand"
         Tree.ViewState.Expanded -> "collapse"
+    }
+
+    private
+    fun visibilityToggleVerb(state: Tree.ViewState): String = when (state) {
+        Tree.ViewState.Collapsed -> "show"
+        Tree.ViewState.Expanded -> "hide"
+    }
+
+    private
+    fun visibility(state: Tree.ViewState): String = when (state) {
+        Tree.ViewState.Collapsed -> "hidden"
+        Tree.ViewState.Expanded -> "shown"
     }
 
     private

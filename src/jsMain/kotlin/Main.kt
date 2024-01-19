@@ -318,9 +318,19 @@ fun exceptionNodeFor(it: JsDiagnostic): ProblemNode? {
         rawText,
         message = exceptionModel.message,
         stackTraceParts = exceptionModel.stackTraceParts.map {
-            ProblemNode.StackTracePart(it.isInternal, it.stackTraceLines)
+            ProblemNode.StackTracePart(
+                it.isInternal,
+                it.stackTraceLines,
+                defaultViewStateFor(it)
+            )
         }
     )
+}
+
+
+private
+fun defaultViewStateFor(stackTracePart: StackTracePart): Tree.ViewState {
+    return if (stackTracePart.isInternal) Tree.ViewState.Collapsed else Tree.ViewState.Expanded
 }
 
 
