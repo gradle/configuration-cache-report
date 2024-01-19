@@ -384,3 +384,26 @@ code em, tt em {
 code + .copy-button {
     margin-inline-start: 0;
 }
+
+.java-exception {
+    font-size: 0.75rem;
+    padding-left: 24px;
+}
+
+.java-exception ul {
+    margin: 0;
+    line-height: inherit;
+}
+
+.java-exception-stacktrace-part {
+    padding-left: 2rem;
+}
+
+.java-exception-stacktrace-internal-toggle {
+    user-select: none;
+    cursor: pointer;
+    border-radius: 2px;
+    padding: 0.1em 0.2em;
+    background: azure;
+    color: #686868;
+}

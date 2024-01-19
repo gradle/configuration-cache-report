@@ -310,8 +310,18 @@ fun messageNodeFor(importedProblem: ImportedProblem) =
 
 
 private
-fun exceptionNodeFor(it: JsDiagnostic): ProblemNode? =
-    it.error?.let(ProblemNode::Exception)
+fun exceptionNodeFor(it: JsDiagnostic): ProblemNode? {
+    val rawText = it.error ?: return null
+    val exceptionModel = exceptionModelFor(rawText)
+
+    return ProblemNode.Exception(
+        rawText,
+        message = exceptionModel.message,
+        stackTraceParts = exceptionModel.stackTraceParts.map {
+            ProblemNode.StackTracePart(it.isInternal, it.stackTraceLines)
+        }
+    )
+}
 
 
 private

@@ -93,6 +93,15 @@ data class ViewFactory(val elementName: String) {
 
     operator fun <I> invoke(
         attributes: List<Attribute<I>>,
+        children: List<View<I>>
+    ): View<I> = View(
+        elementName,
+        attributes = attributes,
+        children = children
+    )
+
+    operator fun <I> invoke(
+        attributes: List<Attribute<I>>,
         innerText: String
     ): View<I> = View(
         elementName,

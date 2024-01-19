@@ -23,13 +23,14 @@ import elmish.code
 import elmish.div
 import elmish.empty
 import elmish.h1
+import elmish.li
 import elmish.ol
-import elmish.pre
 import elmish.small
 import elmish.span
 import elmish.tree.Tree
 import elmish.tree.TreeView
 import elmish.tree.viewSubTrees
+import elmish.ul
 import kotlinx.browser.window
 
 
@@ -62,7 +63,17 @@ sealed class ProblemNode {
 
     data class Message(val prettyText: PrettyText) : ProblemNode()
 
-    data class Exception(val stackTrace: String) : ProblemNode()
+    data class Exception(
+        val rawText: String,
+        val message: String,
+        val stackTraceParts: List<StackTracePart>
+    ) : ProblemNode()
+
+    internal
+    data class StackTracePart(
+        val isInternal: Boolean,
+        val stackTraceLines: List<String>
+    )
 }
 
 
@@ -468,19 +479,90 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
         node: ProblemNode.Exception
     ): View<Intent> = div(
         viewTreeButton(child, treeIntent),
-        span("exception stack trace "),
-        copyButton(
-            text = node.stackTrace,
-            tooltip = "Copy original stacktrace to the clipboard"
-        ),
+        exceptionNodeTitle(node),
         when (child.tree.state) {
             Tree.ViewState.Collapsed -> empty
-            Tree.ViewState.Expanded -> pre(
-                attributes { className("stacktrace") },
-                node.stackTrace
-            )
+            Tree.ViewState.Expanded -> exception(node)
         }
     )
+
+    private
+    val stackTraceMemberCallRe = Regex("""[. ]([^.]+\.[^.]+\(.*\))$""")
+
+    /**
+     * Extracts `CallSiteArray.defaultCall(CallSiteArray.java:47)` from a full stacktrace line like
+     * `at org.codehaus.groovy.runtime.callsite.CallSiteArray.defaultCall(CallSiteArray.java:47)`.
+     */
+    private
+    fun extractStackTraceMemberCall(line: String): String? {
+        return stackTraceMemberCallRe.find(line)?.groupValues?.get(1)
+    }
+
+    private
+    fun exceptionNodeTitle(node: ProblemNode.Exception): View<Intent> {
+        val deepestNonInternalCall = node.stackTraceParts
+            .firstOrNull { !it.isInternal }?.stackTraceLines?.first()
+            ?.let(::extractStackTraceMemberCall)
+
+        return span(
+            buildList<View<Intent>> {
+                add(span("A call at "))
+                if (deepestNonInternalCall != null) {
+                    add(span(code(deepestNonInternalCall)))
+                }
+                add(span(" has thrown an exception"))
+                add(span(copyButton(text = node.rawText, tooltip = "Copy exception to the clipboard")))
+            }
+        )
+    }
+
+    private
+    fun exception(node: ProblemNode.Exception): View<Intent> {
+        return div(
+            attributes { className("java-exception") },
+            buildList {
+                add(exceptionMessage(node.message))
+                addAll(node.stackTraceParts.map {
+                    if (it.isInternal) {
+                        val hiddenLinesCount = it.stackTraceLines.size - 1
+                        val hiddenLinesText = "($hiddenLinesCount internal ${"line".sIfPlural(hiddenLinesCount)})"
+                        exceptionStacktracePart(it.stackTraceLines.takeLast(1), hiddenLinesText)
+                    } else {
+                        exceptionStacktracePart(it.stackTraceLines)
+                    }
+                })
+            }
+        )
+    }
+
+    private
+    fun exceptionMessage(message: String): View<Intent> {
+        return ul(
+            message.lines().map { exceptionLine(it) }
+        )
+    }
+
+    private
+    fun exceptionStacktracePart(lines: List<String>, marker: String? = null): View<Intent> {
+        return ul(
+            attributes { className("java-exception-stacktrace-part") },
+            lines.mapIndexed { index, line -> exceptionLine(line, marker.takeIf { index == lines.lastIndex }) }
+        )
+    }
+
+    private
+    fun exceptionLine(line: String, marker: String? = null): View<Intent> {
+        return li(
+            code(line),
+            if (marker == null) empty
+            else {
+                span(
+                    attributes { className("java-exception-stacktrace-internal-toggle") },
+                    marker
+                )
+            }
+        )
+    }
 
     private
     fun toggleVerb(state: Tree.ViewState): String = when (state) {
