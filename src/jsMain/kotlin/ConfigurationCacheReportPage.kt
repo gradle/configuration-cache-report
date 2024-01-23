@@ -65,16 +65,15 @@ sealed class ProblemNode {
     data class Message(val prettyText: PrettyText) : ProblemNode()
 
     data class Exception(
-        val rawText: String,
-        val message: String,
-        val stackTraceParts: List<StackTracePart>
+        val summary: PrettyText,
+        val fullText: String,
+        val parts: List<StackTracePart>
     ) : ProblemNode()
 
     internal
     data class StackTracePart(
-        val isInternal: Boolean,
-        val stackTraceLines: List<String>,
-        val state: Tree.ViewState
+        val lines: List<String>,
+        val state: Tree.ViewState?
     )
 }
 
@@ -157,8 +156,8 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
         )
         is Intent.ToggleStackTracePart -> model.updateNodeAt(intent.location) {
             require(this is ProblemNode.Exception)
-            copy(stackTraceParts = stackTraceParts.mapAt(intent.partIndex) {
-                it.copy(state = it.state.toggle())
+            copy(parts = parts.mapAt(intent.partIndex) {
+                it.copy(state = it.state?.toggle())
             })
         }
         is Intent.Copy -> {
@@ -520,7 +519,8 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
         node: ProblemNode.Exception
     ): View<Intent> = div(
         viewTreeButton(child, treeIntent),
-        exceptionNodeTitle(node),
+        viewPrettyText(node.summary),
+        span(copyButton(text = node.fullText, tooltip = "Copy exception to the clipboard")),
         when (child.tree.state) {
             Tree.ViewState.Collapsed -> empty
             Tree.ViewState.Expanded -> exception(node) { treeIntent(TreeView.Intent.Toggle(child)) }
@@ -528,67 +528,33 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
     )
 
     private
-    val stackTraceMemberCallRe = Regex("""[. ]([^.]+\.[^.]+\(.*\))$""")
-
-    /**
-     * Extracts `CallSiteArray.defaultCall(CallSiteArray.java:47)` from a full stacktrace line like
-     * `at org.codehaus.groovy.runtime.callsite.CallSiteArray.defaultCall(CallSiteArray.java:47)`.
-     */
-    private
-    fun extractStackTraceMemberCall(line: String): String? {
-        return stackTraceMemberCallRe.find(line)?.groupValues?.get(1)
-    }
-
-    private
-    fun exceptionNodeTitle(node: ProblemNode.Exception): View<Intent> {
-        val deepestNonInternalCall = node.stackTraceParts
-            .firstOrNull { !it.isInternal }?.stackTraceLines?.first()
-            ?.let(::extractStackTraceMemberCall)
-
-        return span(
-            buildList<View<Intent>> {
-                add(span("A call at "))
-                if (deepestNonInternalCall != null) {
-                    add(span(code(deepestNonInternalCall)))
-                }
-                add(span(" has thrown an exception"))
-                add(span(copyButton(text = node.rawText, tooltip = "Copy exception to the clipboard")))
-            }
-        )
-    }
-
-    private
-    fun exception(node: ProblemNode.Exception, owner: () -> Intent.TreeIntent): View<Intent> {
-        return div(
-            attributes { className("java-exception") },
-            buildList {
-                add(exceptionMessage(node.message))
-                addAll(node.stackTraceParts.mapIndexed { index, part ->
-                    if (part.isInternal) {
-                        val collapsableLineCount = part.stackTraceLines.size
-                        val internalLinesToggle = internalLinesToggle(collapsableLineCount, index, part.state, owner)
-                        when (part.state) {
-                            Tree.ViewState.Collapsed -> {
-                                exceptionStacktracePart(part.stackTraceLines.takeLast(1), internalLinesToggle)
-                            }
-                            Tree.ViewState.Expanded -> {
-                                exceptionStacktracePart(part.stackTraceLines, internalLinesToggle)
-                            }
-                        }
-                    } else {
-                        exceptionStacktracePart(part.stackTraceLines)
+    fun exception(node: ProblemNode.Exception, owner: () -> Intent.TreeIntent): View<Intent> = div(
+        attributes { className("java-exception") },
+        node.parts.mapIndexed { index, part ->
+            if (part.state != null) {
+                val collapsableLineCount = part.lines.size
+                val internalLinesToggle = internalLinesToggle(collapsableLineCount, index, part.state, owner)
+                when (part.state) {
+                    Tree.ViewState.Collapsed -> {
+                        exceptionPart(part.lines.takeLast(1), internalLinesToggle)
                     }
-                })
+
+                    Tree.ViewState.Expanded -> {
+                        exceptionPart(part.lines, internalLinesToggle)
+                    }
+                }
+            } else {
+                exceptionPart(part.lines)
             }
-        )
-    }
+        }
+    )
 
     private
     fun internalLinesToggle(hiddenLinesCount: Int, partIndex: Int, state: Tree.ViewState, location: () -> Intent.TreeIntent): View<Intent> {
         val hiddenLinesText = "($hiddenLinesCount internal ${"line".sIfPlural(hiddenLinesCount)} ${visibility(state)})"
         return span(
             attributes {
-                className("java-exception-stacktrace-internal-toggle")
+                className("java-exception-part-toggle")
                 onClick {
                     Intent.ToggleStackTracePart(partIndex, location())
                 }
@@ -599,18 +565,8 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
     }
 
     private
-    fun exceptionMessage(message: String): View<Intent> {
+    fun exceptionPart(lines: List<String>, firstLineTail: View<Intent> = empty): View<Intent> {
         return ul(
-            message.lines().map {
-                exceptionLine(it)
-            }
-        )
-    }
-
-    private
-    fun exceptionStacktracePart(lines: List<String>, firstLineTail: View<Intent> = empty): View<Intent> {
-        return ul(
-            attributes { className("java-exception-stacktrace-part") },
             lines.mapIndexed { i, line -> exceptionLine(line, if (i == 0) firstLineTail else empty) }
         )
     }

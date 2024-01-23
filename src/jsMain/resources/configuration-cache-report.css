@@ -395,11 +395,11 @@ code + .copy-button {
     line-height: inherit;
 }
 
-.java-exception-stacktrace-part {
-    padding-left: 2rem;
+.java-exception code {
+    white-space: pre;
 }
 
-.java-exception-stacktrace-internal-toggle {
+.java-exception-part-toggle {
     user-select: none;
     cursor: pointer;
     border-radius: 2px;
