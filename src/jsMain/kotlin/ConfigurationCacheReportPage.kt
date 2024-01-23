@@ -550,31 +550,30 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
     )
 
     private
-    fun internalLinesToggle(hiddenLinesCount: Int, partIndex: Int, state: Tree.ViewState, location: () -> Intent.TreeIntent): View<Intent> {
-        val hiddenLinesText = "($hiddenLinesCount internal ${"line".sIfPlural(hiddenLinesCount)} ${visibility(state)})"
-        return span(
-            attributes {
-                className("java-exception-part-toggle")
-                onClick {
-                    Intent.ToggleStackTracePart(partIndex, location())
-                }
-                title("Click to ${visibilityToggleVerb(state)}")
-            },
-            hiddenLinesText
-        )
-    }
+    fun internalLinesToggle(
+        hiddenLinesCount: Int,
+        partIndex: Int,
+        state: Tree.ViewState,
+        location: () -> Intent.TreeIntent
+    ): View<Intent> = span(
+        attributes {
+            className("java-exception-part-toggle")
+            onClick {
+                Intent.ToggleStackTracePart(partIndex, location())
+            }
+            title("Click to ${visibilityToggleVerb(state)}")
+        },
+        "($hiddenLinesCount internal ${"line".sIfPlural(hiddenLinesCount)} ${visibility(state)})"
+    )
 
     private
-    fun exceptionPart(lines: List<String>, firstLineTail: View<Intent> = empty): View<Intent> {
-        return ul(
-            lines.mapIndexed { i, line -> exceptionLine(line, if (i == 0) firstLineTail else empty) }
-        )
-    }
+    fun exceptionPart(lines: List<String>, firstLineTail: View<Intent> = empty): View<Intent> = ul(
+        lines.mapIndexed { i, line -> exceptionLine(line, if (i == 0) firstLineTail else empty) }
+    )
 
     private
-    fun exceptionLine(line: String, lineTail: View<Intent> = empty): View<Intent> {
-        return li(code(line), lineTail)
-    }
+    fun exceptionLine(line: String, lineTail: View<Intent> = empty): View<Intent> =
+        li(code(line), lineTail)
 
     private
     fun toggleVerb(state: Tree.ViewState): String = when (state) {
