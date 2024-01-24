@@ -139,8 +139,8 @@ external interface JsError {
 
 private
 external interface JsStackTracePart {
-    val isInternal: Boolean
-    val text: String
+    val text: String?
+    val internalText: String?
 }
 
 
@@ -329,18 +329,31 @@ fun exceptionNodeFor(it: JsDiagnostic): ProblemNode? {
 
     return ProblemNode.Exception(
         summary = toPrettyText(error.summary),
-        fullText = error.parts.joinToString("\n") { it.text },
-        parts = error.parts.map { part ->
-            val lines = part.text.lineSequence().filter { it.isNotEmpty() }.toList()
-            ProblemNode.StackTracePart(lines, defaultViewStateFor(part, lines.size))
+        fullText = error.parts.mapNotNull { it.textContent }.joinToString("\n"),
+        parts = error.parts.mapNotNull { part ->
+            stackTracePartFor(part)
         }
     )
 }
 
 
 private
-fun defaultViewStateFor(stackTracePart: JsStackTracePart, linesCount: Int): Tree.ViewState? {
-    return if (stackTracePart.isInternal && linesCount > 1) Tree.ViewState.Collapsed else null
+fun stackTracePartFor(part: JsStackTracePart): ProblemNode.StackTracePart? {
+    val partText = part.textContent ?: return null
+    val lines = partText.lineSequence().filter { it.isNotEmpty() }.toList()
+    val isInternal = part.internalText != null
+    return ProblemNode.StackTracePart(lines, defaultViewStateFor(isInternal, lines.size))
+}
+
+
+private
+val JsStackTracePart.textContent: String?
+    get() = text ?: internalText
+
+
+private
+fun defaultViewStateFor(isInternal: Boolean, linesCount: Int): Tree.ViewState? {
+    return if (isInternal && linesCount > 1) Tree.ViewState.Collapsed else null
 }
 
 
