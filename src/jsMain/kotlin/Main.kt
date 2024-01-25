@@ -280,33 +280,43 @@ fun toProblemNode(trace: JsTrace): ProblemNode = when (trace.kind) {
     "Project" -> trace.unsafeCast<JsTraceProject>().run {
         ProblemNode.Project(path)
     }
+
     "Task" -> trace.unsafeCast<JsTraceTask>().run {
         ProblemNode.Task(path, type)
     }
+
     "Bean" -> trace.unsafeCast<JsTraceBean>().run {
         ProblemNode.Bean(type)
     }
+
     "Field" -> trace.unsafeCast<JsTraceField>().run {
         ProblemNode.Property("field", name, declaringType)
     }
+
     "InputProperty" -> trace.unsafeCast<JsTraceProperty>().run {
         ProblemNode.Property("input property", name, task)
     }
+
     "OutputProperty" -> trace.unsafeCast<JsTraceProperty>().run {
         ProblemNode.Property("output property", name, task)
     }
+
     "SystemProperty" -> trace.unsafeCast<JsTraceSystemProperty>().run {
         ProblemNode.SystemProperty(name)
     }
+
     "PropertyUsage" -> trace.unsafeCast<JsTracePropertyUsage>().run {
         ProblemNode.Property("property", name, from)
     }
+
     "BuildLogic" -> trace.unsafeCast<JSBuildLogic>().run {
         ProblemNode.BuildLogic(location)
     }
+
     "BuildLogicClass" -> trace.unsafeCast<JSBuildLogicClass>().run {
         ProblemNode.BuildLogicClass(type)
     }
+
     else -> ProblemNode.Label("Gradle runtime")
 }
 

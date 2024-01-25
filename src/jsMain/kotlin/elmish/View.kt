@@ -212,6 +212,7 @@ fun <I> Element.appendElementFor(view: View<I>, send: (I) -> Unit) {
                 appendElementFor(childView, send)
             }
         }
+
         is View.MappedView<*, *> -> {
             @Suppress("unchecked_cast")
             val mappedView = view as View.MappedView<Any?, I>
@@ -219,6 +220,7 @@ fun <I> Element.appendElementFor(view: View<I>, send: (I) -> Unit) {
                 send(mappedView.mapping(it))
             }
         }
+
         View.Empty -> return
     }
 }
