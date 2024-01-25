@@ -148,22 +148,27 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
         is Intent.TaskTreeIntent -> model.copy(
             locationTree = TreeView.step(intent.delegate, model.locationTree)
         )
+
         is Intent.MessageTreeIntent -> model.copy(
             messageTree = TreeView.step(intent.delegate, model.messageTree)
         )
+
         is Intent.InputTreeIntent -> model.copy(
             inputTree = TreeView.step(intent.delegate, model.inputTree)
         )
+
         is Intent.ToggleStackTracePart -> model.updateNodeAt(intent.location) {
             require(this is ProblemNode.Exception)
             copy(parts = parts.mapAt(intent.partIndex) {
                 it.copy(state = it.state?.toggle())
             })
         }
+
         is Intent.Copy -> {
             window.navigator.clipboard.writeText(intent.text)
             model
         }
+
         is Intent.SetTab -> model.copy(
             tab = intent.tab
         )
@@ -342,6 +347,7 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
                             prefix = errorIcon
                         )
                     }
+
                     is ProblemNode.Warning -> {
                         treeLabel(
                             treeIntent,
@@ -351,6 +357,7 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
                             prefix = warningIcon
                         )
                     }
+
                     is ProblemNode.Info -> {
                         treeLabel(
                             treeIntent,
@@ -361,9 +368,11 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
                             suffix = suffixForInfo(labelNode, focus)
                         )
                     }
+
                     is ProblemNode.Exception -> {
                         viewException(treeIntent, focus, labelNode)
                     }
+
                     else -> {
                         treeLabel(treeIntent, focus, labelNode)
                     }
@@ -378,39 +387,48 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
             span("project"),
             reference(node.path)
         )
+
         is ProblemNode.Property -> span(
             span(node.kind),
             reference(node.name),
             span(" of "),
             reference(node.owner)
         )
+
         is ProblemNode.SystemProperty -> span(
             span("system property"),
             reference(node.name),
         )
+
         is ProblemNode.Task -> span(
             span("task"),
             reference(node.path),
             span(" of type "),
             reference(node.type)
         )
+
         is ProblemNode.Bean -> span(
             span("bean of type "),
             reference(node.type)
         )
+
         is ProblemNode.BuildLogic -> span(
             span(node.location)
         )
+
         is ProblemNode.BuildLogicClass -> span(
             span("class "),
             reference(node.type)
         )
+
         is ProblemNode.Label -> span(
             node.text
         )
+
         is ProblemNode.Message -> viewPrettyText(
             node.prettyText
         )
+
         is ProblemNode.Link -> a(
             attributes {
                 className("documentation-button")
@@ -418,6 +436,7 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
             },
             node.label
         )
+
         else -> span(
             node.toString()
         )
