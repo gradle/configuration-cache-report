@@ -132,7 +132,7 @@ external interface JsMessageFragment {
 
 private
 external interface JsError {
-    val summary: Array<JsMessageFragment>
+    val summary: Array<JsMessageFragment>?
     val parts: Array<JsStackTracePart>
 }
 
@@ -324,11 +324,11 @@ fun messageNodeFor(importedProblem: ImportedProblem) =
 
 
 private
-fun exceptionNodeFor(it: JsDiagnostic): ProblemNode? {
-    val error = it.error ?: return null
+fun exceptionNodeFor(diagnostic: JsDiagnostic): ProblemNode? {
+    val error = diagnostic.error ?: return null
 
     return ProblemNode.Exception(
-        summary = toPrettyText(error.summary),
+        summary = error.summary?.let { toPrettyText(it) },
         fullText = error.parts.mapNotNull { it.textContent }.joinToString("\n"),
         parts = error.parts.mapNotNull { part ->
             stackTracePartFor(part)

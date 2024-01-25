@@ -65,7 +65,7 @@ sealed class ProblemNode {
     data class Message(val prettyText: PrettyText) : ProblemNode()
 
     data class Exception(
-        val summary: PrettyText,
+        val summary: PrettyText?,
         val fullText: String,
         val parts: List<StackTracePart>
     ) : ProblemNode()
@@ -519,8 +519,10 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
         node: ProblemNode.Exception
     ): View<Intent> = div(
         viewTreeButton(child, treeIntent),
-        viewPrettyText(node.summary),
+        span("Exception"),
         span(copyButton(text = node.fullText, tooltip = "Copy exception to the clipboard")),
+        node.summary?.let { span(" ") } ?: empty,
+        node.summary?.let { viewPrettyText(it) } ?: empty,
         when (child.tree.state) {
             Tree.ViewState.Collapsed -> empty
             Tree.ViewState.Expanded -> exception(node) { treeIntent(TreeView.Intent.Toggle(child)) }

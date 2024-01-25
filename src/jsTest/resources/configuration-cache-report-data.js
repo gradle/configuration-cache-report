@@ -12,7 +12,7 @@ function configurationCacheProblems() {
                     "problem": [{"text": "invocation of "}, {"name": "Task.project"}, {"text": " at execution time is unsupported."}],
                     "documentationLink": "https://docs.gradle.org/6.6-20200618155501+0000/userguide/configuration_cache.html#use_project_during_execution",
                     "error": {
-                        "summary": [{"text": "Exception stacktrace"}],
+                        "summary": [{"text": "at "}, {"name": "build_44nw1yvono72kvlw7g0lm2rd7$_run_closure1$_closure2.doCall(/Users/paul/src/gradle-related/gradle/subprojects/docs/src/snippets/configurationCache/problemsGroovy/groovy/build.gradle:5)"}],
                         "parts": [{
                             "text": "org.gradle.api.InvalidUserCodeException: Invocation of 'Task.project' by task ':someTask' at execution time is unsupported."
                         }, {
@@ -38,7 +38,6 @@ function configurationCacheProblems() {
                     "trace": [{"kind": "PropertyUsage", "name": "foo", "from": ":sub-b"}, {"kind": "Project", "path": ":sub-b"}, {"kind": "BuildLogic", "location": "build file 'sub-b/build.gradle'"}],
                     "problem": [{"text": "Project "}, {"name": ":sub-b"}, {"text": " cannot dynamically lookup a "}, {"text": "property"}, {"text": " in the parent project "}, {"name": ":"}],
                     "error": {
-                        "summary": [{"text": "Exception stacktrace"}],
                         "parts": [{
                             "text": "org.gradle.api.InvalidUserCodeException: Project ':sub-b' cannot dynamically lookup a property in the parent project ':'\n"
                         }, {
