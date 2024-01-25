@@ -55,7 +55,7 @@ external interface JsDiagnostic {
     val problem: Array<JsMessageFragment>?
     val trace: Array<JsTrace>
     val documentationLink: String?
-    val error: String?
+    val error: JsError?
 }
 
 
@@ -127,6 +127,20 @@ private
 external interface JsMessageFragment {
     val text: String?
     val name: String?
+}
+
+
+private
+external interface JsError {
+    val summary: Array<JsMessageFragment>?
+    val parts: Array<JsStackTracePart>
+}
+
+
+private
+external interface JsStackTracePart {
+    val text: String?
+    val internalText: String?
 }
 
 
@@ -310,8 +324,37 @@ fun messageNodeFor(importedProblem: ImportedProblem) =
 
 
 private
-fun exceptionNodeFor(it: JsDiagnostic): ProblemNode? =
-    it.error?.let(ProblemNode::Exception)
+fun exceptionNodeFor(diagnostic: JsDiagnostic): ProblemNode? {
+    val error = diagnostic.error ?: return null
+
+    return ProblemNode.Exception(
+        summary = error.summary?.let { toPrettyText(it) },
+        fullText = error.parts.mapNotNull { it.textContent }.joinToString("\n"),
+        parts = error.parts.mapNotNull { part ->
+            stackTracePartFor(part)
+        }
+    )
+}
+
+
+private
+fun stackTracePartFor(part: JsStackTracePart): ProblemNode.StackTracePart? {
+    val partText = part.textContent ?: return null
+    val lines = partText.lineSequence().filter { it.isNotEmpty() }.toList()
+    val isInternal = part.internalText != null
+    return ProblemNode.StackTracePart(lines, defaultViewStateFor(isInternal, lines.size))
+}
+
+
+private
+val JsStackTracePart.textContent: String?
+    get() = text ?: internalText
+
+
+private
+fun defaultViewStateFor(isInternal: Boolean, linesCount: Int): Tree.ViewState? {
+    return if (isInternal && linesCount > 1) Tree.ViewState.Collapsed else null
+}
 
 
 private

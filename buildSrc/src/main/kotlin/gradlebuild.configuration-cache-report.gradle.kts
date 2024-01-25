@@ -16,7 +16,6 @@
 import gradlebuild.configcachereport.tasks.MergeReportAssets
 import gradlebuild.configcachereport.tasks.VerifyDevWorkflow
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
-import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
 import org.jlleitschuh.gradle.ktlint.tasks.KtLintCheckTask
 
@@ -31,15 +30,20 @@ kotlin {
             webpackTask(Action {
                 sourceMaps = false
             })
-            testTask(Action {
-                enabled = false
-            })
         }
 
         // Creating a distribution of the JS code as a single executable file
         binaries.executable()
         // Also bunding all dependencies into a single file using a Gradle property:
         // kotlin.js.ir.output.granularity=whole-program
+    }
+
+    sourceSets {
+        commonTest {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
     }
 }
 

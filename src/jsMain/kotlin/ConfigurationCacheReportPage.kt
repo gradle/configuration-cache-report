@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import data.mapAt
 import elmish.Component
 import elmish.View
 import elmish.a
@@ -23,13 +24,14 @@ import elmish.code
 import elmish.div
 import elmish.empty
 import elmish.h1
+import elmish.li
 import elmish.ol
-import elmish.pre
 import elmish.small
 import elmish.span
 import elmish.tree.Tree
 import elmish.tree.TreeView
 import elmish.tree.viewSubTrees
+import elmish.ul
 import kotlinx.browser.window
 
 
@@ -62,7 +64,17 @@ sealed class ProblemNode {
 
     data class Message(val prettyText: PrettyText) : ProblemNode()
 
-    data class Exception(val stackTrace: String) : ProblemNode()
+    data class Exception(
+        val summary: PrettyText?,
+        val fullText: String,
+        val parts: List<StackTracePart>
+    ) : ProblemNode()
+
+    internal
+    data class StackTracePart(
+        val lines: List<String>,
+        val state: Tree.ViewState?
+    )
 }
 
 
@@ -115,11 +127,17 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
 
     sealed class Intent {
 
-        data class TaskTreeIntent(val delegate: ProblemTreeIntent) : Intent()
+        sealed class TreeIntent : Intent() {
+            abstract val delegate: ProblemTreeIntent
+        }
 
-        data class MessageTreeIntent(val delegate: ProblemTreeIntent) : Intent()
+        data class TaskTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
-        data class InputTreeIntent(val delegate: ProblemTreeIntent) : Intent()
+        data class MessageTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
+
+        data class InputTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
+
+        data class ToggleStackTracePart(val partIndex: Int, val location: TreeIntent) : Intent()
 
         data class Copy(val text: String) : Intent()
 
@@ -136,6 +154,12 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
         is Intent.InputTreeIntent -> model.copy(
             inputTree = TreeView.step(intent.delegate, model.inputTree)
         )
+        is Intent.ToggleStackTracePart -> model.updateNodeAt(intent.location) {
+            require(this is ProblemNode.Exception)
+            copy(parts = parts.mapAt(intent.partIndex) {
+                it.copy(state = it.state?.toggle())
+            })
+        }
         is Intent.Copy -> {
             window.navigator.clipboard.writeText(intent.text)
             model
@@ -144,6 +168,33 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
             tab = intent.tab
         )
     }
+
+    private
+    fun Model.updateNodeAt(
+        tree: Intent.TreeIntent,
+        update: ProblemNode.() -> ProblemNode
+    ) = when (tree) {
+        is Intent.MessageTreeIntent -> copy(
+            messageTree = messageTree.updateNodeAt(tree, update)
+        )
+
+        is Intent.TaskTreeIntent -> copy(
+            locationTree = locationTree.updateNodeAt(tree, update)
+        )
+
+        is Intent.InputTreeIntent -> copy(
+            inputTree = inputTree.updateNodeAt(tree, update)
+        )
+    }
+
+    private
+    fun ProblemTreeModel.updateNodeAt(
+        tree: Intent.TreeIntent,
+        update: ProblemNode.() -> ProblemNode
+    ): TreeView.Model<ProblemNode> = updateLabelAt(
+        tree.delegate.focus,
+        update
+    )
 
     override fun view(model: Model): View<Intent> = div(
         attributes { className("report-wrapper") },
@@ -270,13 +321,13 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
     )
 
     private
-    fun viewTree(model: ProblemTreeModel, treeIntent: (ProblemTreeIntent) -> Intent): View<Intent> =
+    fun viewTree(model: ProblemTreeModel, treeIntent: (ProblemTreeIntent) -> Intent.TreeIntent): View<Intent> =
         viewTree(model.tree.focus().children, treeIntent)
 
     private
     fun viewTree(
         subTrees: Sequence<Tree.Focus<ProblemNode>>,
-        treeIntent: (ProblemTreeIntent) -> Intent,
+        treeIntent: (ProblemTreeIntent) -> Intent.TreeIntent,
         suffixForInfo: (ProblemNode.Info, Tree.Focus<ProblemNode>) -> View<Intent> = { _, _ -> empty }
     ): View<Intent> = div(
         ol(
@@ -463,29 +514,85 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
 
     private
     fun viewException(
-        treeIntent: (ProblemTreeIntent) -> Intent,
+        treeIntent: (ProblemTreeIntent) -> Intent.TreeIntent,
         child: Tree.Focus<ProblemNode>,
         node: ProblemNode.Exception
     ): View<Intent> = div(
         viewTreeButton(child, treeIntent),
-        span("exception stack trace "),
-        copyButton(
-            text = node.stackTrace,
-            tooltip = "Copy original stacktrace to the clipboard"
-        ),
+        span("Exception"),
+        span(copyButton(text = node.fullText, tooltip = "Copy exception to the clipboard")),
+        node.summary?.let { span(" ") } ?: empty,
+        node.summary?.let { viewPrettyText(it) } ?: empty,
         when (child.tree.state) {
             Tree.ViewState.Collapsed -> empty
-            Tree.ViewState.Expanded -> pre(
-                attributes { className("stacktrace") },
-                node.stackTrace
-            )
+            Tree.ViewState.Expanded -> exception(node) { treeIntent(TreeView.Intent.Toggle(child)) }
         }
     )
+
+    private
+    fun exception(node: ProblemNode.Exception, owner: () -> Intent.TreeIntent): View<Intent> = div(
+        attributes { className("java-exception") },
+        node.parts.mapIndexed { index, part ->
+            if (part.state != null) {
+                val collapsableLineCount = part.lines.size
+                val internalLinesToggle = internalLinesToggle(collapsableLineCount, index, part.state, owner)
+                when (part.state) {
+                    Tree.ViewState.Collapsed -> {
+                        exceptionPart(part.lines.takeLast(1), internalLinesToggle)
+                    }
+
+                    Tree.ViewState.Expanded -> {
+                        exceptionPart(part.lines, internalLinesToggle)
+                    }
+                }
+            } else {
+                exceptionPart(part.lines)
+            }
+        }
+    )
+
+    private
+    fun internalLinesToggle(
+        hiddenLinesCount: Int,
+        partIndex: Int,
+        state: Tree.ViewState,
+        location: () -> Intent.TreeIntent
+    ): View<Intent> = span(
+        attributes {
+            className("java-exception-part-toggle")
+            onClick {
+                Intent.ToggleStackTracePart(partIndex, location())
+            }
+            title("Click to ${visibilityToggleVerb(state)}")
+        },
+        "($hiddenLinesCount internal ${"line".sIfPlural(hiddenLinesCount)} ${visibility(state)})"
+    )
+
+    private
+    fun exceptionPart(lines: List<String>, firstLineTail: View<Intent> = empty): View<Intent> = ul(
+        lines.mapIndexed { i, line -> exceptionLine(line, if (i == 0) firstLineTail else empty) }
+    )
+
+    private
+    fun exceptionLine(line: String, lineTail: View<Intent> = empty): View<Intent> =
+        li(code(line), lineTail)
 
     private
     fun toggleVerb(state: Tree.ViewState): String = when (state) {
         Tree.ViewState.Collapsed -> "expand"
         Tree.ViewState.Expanded -> "collapse"
+    }
+
+    private
+    fun visibilityToggleVerb(state: Tree.ViewState): String = when (state) {
+        Tree.ViewState.Collapsed -> "show"
+        Tree.ViewState.Expanded -> "hide"
+    }
+
+    private
+    fun visibility(state: Tree.ViewState): String = when (state) {
+        Tree.ViewState.Collapsed -> "hidden"
+        Tree.ViewState.Expanded -> "shown"
     }
 
     private
