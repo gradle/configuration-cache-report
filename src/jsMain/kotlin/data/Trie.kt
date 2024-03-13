@@ -17,7 +17,6 @@
 package data
 
 
-@Suppress("experimental_feature_warning")
 value class Trie<T>(
 
     private
