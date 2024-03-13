@@ -231,7 +231,8 @@ private
 fun problemNodesByMessage(problems: List<ImportedProblem>): Sequence<List<ProblemNode>> =
     problems.asSequence().map { problem ->
         buildList {
-            add(problemNodeFor(problem))
+            add(problemTemplateNodeFor(problem))
+            add(messageNodeFor(problem))
             addAll(problem.trace)
             addExceptionNode(problem)
         }
@@ -261,6 +262,14 @@ private
 fun problemNodeFor(problem: ImportedProblem) = errorOrWarningNodeFor(
     problem.problem,
     messageNodeFor(problem),
+    docLinkFor(problem.problem)
+)
+
+
+private
+fun problemTemplateNodeFor(problem: ImportedProblem) = errorOrWarningNodeFor(
+    problem.problem,
+    messageTemplateNodeFor(problem),
     docLinkFor(problem.problem)
 )
 
@@ -331,6 +340,21 @@ fun errorOrWarningNodeFor(problem: JsDiagnostic, label: ProblemNode, docLink: Pr
 private
 fun messageNodeFor(importedProblem: ImportedProblem) =
     ProblemNode.Message(importedProblem.message)
+
+
+private
+fun messageTemplateNodeFor(importedProblem: ImportedProblem) =
+    ProblemNode.Message(importedProblem.message.toTemplate())
+
+
+private
+fun PrettyText.toTemplate(): PrettyText =
+    PrettyText(fragments.map {
+        when (it) {
+            is PrettyText.Fragment.Reference -> PrettyText.Fragment.Reference("___")
+            else -> it
+        }
+    })
 
 
 private
