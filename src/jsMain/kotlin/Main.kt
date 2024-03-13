@@ -45,6 +45,7 @@ external interface JsModel {
     val documentationLink: String
     val totalProblemCount: Int
     val diagnostics: Array<JsDiagnostic>
+    val dictionary: Array<String>?
 }
 
 
@@ -153,8 +154,32 @@ data class ImportedProblem(
 
 
 private
+interface StringDictionary {
+    fun get(key: String): String
+}
+
+
+private
+object NoopStringDictionary : StringDictionary {
+    override fun get(key: String): String = key
+}
+
+
+private
+class DefaultStringDictionary(
+    private val dict: Array<String>
+) : StringDictionary {
+
+    override fun get(key: String): String {
+        return dict[key.toInt()]
+    }
+}
+
+
+private
 fun reportPageModelFromJsModel(jsModel: JsModel): ConfigurationCacheReportPage.Model {
-    val diagnostics = importDiagnostics(jsModel.diagnostics)
+    val dict = jsModel.dictionary?.let(::DefaultStringDictionary) ?: NoopStringDictionary
+    val diagnostics = importDiagnostics(jsModel.diagnostics, dict)
     return ConfigurationCacheReportPage.Model(
         cacheAction = jsModel.cacheAction,
         requestedTasks = jsModel.requestedTasks,
@@ -163,16 +188,16 @@ fun reportPageModelFromJsModel(jsModel: JsModel): ConfigurationCacheReportPage.M
         reportedProblems = diagnostics.problems.size,
         messageTree = treeModelFor(
             ProblemNode.Label("Problems grouped by message"),
-            problemNodesByMessage(diagnostics.problems)
+            problemNodesByMessage(diagnostics.problems, dict)
         ),
         locationTree = treeModelFor(
             ProblemNode.Label("Problems grouped by location"),
-            problemNodesByLocation(diagnostics.problems)
+            problemNodesByLocation(diagnostics.problems, dict)
         ),
         reportedInputs = diagnostics.inputs.size,
         inputTree = treeModelFor(
             ProblemNode.Label("Inputs"),
-            inputNodes(diagnostics.inputs)
+            inputNodes(diagnostics.inputs, dict)
         )
     )
 }
@@ -186,14 +211,14 @@ class ImportedDiagnostics(
 
 
 private
-fun importDiagnostics(jsDiagnostics: Array<JsDiagnostic>): ImportedDiagnostics {
+fun importDiagnostics(jsDiagnostics: Array<JsDiagnostic>, dict: StringDictionary): ImportedDiagnostics {
     val importedProblems = mutableListOf<ImportedProblem>()
     val importedInputs = mutableListOf<ImportedProblem>()
     for (diagnostic in jsDiagnostics) {
         diagnostic.input?.let {
-            importedInputs.add(toImportedProblem(it, diagnostic))
+            importedInputs.add(toImportedProblem(it, diagnostic, dict))
         } ?: diagnostic.problem!!.let {
-            importedProblems.add(toImportedProblem(it, diagnostic))
+            importedProblems.add(toImportedProblem(it, diagnostic, dict))
         }
     }
     return ImportedDiagnostics(importedProblems, importedInputs)
@@ -201,15 +226,15 @@ fun importDiagnostics(jsDiagnostics: Array<JsDiagnostic>): ImportedDiagnostics {
 
 
 private
-fun toImportedProblem(label: Array<JsMessageFragment>, jsProblem: JsDiagnostic) = ImportedProblem(
+fun toImportedProblem(label: Array<JsMessageFragment>, jsProblem: JsDiagnostic, dict: StringDictionary) = ImportedProblem(
     jsProblem,
-    label.let(::toPrettyText),
+    toPrettyText(label, dict),
     jsProblem.trace.map(::toProblemNode)
 )
 
 
 private
-fun inputNodes(inputs: List<ImportedProblem>): Sequence<List<ProblemNode>> =
+fun inputNodes(inputs: List<ImportedProblem>, dict: StringDictionary): Sequence<List<ProblemNode>> =
     inputs.asSequence().map { input ->
         buildList {
             val message = input.message
@@ -218,7 +243,7 @@ fun inputNodes(inputs: List<ImportedProblem>): Sequence<List<ProblemNode>> =
             add(
                 ProblemNode.Info(
                     ProblemNode.Label(inputType),
-                    docLinkFor(input.problem)
+                    docLinkFor(input.problem, dict)
                 )
             )
             add(ProblemNode.Message(inputDescription))
@@ -228,48 +253,48 @@ fun inputNodes(inputs: List<ImportedProblem>): Sequence<List<ProblemNode>> =
 
 
 private
-fun problemNodesByMessage(problems: List<ImportedProblem>): Sequence<List<ProblemNode>> =
+fun problemNodesByMessage(problems: List<ImportedProblem>, dict: StringDictionary): Sequence<List<ProblemNode>> =
     problems.asSequence().map { problem ->
         buildList {
-            add(problemNodeFor(problem))
+            add(problemNodeFor(problem, dict))
             addAll(problem.trace)
-            addExceptionNode(problem)
+            addExceptionNode(problem, dict)
         }
     }
 
 
 private
-fun problemNodesByLocation(problems: List<ImportedProblem>): Sequence<List<ProblemNode>> =
+fun problemNodesByLocation(problems: List<ImportedProblem>, dict: StringDictionary): Sequence<List<ProblemNode>> =
     problems.asSequence().map { problem ->
         buildList {
             addAll(problem.trace.asReversed())
-            add(problemNodeFor(problem))
-            addExceptionNode(problem)
+            add(problemNodeFor(problem, dict))
+            addExceptionNode(problem, dict)
         }
     }
 
 
 private
-fun MutableList<ProblemNode>.addExceptionNode(problem: ImportedProblem) {
-    exceptionNodeFor(problem.problem)?.let {
+fun MutableList<ProblemNode>.addExceptionNode(problem: ImportedProblem, dict: StringDictionary) {
+    exceptionNodeFor(problem.problem, dict)?.let {
         add(it)
     }
 }
 
 
 private
-fun problemNodeFor(problem: ImportedProblem) = errorOrWarningNodeFor(
+fun problemNodeFor(problem: ImportedProblem, dict: StringDictionary) = errorOrWarningNodeFor(
     problem.problem,
     messageNodeFor(problem),
-    docLinkFor(problem.problem)
+    docLinkFor(problem.problem, dict)
 )
 
 
 private
-fun toPrettyText(message: Array<JsMessageFragment>) = PrettyText(
+fun toPrettyText(message: Array<JsMessageFragment>, dict: StringDictionary) = PrettyText(
     message.map {
-        it.text?.let(PrettyText.Fragment::Text)
-            ?: it.name?.let(PrettyText.Fragment::Reference)
+        it.text?.let(dict::get)?.let(PrettyText.Fragment::Text)
+            ?: it.name?.let(dict::get)?.let(PrettyText.Fragment::Reference)
             ?: PrettyText.Fragment.Text("Unrecognised message fragment: ${stringify(it)}")
     }
 )
@@ -334,22 +359,22 @@ fun messageNodeFor(importedProblem: ImportedProblem) =
 
 
 private
-fun exceptionNodeFor(diagnostic: JsDiagnostic): ProblemNode? {
+fun exceptionNodeFor(diagnostic: JsDiagnostic, dict: StringDictionary): ProblemNode? {
     val error = diagnostic.error ?: return null
 
     return ProblemNode.Exception(
-        summary = error.summary?.let { toPrettyText(it) },
-        fullText = error.parts.mapNotNull { it.textContent }.joinToString("\n"),
+        summary = error.summary?.let { toPrettyText(it, dict) },
+        fullText = error.parts.mapNotNull { it.textContent?.let(dict::get) }.joinToString("\n"),
         parts = error.parts.mapNotNull { part ->
-            stackTracePartFor(part)
+            stackTracePartFor(part, dict)
         }
     )
 }
 
 
 private
-fun stackTracePartFor(part: JsStackTracePart): ProblemNode.StackTracePart? {
-    val partText = part.textContent ?: return null
+fun stackTracePartFor(part: JsStackTracePart, dict: StringDictionary): ProblemNode.StackTracePart? {
+    val partText = part.textContent?.let(dict::get) ?: return null
     val lines = partText.lineSequence().filter { it.isNotEmpty() }.toList()
     val isInternal = part.internalText != null
     return ProblemNode.StackTracePart(lines, defaultViewStateFor(isInternal, lines.size))
@@ -368,8 +393,8 @@ fun defaultViewStateFor(isInternal: Boolean, linesCount: Int): Tree.ViewState? {
 
 
 private
-fun docLinkFor(it: JsDiagnostic): ProblemNode? =
-    it.documentationLink?.let { ProblemNode.Link(it, " ?") }
+fun docLinkFor(it: JsDiagnostic, dict: StringDictionary): ProblemNode? =
+    it.documentationLink?.let(dict::get)?.let { ProblemNode.Link(it, " ?") }
 
 
 private
