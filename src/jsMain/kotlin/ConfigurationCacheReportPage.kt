@@ -107,6 +107,7 @@ internal
 object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Model, ConfigurationCacheReportPage.Intent> {
 
     data class Model(
+        val rootName: String,
         val cacheAction: String,
         val requestedTasks: String,
         val documentationLink: String,
@@ -249,7 +250,9 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
     private
     fun displaySummary(model: Model): View<Intent> =
         h1(
-            "${model.cacheAction.capitalize()} the configuration cache for ",
+            "${model.cacheAction.capitalize()} the configuration cache in ",
+            code(model.rootName),
+            span(" build for "),
             code(model.requestedTasks),
             br(),
             small(model.inputsSummary()),
