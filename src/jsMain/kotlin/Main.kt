@@ -133,7 +133,7 @@ external interface JsMessageFragment {
 private
 external interface JsError {
     val summary: Array<JsMessageFragment>?
-    val parts: Array<JsStackTracePart>
+    val parts: Array<JsStackTracePart>?
 }
 
 
@@ -233,7 +233,7 @@ fun problemNodesByMessage(problems: List<ImportedProblem>): Sequence<List<Proble
         buildList {
             add(problemNodeFor(problem))
             addAll(problem.trace)
-            addExceptionNode(problem)
+            addErrorCauseNode(problem)
         }
     }
 
@@ -244,14 +244,14 @@ fun problemNodesByLocation(problems: List<ImportedProblem>): Sequence<List<Probl
         buildList {
             addAll(problem.trace.asReversed())
             add(problemNodeFor(problem))
-            addExceptionNode(problem)
+            addErrorCauseNode(problem)
         }
     }
 
 
 private
-fun MutableList<ProblemNode>.addExceptionNode(problem: ImportedProblem) {
-    exceptionNodeFor(problem.problem)?.let {
+fun MutableList<ProblemNode>.addErrorCauseNode(problem: ImportedProblem) {
+    errorCauseNodeFor(problem.problem)?.let {
         add(it)
     }
 }
@@ -334,13 +334,18 @@ fun messageNodeFor(importedProblem: ImportedProblem) =
 
 
 private
-fun exceptionNodeFor(diagnostic: JsDiagnostic): ProblemNode? {
+fun errorCauseNodeFor(diagnostic: JsDiagnostic): ProblemNode? {
     val error = diagnostic.error ?: return null
+    val parts = error.parts
+    if (parts == null) {
+        val summary = error.summary ?: return null
+        return ProblemNode.Message(toPrettyText(summary))
+    }
 
     return ProblemNode.Exception(
         summary = error.summary?.let { toPrettyText(it) },
-        fullText = error.parts.mapNotNull { it.textContent }.joinToString("\n"),
-        parts = error.parts.mapNotNull { part ->
+        fullText = parts.mapNotNull { it.textContent }.joinToString("\n"),
+        parts = parts.mapNotNull { part ->
             stackTracePartFor(part)
         }
     )
