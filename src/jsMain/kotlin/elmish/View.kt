@@ -71,6 +71,11 @@ fun <I> render(view: View<I>, into: Element, send: (I) -> Unit) {
 }
 
 
+inline fun <T, I> T?.view(block: (T) -> View<I>): View<I> {
+    return if (this != null) block(this) else empty
+}
+
+
 data class ViewFactory(val elementName: String) {
 
     operator fun <I> invoke(innerText: String): View<I> =

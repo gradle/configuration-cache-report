@@ -32,6 +32,7 @@ import elmish.tree.Tree
 import elmish.tree.TreeView
 import elmish.tree.viewSubTrees
 import elmish.ul
+import elmish.view
 import kotlinx.browser.window
 
 
@@ -107,9 +108,9 @@ internal
 object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Model, ConfigurationCacheReportPage.Intent> {
 
     data class Model(
-        val rootName: String,
+        val buildName: String?,
         val cacheAction: String,
-        val requestedTasks: String,
+        val requestedTasks: String?,
         val documentationLink: String,
         val totalProblems: Int,
         val reportedProblems: Int,
@@ -248,17 +249,22 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
         )
 
     private
-    fun displaySummary(model: Model): View<Intent> =
-        h1(
-            "${model.cacheAction.capitalize()} the configuration cache in ",
-            code(model.rootName),
-            span(" build for "),
-            code(model.requestedTasks),
+    fun displaySummary(model: Model): View<Intent> {
+        val buildName = model.buildName
+        val requestedTasks = model.requestedTasks
+        val manyTasks = requestedTasks?.contains(" ") ?: true
+        return h1(
+            "${model.cacheAction.capitalize()} the configuration cache for ",
+            buildName.view { code(it) },
+            buildName.view { span(" build and ") },
+            requestedTasks?.let { code(it) } ?: span("default"),
+            span(if (manyTasks) " tasks" else " task"),
             br(),
             small(model.inputsSummary()),
             br(),
             small(model.problemsSummary()),
         )
+    }
 
     private
     fun Model.inputsSummary() =
