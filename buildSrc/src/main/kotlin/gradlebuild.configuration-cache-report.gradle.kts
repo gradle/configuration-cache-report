@@ -95,8 +95,7 @@ tasks.assemble {
 }
 
 val jar by tasks.registering(Jar::class) {
-    from(tasks.named("assembleReport"))
-    dependsOn("assemble")
+    from(assembleReport)
 }
 
 configurations.create("configurationCacheReport") {
