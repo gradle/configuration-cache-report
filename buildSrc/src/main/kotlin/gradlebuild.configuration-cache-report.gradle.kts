@@ -78,6 +78,11 @@ val assembleReport by tasks.registering(MergeReportAssets::class) {
     cssFile.set(webpackFile("configuration-cache-report.css"))
     jsFile.set(webpackFile("configuration-cache-report.js"))
     outputFile.set(layout.buildDirectory.file("$name/configuration-cache-report.html"))
+
+    // This is a workaround for "undeclared" dependency when running the build as included build of gradle/gradle.
+    // The KMP plugin declares its outputs both on Webpack and lifecycle task, which trips over missing dependency
+    // detector.
+    dependsOn("jsBrowserDistribution")
 }
 
 fun webpackFile(fileName: String) =
