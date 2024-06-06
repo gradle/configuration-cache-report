@@ -49,6 +49,8 @@ sealed class ProblemNode {
 
     data class Task(val path: String, val type: String) : ProblemNode()
 
+    data class TaskPath(val path: String) : ProblemNode()
+
     data class Bean(val type: String) : ProblemNode()
 
     data class SystemProperty(val name: String) : ProblemNode()
@@ -118,13 +120,16 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
         val locationTree: ProblemTreeModel,
         val reportedInputs: Int,
         val inputTree: ProblemTreeModel,
+        val reportedIncompatibleTasks: Int,
+        val incompatibleTaskTree: ProblemTreeModel,
         val tab: Tab = if (totalProblems == 0) Tab.Inputs else Tab.ByMessage
     )
 
     enum class Tab(val text: String) {
         Inputs("Build configuration inputs"),
         ByMessage("Problems grouped by message"),
-        ByLocation("Problems grouped by location")
+        ByLocation("Problems grouped by location"),
+        IncompatibleTasks("Incompatible tasks")
     }
 
     sealed class Intent {
@@ -138,6 +143,8 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
         data class MessageTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
         data class InputTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
+
+        data class IncompatibleTaskTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
         data class ToggleStackTracePart(val partIndex: Int, val location: TreeIntent) : Intent()
 
@@ -157,6 +164,10 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
 
         is Intent.InputTreeIntent -> model.copy(
             inputTree = TreeView.step(intent.delegate, model.inputTree)
+        )
+
+        is Intent.IncompatibleTaskTreeIntent -> model.copy(
+            incompatibleTaskTree = TreeView.step(intent.delegate, model.incompatibleTaskTree)
         )
 
         is Intent.ToggleStackTracePart -> model.updateNodeAt(intent.location) {
@@ -192,6 +203,10 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
         is Intent.InputTreeIntent -> copy(
             inputTree = inputTree.updateNodeAt(tree, update)
         )
+
+        is Intent.IncompatibleTaskTreeIntent -> copy(
+            incompatibleTaskTree = incompatibleTaskTree.updateNodeAt(tree, update)
+        )
     }
 
     private
@@ -222,7 +237,8 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
             attributes { className("groups") },
             displayTabButton(Tab.Inputs, model.tab, model.reportedInputs),
             displayTabButton(Tab.ByMessage, model.tab, model.messageTree.childCount),
-            displayTabButton(Tab.ByLocation, model.tab, model.locationTree.childCount)
+            displayTabButton(Tab.ByLocation, model.tab, model.locationTree.childCount),
+            displayTabButton(Tab.IncompatibleTasks, model.tab, model.reportedIncompatibleTasks)
         )
     )
 
@@ -231,6 +247,7 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
         attributes { className("content") },
         when (model.tab) {
             Tab.Inputs -> viewInputs(model.inputTree)
+            Tab.IncompatibleTasks -> viewIncompatibleTasks(model.incompatibleTaskTree)
             Tab.ByMessage -> viewTree(model.messageTree, Intent::MessageTreeIntent)
             Tab.ByLocation -> viewTree(model.locationTree, Intent::TaskTreeIntent)
         }
@@ -243,6 +260,18 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
             viewTree(
                 inputTree.tree.focus().children,
                 Intent::InputTreeIntent
+            ) { _, focus ->
+                countBalloon(focus.tree.children.size)
+            }
+        )
+
+    private
+    fun viewIncompatibleTasks(incompatibleTaskTree: ProblemTreeModel): View<Intent> =
+        div(
+            attributes { className("incompatibleTasks") },
+            viewTree(
+                incompatibleTaskTree.tree.focus().children,
+                Intent::IncompatibleTaskTreeIntent
             ) { _, focus ->
                 countBalloon(focus.tree.children.size)
             }

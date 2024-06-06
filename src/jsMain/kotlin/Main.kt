@@ -49,11 +49,12 @@ external interface JsModel {
 }
 
 
-/** A diagnostic is either an [input] or a [problem] description (not both). */
+/** A diagnostic is one of [input], [problem] or [incompatibleTask] description. */
 private
 external interface JsDiagnostic {
     val input: Array<JsMessageFragment>?
     val problem: Array<JsMessageFragment>?
+    val incompatibleTask: Array<JsMessageFragment>?
     val trace: Array<JsTrace>
     val documentationLink: String?
     val error: JsError?
@@ -76,6 +77,12 @@ private
 external interface JsTraceTask : JsTrace {
     val path: String
     val type: String
+}
+
+
+private
+external interface JsTraceTaskPath : JsTrace {
+    val path: String
 }
 
 
@@ -164,17 +171,22 @@ fun reportPageModelFromJsModel(jsModel: JsModel): ConfigurationCacheReportPage.M
         totalProblems = jsModel.totalProblemCount,
         reportedProblems = diagnostics.problems.size,
         messageTree = treeModelFor(
-            ProblemNode.Label("Problems grouped by message"),
+            ProblemNode.Label(ConfigurationCacheReportPage.Tab.ByMessage.text),
             problemNodesByMessage(diagnostics.problems)
         ),
         locationTree = treeModelFor(
-            ProblemNode.Label("Problems grouped by location"),
+            ProblemNode.Label(ConfigurationCacheReportPage.Tab.ByLocation.text),
             problemNodesByLocation(diagnostics.problems)
         ),
         reportedInputs = diagnostics.inputs.size,
         inputTree = treeModelFor(
-            ProblemNode.Label("Inputs"),
+            ProblemNode.Label(ConfigurationCacheReportPage.Tab.Inputs.text),
             inputNodes(diagnostics.inputs)
+        ),
+        reportedIncompatibleTasks = diagnostics.incompatibleTasks.size,
+        incompatibleTaskTree = treeModelFor(
+            ProblemNode.Label(ConfigurationCacheReportPage.Tab.IncompatibleTasks.text),
+            incompatibleTaskNodes(diagnostics.incompatibleTasks)
         )
     )
 }
@@ -183,7 +195,8 @@ fun reportPageModelFromJsModel(jsModel: JsModel): ConfigurationCacheReportPage.M
 private
 class ImportedDiagnostics(
     val problems: List<ImportedProblem>,
-    val inputs: List<ImportedProblem>
+    val inputs: List<ImportedProblem>,
+    val incompatibleTasks: List<ImportedProblem>
 )
 
 
@@ -191,14 +204,17 @@ private
 fun importDiagnostics(jsDiagnostics: Array<JsDiagnostic>): ImportedDiagnostics {
     val importedProblems = mutableListOf<ImportedProblem>()
     val importedInputs = mutableListOf<ImportedProblem>()
+    val incompatibleTasks = mutableListOf<ImportedProblem>()
     for (diagnostic in jsDiagnostics) {
         diagnostic.input?.let {
             importedInputs.add(toImportedProblem(it, diagnostic))
+        } ?: diagnostic.incompatibleTask?.let {
+            incompatibleTasks.add(toImportedProblem(it, diagnostic))
         } ?: diagnostic.problem!!.let {
             importedProblems.add(toImportedProblem(it, diagnostic))
         }
     }
-    return ImportedDiagnostics(importedProblems, importedInputs)
+    return ImportedDiagnostics(importedProblems, importedInputs, incompatibleTasks)
 }
 
 
@@ -225,6 +241,22 @@ fun inputNodes(inputs: List<ImportedProblem>): Sequence<List<ProblemNode>> =
             )
             add(ProblemNode.Message(inputDescription))
             addAll(input.trace)
+        }
+    }
+
+
+private
+fun incompatibleTaskNodes(incompatibleTasks: List<ImportedProblem>): Sequence<List<ProblemNode>> =
+    incompatibleTasks.asSequence().map { incompatibleTask ->
+        buildList {
+            val message = incompatibleTask.message
+            val incompatibleTaskDescription = message.copy(fragments = message.fragments)
+            add(
+                ProblemNode.Warning(
+                    ProblemNode.Message(incompatibleTaskDescription),
+                    docLinkFor(incompatibleTask.problem)
+                )
+            )
         }
     }
 
@@ -285,6 +317,10 @@ fun toProblemNode(trace: JsTrace): ProblemNode = when (trace.kind) {
 
     "Task" -> trace.unsafeCast<JsTraceTask>().run {
         ProblemNode.Task(path, type)
+    }
+
+    "TaskPath" -> trace.unsafeCast<JsTraceTaskPath>().run {
+        ProblemNode.TaskPath(path)
     }
 
     "Bean" -> trace.unsafeCast<JsTraceBean>().run {
