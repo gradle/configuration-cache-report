@@ -71,7 +71,7 @@ function configurationCacheProblems() {
                   }, {
                       "text": "."
                   }],
-                  "documentationLink": "https://docs.gradle.org/8.9-20240604171041+0000/userguide/configuration_cache.html#config_cache:task_opt_out"
+                  "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:task_opt_out"
               }, {
                   "trace": [{
                       "kind": "TaskPath",
@@ -90,7 +90,7 @@ function configurationCacheProblems() {
                   }, {
                       "text": "."
                   }],
-                  "documentationLink": "https://docs.gradle.org/8.9-20240604171041+0000/userguide/configuration_cache.html#config_cache:task_opt_out"
+                  "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:task_opt_out"
               }
           ]
         }
