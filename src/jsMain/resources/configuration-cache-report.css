@@ -114,7 +114,6 @@ ul .tree-btn {
 }
 
 .error-icon {
-    cursor: pointer;
     display: inline-block;
     width: 16px;
     height: 16px;
@@ -128,7 +127,6 @@ ul .tree-btn {
 }
 
 .warning-icon {
-    cursor: pointer;
     display: inline-block;
     width: 13px;
     height: 13px;
