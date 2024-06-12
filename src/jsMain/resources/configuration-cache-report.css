@@ -93,10 +93,6 @@
     background-position: bottom -2px left;
 }
 
-.tree-btn {
-    padding-right: 8px;
-}
-
 .tree-btn, .tree-icon {
     color: #999;
     display: inline-block;
@@ -107,7 +103,7 @@
 }
 
 ul .tree-btn {
-    margin-right: 4px;
+    margin-right: 3px;
 }
 
 .tree-icon {
