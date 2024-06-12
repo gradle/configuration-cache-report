@@ -565,8 +565,7 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
             title(tooltip)
             className("copy-button")
             onClick { Intent.Copy(text) }
-        },
-        "📋"
+        }
     )
 
     private

@@ -169,6 +169,9 @@ ul .tree-btn {
 }
 
 .copy-button {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
     user-select: none;
     cursor: pointer;
     color: transparent;
