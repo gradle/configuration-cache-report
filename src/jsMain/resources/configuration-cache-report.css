@@ -105,12 +105,16 @@ ul .tree-btn {
     margin-top: -0.2em;
 }
 
-.text-backed-icon {
+.invisible-text {
     user-select: all; /* Allow the text to be selectable */
     color: transparent; /* Hide the text */
     text-indent: -9999px; /* Move the text out of view */
     position: relative;
     white-space: pre; /* Preserve meaningful whitespace in the invisible text for copying */
+}
+
+.text-for-copy {
+    display: inline-block;
 }
 
 .error-icon {

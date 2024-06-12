@@ -505,7 +505,7 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
     private
     fun viewTreeButton(child: Tree.Focus<ProblemNode>, treeIntent: (ProblemTreeIntent) -> Intent): View<Intent> = span(
         attributes {
-            classNames("text-backed-icon", "tree-btn")
+            classNames("invisible-text", "tree-btn")
             if (child.tree.state === Tree.ViewState.Collapsed) {
                 className("collapsed")
             }
@@ -520,7 +520,7 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
 
     private
     fun viewLeafIcon(child: Tree.Focus<ProblemNode>): View<Intent> = span(
-        attributes { classNames("text-backed-icon", "leaf-icon") },
+        attributes { classNames("invisible-text", "leaf-icon") },
         copyTextPrefixForTreeNode(child)
     )
 
@@ -530,13 +530,13 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
 
     private
     val errorIcon = span<Intent>(
-        attributes { classNames("text-backed-icon", "error-icon") },
+        attributes { classNames("invisible-text", "error-icon") },
         "[error] "
     )
 
     private
     val warningIcon = span<Intent>(
-        attributes { classNames("text-backed-icon", "warning-icon") },
+        attributes { classNames("invisible-text", "warning-icon") },
         "[warn]  " // two spaces to align with [error] prefix
     )
 
@@ -552,11 +552,19 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
 
     private
     fun reference(name: String): View<Intent> = span(
+        invisibleBacktick,
         code(name),
+        invisibleBacktick,
         copyButton(
             text = name,
             tooltip = "Copy reference to the clipboard"
         )
+    )
+
+    private
+    val invisibleBacktick: View<Intent> = span(
+        attributes { classNames("invisible-text", "text-for-copy") },
+        "`"
     )
 
     private
