@@ -524,14 +524,14 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
 
     private
     val errorIcon = span<Intent>(
-        attributes { className("error-icon") },
-        "⨉"
+        attributes { classNames("text-backed-icon", "error-icon") },
+        "[error] "
     )
 
     private
     val warningIcon = span<Intent>(
-        attributes { className("warning-icon") },
-        "⚠️"
+        attributes { classNames("text-backed-icon", "warning-icon") },
+        "[warn]  " // two spaces to align with [error] prefix
     )
 
     private

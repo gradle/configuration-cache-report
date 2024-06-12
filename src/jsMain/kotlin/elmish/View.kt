@@ -176,6 +176,8 @@ class Attributes<I>(private val add: (Attribute<I>) -> Unit) {
 
     fun className(value: String) = add(Attribute.ClassName(value))
 
+    fun classNames(vararg values: String) = values.forEach { add(Attribute.ClassName(it)) }
+
     fun title(value: String) = add(Attribute.Named("title", value))
 
     fun href(value: String) = add(Attribute.Named("href", value))

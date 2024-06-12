@@ -117,36 +117,40 @@ ul .tree-btn {
     margin-right: 8px;
 }
 
-.error-icon {
-    color: transparent;
-    font-size: 18px;
-    line-height: 1rem;
-    padding-left: 2px;
-    margin-right: 8px;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M193.94 256L296.5 153.44l21.15-21.15c3.12-3.12 3.12-8.19 0-11.31l-22.63-22.63c-3.12-3.12-8.19-3.12-11.31 0L160 222.06 36.29 98.34c-3.12-3.12-8.19-3.12-11.31 0L2.34 120.97c-3.12 3.12-3.12 8.19 0 11.31L126.06 256 2.34 379.71c-3.12 3.12-3.12 8.19 0 11.31l22.63 22.63c3.12 3.12 8.19 3.12 11.31 0L160 289.94 262.56 392.5l21.15 21.15c3.12 3.12 8.19 3.12 11.31 0l22.63-22.63c3.12-3.12 3.12-8.19 0-11.31L193.94 256z" fill="%23FC461E" stroke="%23FC461E"/></svg>');
-    background-repeat: no-repeat;
-    background-size: 16px 16px;
-    background-position: bottom right;
+.text-backed-icon {
+    user-select: all; /* Allow the text to be selectable */
+    color: transparent; /* Hide the text */
+    text-indent: -9999px; /* Move the text out of view */
+    position: relative;
+    white-space: pre; /* Preserve trailing space in the invisible text */
 }
 
-.error-icon::selection {
-    color: transparent;
+.error-icon {
+    cursor: pointer;
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M193.94 256L296.5 153.44l21.15-21.15c3.12-3.12 3.12-8.19 0-11.31l-22.63-22.63c-3.12-3.12-8.19-3.12-11.31 0L160 222.06 36.29 98.34c-3.12-3.12-8.19-3.12-11.31 0L2.34 120.97c-3.12 3.12-3.12 8.19 0 11.31L126.06 256 2.34 379.71c-3.12 3.12-3.12 8.19 0 11.31l22.63 22.63c3.12 3.12 8.19 3.12 11.31 0L160 289.94 262.56 392.5l21.15 21.15c3.12 3.12 8.19 3.12 11.31 0l22.63-22.63c3.12-3.12 3.12-8.19 0-11.31L193.94 256z" fill="%23FC461E" stroke="%23FC461E"/></svg>');
+    background-size: contain;
+    background-repeat: no-repeat;
+    vertical-align: middle;
+    margin-inline-start: 0.5ex;
+    margin-inline-end: 0.5ex;
+    margin-top: -0.2em;
 }
 
 .warning-icon {
-    color: transparent;
-    font-size: 18px;
-    line-height: 1rem;
-    padding-left: 2px;
-    margin-right: 0;
+    cursor: pointer;
+    display: inline-block;
+    width: 13px;
+    height: 13px;
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M270.2 160h35.5c3.4 0 6.1 2.8 6 6.2l-7.5 196c-.1 3.2-2.8 5.8-6 5.8h-20.5c-3.2 0-5.9-2.5-6-5.8l-7.5-196c-.1-3.4 2.6-6.2 6-6.2zM288 388c-15.5 0-28 12.5-28 28s12.5 28 28 28 28-12.5 28-28-12.5-28-28-28zm281.5 52L329.6 24c-18.4-32-64.7-32-83.2 0L6.5 440c-18.4 31.9 4.6 72 41.6 72H528c36.8 0 60-40 41.5-72zM528 480H48c-12.3 0-20-13.3-13.9-24l240-416c6.1-10.6 21.6-10.7 27.7 0l240 416c6.2 10.6-1.5 24-13.8 24z" fill="%23DEAD22" stroke="%23DEAD22"/></svg>');
+    background-size: contain;
     background-repeat: no-repeat;
-    background-size: 13px 13px;
-    background-position: bottom 3px left
-}
-
-.warning-icon::selection {
-    color: transparent;
+    vertical-align: middle;
+    margin-inline-start: 0.3ex;
+    margin-inline-end: 1.1ex;
+    margin-top: -0.1em;
 }
 
 .documentation-button {
