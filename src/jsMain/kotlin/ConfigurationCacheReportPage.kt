@@ -499,7 +499,7 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
     fun treeButtonFor(child: Tree.Focus<ProblemNode>, treeIntent: (ProblemTreeIntent) -> Intent): View<Intent> =
         when {
             child.tree.isNotEmpty() -> viewTreeButton(child, treeIntent)
-            else -> leafIcon
+            else -> viewLeafIcon(child)
         }
 
     private
@@ -515,8 +515,18 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
             title("Click to ${toggleVerb(child.tree.state)}")
             onClick { treeIntent(TreeView.Intent.Toggle(child)) }
         },
-        "- "
+        copyTextPrefixForTreeNode(child)
     )
+
+    private
+    fun viewLeafIcon(child: Tree.Focus<ProblemNode>): View<Intent> = span(
+        attributes { classNames("text-backed-icon", "leaf-icon") },
+        copyTextPrefixForTreeNode(child)
+    )
+
+    private
+    fun copyTextPrefixForTreeNode(child: Tree.Focus<ProblemNode>) =
+        "    ".repeat(child.depth - 1) + "- "
 
     private
     val errorIcon = span<Intent>(
@@ -528,12 +538,6 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
     val warningIcon = span<Intent>(
         attributes { classNames("text-backed-icon", "warning-icon") },
         "[warn]  " // two spaces to align with [error] prefix
-    )
-
-    private
-    val leafIcon = span<Intent>(
-        attributes { classNames("text-backed-icon", "leaf-icon") },
-        "- "
     )
 
     private
