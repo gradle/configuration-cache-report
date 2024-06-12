@@ -53,7 +53,46 @@ function configurationCacheProblems() {
                     "trace": [{"kind": "PropertyUsage", "name": "bar", "from": ":sub-c"}, {"kind": "Project", "path": ":sub-b"}, {"kind": "BuildLogic", "location": "build file 'sub-c/build.gradle'"}],
                     "problem": [{"text": "Project "}, {"name": ":sub-c"}, {"text": " cannot dynamically lookup a "}, {"text": "property"}, {"text": " in the parent project "}, {"name": ":"}],
                     "error": {}
-                }]
+                },{
+                  "trace": [{
+                      "kind": "TaskPath",
+                      "path": ":anotherReportedlyIncompatible"
+                  }],
+                  "incompatibleTask": [{
+                      "text": "task "
+                  }, {
+                      "name": ":anotherReportedlyIncompatible"
+                  }, {
+                      "text": " is incompatible with the configuration cache. "
+                  }, {
+                      "text": "Reason: "
+                  }, {
+                      "text": "some other reason"
+                  }, {
+                      "text": "."
+                  }],
+                  "documentationLink": "https://docs.gradle.org/8.9-20240604171041+0000/userguide/configuration_cache.html#config_cache:task_opt_out"
+              }, {
+                  "trace": [{
+                      "kind": "TaskPath",
+                      "path": ":reportedlyIncompatible"
+                  }],
+                  "incompatibleTask": [{
+                      "text": "task "
+                  }, {
+                      "name": ":reportedlyIncompatible"
+                  }, {
+                      "text": " is incompatible with the configuration cache. "
+                  }, {
+                      "text": "Reason: "
+                  }, {
+                      "text": "declares itself as not compatible"
+                  }, {
+                      "text": "."
+                  }],
+                  "documentationLink": "https://docs.gradle.org/8.9-20240604171041+0000/userguide/configuration_cache.html#config_cache:task_opt_out"
+              }
+          ]
         }
     );
 }
