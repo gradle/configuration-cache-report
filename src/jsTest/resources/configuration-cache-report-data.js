@@ -5,13 +5,13 @@ function configurationCacheProblems() {
             "buildName": "sampleProject",
             "cacheAction": "storing",
             "requestedTasks": "clean build",
-            "documentationLink": "https://docs.gradle.org/6.6-20200618155501+0000/userguide/configuration_cache.html",
+            "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html",
             "totalProblemCount": 4,
             "diagnostics": [
                 {
                     "trace": [{"kind": "BuildLogic", "location": "build file 'build.gradle'"}],
                     "problem": [{"text": "invocation of "}, {"name": "Task.project"}, {"text": " at execution time is unsupported."}],
-                    "documentationLink": "https://docs.gradle.org/6.6-20200618155501+0000/userguide/configuration_cache.html#use_project_during_execution",
+                    "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:requirements:use_project_during_execution",
                     "error": {
                         "summary": [{"text": "at "}, {"name": "build_44nw1yvono72kvlw7g0lm2rd7$_run_closure1$_closure2.doCall(/Users/paul/src/gradle-related/gradle/subprojects/docs/src/snippets/configurationCache/problemsGroovy/groovy/build.gradle:5)"}],
                         "parts": [{
@@ -30,11 +30,11 @@ function configurationCacheProblems() {
                         {"kind": "BuildLogic", "location": "build file 'build.gradle.kts'"}
                     ],
                     "problem": [{"text": "cannot "}, {"text": "serialize"}, {"text": " object of type "}, {"name": "java.lang.Thread"}, {"text": ", a subtype of "}, {"name": "java.lang.Thread"}, {"text": ","}, {"text": " as these are not supported with the configuration cache."}],
-                    "documentationLink": "https://docs.gradle.org/7.5-20220407191618+0000/userguide/configuration_cache.html#config_cache:requirements:disallowed_types"
+                    "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:requirements:disallowed_types"
                 },{
                     "trace": [{"kind": "BuildLogic", "location": "build file 'build.gradle'"}],
                     "input": [{"text": "system property "}, {"name": "someMessage"}],
-                    "documentationLink": "https://docs.gradle.org/6.6-20200618155501+0000/userguide/configuration_cache.html#undeclared_sys_prop_read"
+                    "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:requirements:reading_sys_props_and_env_vars"
                 }, {
                     "trace": [{"kind": "PropertyUsage", "name": "foo", "from": ":sub-b"}, {"kind": "Project", "path": ":sub-b"}, {"kind": "BuildLogic", "location": "build file 'sub-b/build.gradle'"}],
                     "problem": [{"text": "Project "}, {"name": ":sub-b"}, {"text": " cannot dynamically lookup a "}, {"text": "property"}, {"text": " in the parent project "}, {"name": ":"}],
