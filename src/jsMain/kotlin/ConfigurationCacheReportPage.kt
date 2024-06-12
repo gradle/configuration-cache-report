@@ -506,7 +506,7 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
     private
     fun viewTreeButton(child: Tree.Focus<ProblemNode>, treeIntent: (ProblemTreeIntent) -> Intent): View<Intent> = span(
         attributes {
-            className("tree-btn")
+            classNames("text-backed-icon", "tree-btn")
             if (child.tree.state === Tree.ViewState.Collapsed) {
                 className("collapsed")
             }
@@ -516,10 +516,7 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
             title("Click to ${toggleVerb(child.tree.state)}")
             onClick { treeIntent(TreeView.Intent.Toggle(child)) }
         },
-        when (child.tree.state) {
-            Tree.ViewState.Collapsed -> "› "
-            Tree.ViewState.Expanded -> "⌄ "
-        }
+        "- "
     )
 
     private
