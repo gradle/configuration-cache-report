@@ -499,7 +499,7 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
     fun treeButtonFor(child: Tree.Focus<ProblemNode>, treeIntent: (ProblemTreeIntent) -> Intent): View<Intent> =
         when {
             child.tree.isNotEmpty() -> viewTreeButton(child, treeIntent)
-            else -> squareIcon
+            else -> leafIcon
         }
 
     private
@@ -531,9 +531,9 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
     )
 
     private
-    val squareIcon = span<Intent>(
-        attributes { className("tree-icon") },
-        "■"
+    val leafIcon = span<Intent>(
+        attributes { classNames("text-backed-icon", "leaf-icon") },
+        "- "
     )
 
     private
