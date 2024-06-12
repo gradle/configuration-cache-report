@@ -421,24 +421,24 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
     private
     fun viewNode(node: ProblemNode): View<Intent> = when (node) {
         is ProblemNode.Project -> span(
-            span("project"),
+            span("project "),
             reference(node.path)
         )
 
         is ProblemNode.Property -> span(
-            span(node.kind),
+            span("${node.kind} "),
             reference(node.name),
             span(" of "),
             reference(node.owner)
         )
 
         is ProblemNode.SystemProperty -> span(
-            span("system property"),
+            span("system property "),
             reference(node.name),
         )
 
         is ProblemNode.Task -> span(
-            span("task"),
+            span("task "),
             reference(node.path),
             span(" of type "),
             reference(node.type)
