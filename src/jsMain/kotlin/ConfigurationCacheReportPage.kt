@@ -402,7 +402,6 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
                             focus,
                             labelNode.label,
                             labelNode.docLink,
-                            prefix = squareIcon,
                             suffix = suffixForInfo(labelNode, focus)
                         )
                     }
