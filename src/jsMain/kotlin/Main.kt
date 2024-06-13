@@ -43,7 +43,7 @@ external interface JsModel {
     val buildName: String?
     val cacheAction: String
     val requestedTasks: String?
-    val entryInvalidReason: Array<JsMessageFragment>?
+    val cacheActionDescription: Array<JsMessageFragment>?
     val documentationLink: String
     val totalProblemCount: Int
     val diagnostics: Array<JsDiagnostic>
@@ -167,9 +167,9 @@ fun reportPageModelFromJsModel(jsModel: JsModel): ConfigurationCacheReportPage.M
     return ConfigurationCacheReportPage.Model(
         buildName = jsModel.buildName,
         cacheAction = jsModel.cacheAction,
+        cacheActionDescription = jsModel.cacheActionDescription?.let(::toPrettyText),
         requestedTasks = jsModel.requestedTasks,
         documentationLink = jsModel.documentationLink,
-        entryInvalidReason = jsModel.entryInvalidReason?.let(::toPrettyText),
         totalProblems = jsModel.totalProblemCount,
         reportedProblems = diagnostics.problems.size,
         messageTree = treeModelFor(

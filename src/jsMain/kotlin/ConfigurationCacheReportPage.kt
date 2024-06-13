@@ -113,9 +113,9 @@ object ConfigurationCacheReportPage :
     data class Model(
         val buildName: String?,
         val cacheAction: String,
+        val cacheActionDescription: PrettyText?,
         val requestedTasks: String?,
         val documentationLink: String,
-        val entryInvalidReason: PrettyText?,
         val totalProblems: Int,
         val reportedProblems: Int,
         val messageTree: ProblemTreeModel,
@@ -282,16 +282,16 @@ object ConfigurationCacheReportPage :
     private
     fun displaySummary(model: Model): View<Intent> = div(
         displayHeading(model),
-        model.entryInvalidReason.view { displayEntryInvalidReason(it) },
-        model.entryInvalidReason.view { br() },
+        model.cacheActionDescription.view { displayActionDescription(it) },
+        model.cacheActionDescription.view { br() },
         small(model.inputsSummary()),
         br(),
         small(model.problemsSummary()),
     )
 
     private
-    fun displayEntryInvalidReason(entryInvalidReason: PrettyText): View<Intent> = small(
-        viewPrettyText(entryInvalidReason)
+    fun displayActionDescription(description: PrettyText): View<Intent> = small(
+        viewPrettyText(description)
     )
 
     private
