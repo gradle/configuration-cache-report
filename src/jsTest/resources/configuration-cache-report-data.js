@@ -6,6 +6,7 @@ function configurationCacheProblems() {
             "cacheAction": "storing",
             "requestedTasks": "clean build",
             "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html",
+            "entryInvalidReason": [{"text": "Calculating task graph as configuration cache cannot be reused because file"}, {"name": "build.gradle"}, {"text": " has changed."}],
             "totalProblemCount": 4,
             "diagnostics": [
                 {
