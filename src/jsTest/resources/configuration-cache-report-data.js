@@ -24,19 +24,23 @@ function configurationCacheProblems() {
                             "internalText": "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)\n\tat java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:566)\n\tat org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:101)\n\tat groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:323)\n\tat org.codehaus.groovy.runtime.metaclass.ClosureMetaClass.invokeMethod(ClosureMetaClass.java:263)\n\tat groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1041)\n\tat groovy.lang.Closure.call(Closure.java:405)\n\tat groovy.lang.Closure.call(Closure.java:421)\n\tat org.gradle.api.internal.AbstractTask$ClosureTaskAction.doExecute(AbstractTask.java:681)\n\tat org.gradle.api.internal.AbstractTask$ClosureTaskAction.lambda$execute$0(AbstractTask.java:668)\n\tat org.gradle.configuration.internal.DefaultUserCodeApplicationContext$CurrentApplication.reapply(DefaultUserCodeApplicationContext.java:86)\n\tat org.gradle.api.internal.AbstractTask$ClosureTaskAction.execute(AbstractTask.java:668)\n\tat org.gradle.api.internal.AbstractTask$ClosureTaskAction.execute(AbstractTask.java:643)\n\tat org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter$3.run(ExecuteActionsTaskExecuter.java:569)\n\tat org.gradle.internal.operations.DefaultBuildOperationExecutor$RunnableBuildOperationWorker.execute(DefaultBuildOperationExecutor.java:395)\n\tat org.gradle.internal.operations.DefaultBuildOperationExecutor$RunnableBuildOperationWorker.execute(DefaultBuildOperationExecutor.java:387)\n\tat org.gradle.internal.operations.DefaultBuildOperationExecutor$1.execute(DefaultBuildOperationExecutor.java:157)\n\tat org.gradle.internal.operations.DefaultBuildOperationExecutor.execute(DefaultBuildOperationExecutor.java:242)\n\tat org.gradle.internal.operations.DefaultBuildOperationExecutor.execute(DefaultBuildOperationExecutor.java:150)\n\tat org.gradle.internal.operations.DefaultBuildOperationExecutor.run(DefaultBuildOperationExecutor.java:84)\n\tat org.gradle.internal.operations.DelegatingBuildOperationExecutor.run(DelegatingBuildOperationExecutor.java:31)\n\tat org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeAction(ExecuteActionsTaskExecuter.java:554)\n\tat org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeActions(ExecuteActionsTaskExecuter.java:537)\n\tat org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.access$300(ExecuteActionsTaskExecuter.java:108)\n\tat org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter$TaskExecution.executeWithPreviousOutputFiles(ExecuteActionsTaskExecuter.java:278)\n\tat org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter$TaskExecution.execute(ExecuteActionsTaskExecuter.java:267)\n\tat org.gradle.internal.execution.steps.ExecuteStep.lambda$execute$1(ExecuteStep.java:33)\n\tat java.base/java.util.Optional.orElseGet(Optional.java:369)\n\tat org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:33)\n\tat org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:26)\n\tat org.gradle.internal.execution.steps.CleanupOutputsStep.execute(CleanupOutputsStep.java:67)\n\tat org.gradle.internal.execution.steps.CleanupOutputsStep.execute(CleanupOutputsStep.java:36)\n\tat org.gradle.internal.execution.steps.ResolveInputChangesStep.execute(ResolveInputChangesStep.java:49)\n\tat org.gradle.internal.execution.steps.ResolveInputChangesStep.execute(ResolveInputChangesStep.java:34)\n\tat org.gradle.internal.execution.steps.CancelExecutionStep.execute(CancelExecutionStep.java:43)\n\tat org.gradle.internal.execution.steps.TimeoutStep.executeWithoutTimeout(TimeoutStep.java:73)\n\tat org.gradle.internal.execution.steps.TimeoutStep.execute(TimeoutStep.java:54)\n\tat org.gradle.internal.execution.steps.CatchExceptionStep.execute(CatchExceptionStep.java:34)\n\tat org.gradle.internal.execution.steps.CreateOutputsStep.execute(CreateOutputsStep.java:44)\n\tat org.gradle.internal.execution.steps.SnapshotOutputsStep.execute(SnapshotOutputsStep.java:54)\n\tat org.gradle.internal.execution.steps.SnapshotOutputsStep.execute(SnapshotOutputsStep.java:38)\n\tat org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:49)\n\tat org.gradle.internal.execution.steps.CacheStep.executeWithoutCache(CacheStep.java:159)\n\tat org.gradle.internal.execution.steps.CacheStep.execute(CacheStep.java:72)\n\tat org.gradle.internal.execution.steps.CacheStep.execute(CacheStep.java:43)\n\tat org.gradle.internal.execution.steps.StoreExecutionStateStep.execute(StoreExecutionStateStep.java:44)\n\tat org.gradle.internal.execution.steps.StoreExecutionStateStep.execute(StoreExecutionStateStep.java:33)\n\tat org.gradle.internal.execution.steps.RecordOutputsStep.execute(RecordOutputsStep.java:38)\n\tat org.gradle.internal.execution.steps.RecordOutputsStep.execute(RecordOutputsStep.java:24)\n\tat org.gradle.internal.execution.steps.SkipUpToDateStep.executeBecause(SkipUpToDateStep.java:92)\n\tat org.gradle.internal.execution.steps.SkipUpToDateStep.lambda$execute$0(SkipUpToDateStep.java:85)\n\tat java.base/java.util.Optional.map(Optional.java:265)\n\tat org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:55)\n\tat org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:39)\n\tat org.gradle.internal.execution.steps.ResolveChangesStep.execute(ResolveChangesStep.java:76)\n\tat org.gradle.internal.execution.steps.ResolveChangesStep.execute(ResolveChangesStep.java:37)\n\tat org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:36)\n\tat org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:26)\n\tat org.gradle.internal.execution.steps.ResolveCachingStateStep.execute(ResolveCachingStateStep.java:94)\n\tat org.gradle.internal.execution.steps.ResolveCachingStateStep.execute(ResolveCachingStateStep.java:49)\n\tat org.gradle.internal.execution.steps.CaptureStateBeforeExecutionStep.execute(CaptureStateBeforeExecutionStep.java:79)\n\tat org.gradle.internal.execution.steps.CaptureStateBeforeExecutionStep.execute(CaptureStateBeforeExecutionStep.java:53)\n\tat org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:74)\n\tat org.gradle.internal.execution.steps.SkipEmptyWorkStep.lambda$execute$2(SkipEmptyWorkStep.java:78)\n\tat java.base/java.util.Optional.orElseGet(Optional.java:369)\n\tat org.gradle.internal.execution.steps.SkipEmptyWorkStep.execute(SkipEmptyWorkStep.java:78)\n\tat org.gradle.internal.execution.steps.SkipEmptyWorkStep.execute(SkipEmptyWorkStep.java:34)\n\tat org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:39)\n\tat org.gradle.internal.execution.steps.LoadExecutionStateStep.execute(LoadExecutionStateStep.java:40)\n\tat org.gradle.internal.execution.steps.LoadExecutionStateStep.execute(LoadExecutionStateStep.java:28)\n\tat org.gradle.internal.execution.impl.DefaultWorkExecutor.execute(DefaultWorkExecutor.java:33)\n\tat org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:194)\n\tat org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:186)\n\tat org.gradle.api.internal.tasks.execution.CleanupStaleOutputsExecuter.execute(CleanupStaleOutputsExecuter.java:114)\n\tat org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)\n\tat org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:62)\n\tat org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)\n\tat org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:56)\n\tat org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)\n\tat org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)\n\tat org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)\n\tat org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)\n\tat org.gradle.internal.operations.DefaultBuildOperationExecutor$CallableBuildOperationWorker.execute(DefaultBuildOperationExecutor.java:409)\n\tat org.gradle.internal.operations.DefaultBuildOperationExecutor$CallableBuildOperationWorker.execute(DefaultBuildOperationExecutor.java:399)\n\tat org.gradle.internal.operations.DefaultBuildOperationExecutor$1.execute(DefaultBuildOperationExecutor.java:157)\n\tat org.gradle.internal.operations.DefaultBuildOperationExecutor.execute(DefaultBuildOperationExecutor.java:242)\n\tat org.gradle.internal.operations.DefaultBuildOperationExecutor.execute(DefaultBuildOperationExecutor.java:150)\n\tat org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:94)\n\tat org.gradle.internal.operations.DelegatingBuildOperationExecutor.call(DelegatingBuildOperationExecutor.java:36)\n\tat org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)\n\tat org.gradle.execution.plan.LocalTaskNodeExecutor.execute(LocalTaskNodeExecutor.java:41)\n\tat org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:372)\n\tat org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:359)\n\tat org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:352)\n\tat org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:338)\n\tat org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.lambda$run$0(DefaultPlanExecutor.java:127)\n\tat org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:191)\n\tat org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.executeNextNode(DefaultPlanExecutor.java:182)\n\tat org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:124)\n\tat org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)\n\tat org.gradle.internal.concurrent.ManagedExecutorImpl$1.run(ManagedExecutorImpl.java:48)\n\tat java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128)\n\tat java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)\n\tat org.gradle.internal.concurrent.ThreadFactoryImpl$ManagedThreadRunnable.run(ThreadFactoryImpl.java:56)\n\tat java.base/java.lang.Thread.run(Thread.java:834)\n"
                         }]
                     }
-                },{
+                }, {
                     "trace": [
                         {"kind": "SystemProperty", "name": "org.example.property"},
                         {"kind": "BuildLogic", "location": "build file 'build.gradle.kts'"}
                     ],
                     "problem": [{"text": "cannot "}, {"text": "serialize"}, {"text": " object of type "}, {"name": "java.lang.Thread"}, {"text": ", a subtype of "}, {"name": "java.lang.Thread"}, {"text": ","}, {"text": " as these are not supported with the configuration cache."}],
                     "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:requirements:disallowed_types"
-                },{
+                }, {
                     "trace": [{"kind": "BuildLogic", "location": "build file 'build.gradle'"}],
                     "input": [{"text": "system property "}, {"name": "someMessage"}],
                     "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:requirements:reading_sys_props_and_env_vars"
                 }, {
-                    "trace": [{"kind": "PropertyUsage", "name": "foo", "from": ":sub-b"}, {"kind": "Project", "path": ":sub-b"}, {"kind": "BuildLogic", "location": "build file 'sub-b/build.gradle'"}],
+                    "trace": [
+                        {"kind": "PropertyUsage", "name": "foo", "from": ":sub-b"},
+                        {"kind": "Project", "path": ":sub-b"},
+                        {"kind": "BuildLogic", "location": "build file 'sub-b/build.gradle'"}
+                    ],
                     "problem": [{"text": "Project "}, {"name": ":sub-b"}, {"text": " cannot dynamically lookup a "}, {"text": "property"}, {"text": " in the parent project "}, {"name": ":"}],
                     "error": {
                         "parts": [{
@@ -50,49 +54,29 @@ function configurationCacheProblems() {
                         }]
                     }
                 }, {
-                    "trace": [{"kind": "PropertyUsage", "name": "bar", "from": ":sub-c"}, {"kind": "Project", "path": ":sub-b"}, {"kind": "BuildLogic", "location": "build file 'sub-c/build.gradle'"}],
+                    "trace": [
+                        {"kind": "PropertyUsage", "name": "bar", "from": ":sub-c"},
+                        {"kind": "Project", "path": ":sub-b"},
+                        {"kind": "BuildLogic", "location": "build file 'sub-c/build.gradle'"}
+                    ],
                     "problem": [{"text": "Project "}, {"name": ":sub-c"}, {"text": " cannot dynamically lookup a "}, {"text": "property"}, {"text": " in the parent project "}, {"name": ":"}],
                     "error": {}
-                },{
-                  "trace": [{
-                      "kind": "TaskPath",
-                      "path": ":anotherReportedlyIncompatible"
-                  }],
-                  "incompatibleTask": [{
-                      "text": "task "
-                  }, {
-                      "name": ":anotherReportedlyIncompatible"
-                  }, {
-                      "text": " is incompatible with the configuration cache. "
-                  }, {
-                      "text": "Reason: "
-                  }, {
-                      "text": "some other reason"
-                  }, {
-                      "text": "."
-                  }],
-                  "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:task_opt_out"
-              }, {
-                  "trace": [{
-                      "kind": "TaskPath",
-                      "path": ":reportedlyIncompatible"
-                  }],
-                  "incompatibleTask": [{
-                      "text": "task "
-                  }, {
-                      "name": ":reportedlyIncompatible"
-                  }, {
-                      "text": " is incompatible with the configuration cache. "
-                  }, {
-                      "text": "Reason: "
-                  }, {
-                      "text": "declares itself as not compatible"
-                  }, {
-                      "text": "."
-                  }],
-                  "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:task_opt_out"
-              }
-          ]
+                }, {
+                    "trace": [{"kind": "TaskPath", "path": ":anotherReportedlyIncompatible"}],
+                    "incompatibleTask": [
+                        {"text": "task "}, {"name": ":anotherReportedlyIncompatible"}, {"text": " is incompatible with the configuration cache. "},
+                        {"text": "Reason: "}, {"text": "some other reason"}, {"text": "."}
+                    ],
+                    "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:task_opt_out"
+                }, {
+                    "trace": [{"kind": "TaskPath", "path": ":reportedlyIncompatible"}],
+                    "incompatibleTask": [
+                        {"text": "task "}, {"name": ":reportedlyIncompatible"}, {"text": " is incompatible with the configuration cache. "},
+                        {"text": "Reason: "}, {"text": "declares itself as not compatible"}, {"text": "."}
+                    ],
+                    "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:task_opt_out"
+                }
+            ]
         }
     );
 }
