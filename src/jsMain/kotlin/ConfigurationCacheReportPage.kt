@@ -107,7 +107,8 @@ val ProblemTreeModel.childCount: Int
 
 
 internal
-object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Model, ConfigurationCacheReportPage.Intent> {
+object ConfigurationCacheReportPage :
+    Component<ConfigurationCacheReportPage.Model, ConfigurationCacheReportPage.Intent> {
 
     data class Model(
         val buildName: String?,
