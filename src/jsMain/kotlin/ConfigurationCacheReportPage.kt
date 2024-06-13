@@ -282,9 +282,16 @@ object ConfigurationCacheReportPage :
     private
     fun displaySummary(model: Model): View<Intent> = div(
         displayHeading(model),
+        model.entryInvalidReason.view { displayEntryInvalidReason(it) },
+        model.entryInvalidReason.view { br() },
         small(model.inputsSummary()),
         br(),
         small(model.problemsSummary()),
+    )
+
+    private
+    fun displayEntryInvalidReason(entryInvalidReason: PrettyText): View<Intent> = small(
+        viewPrettyText(entryInvalidReason)
     )
 
     private
