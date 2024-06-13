@@ -105,6 +105,8 @@ data class Tree<T>(
 
         abstract val tree: Tree<T>
 
+        abstract val depth: Int
+
         abstract fun update(f: Tree<T>.() -> Tree<T>): Tree<T>
 
         val children
@@ -120,6 +122,9 @@ data class Tree<T>(
             override val tree: Tree<T>
         ) : Focus<T>() {
 
+            override val depth: Int
+                get() = 0
+
             override fun update(f: Tree<T>.() -> Tree<T>): Tree<T> = f(tree)
         }
 
@@ -128,6 +133,9 @@ data class Tree<T>(
             val index: Int,
             override val tree: Tree<T>
         ) : Focus<T>() {
+
+            override val depth: Int
+                get() = parent.depth + 1
 
             override fun update(f: Tree<T>.() -> Tree<T>): Tree<T> = parent.update {
                 copy(children = children.mapAt(index, f))

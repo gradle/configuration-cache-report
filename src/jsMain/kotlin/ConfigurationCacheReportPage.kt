@@ -349,7 +349,10 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
     private
     fun countBalloon(count: Int): View<Intent> = span(
         attributes { className("group-selector__count") },
-        "$count"
+        invisibleSpace,
+        invisibleOpenParen,
+        span("$count"),
+        invisibleCloseParen
     )
 
     private
@@ -402,7 +405,6 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
                             focus,
                             labelNode.label,
                             labelNode.docLink,
-                            prefix = squareIcon,
                             suffix = suffixForInfo(labelNode, focus)
                         )
                     }
@@ -422,24 +424,24 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
     private
     fun viewNode(node: ProblemNode): View<Intent> = when (node) {
         is ProblemNode.Project -> span(
-            span("project"),
+            span("project "),
             reference(node.path)
         )
 
         is ProblemNode.Property -> span(
-            span(node.kind),
+            span("${node.kind} "),
             reference(node.name),
             span(" of "),
             reference(node.owner)
         )
 
         is ProblemNode.SystemProperty -> span(
-            span("system property"),
+            span("system property "),
             reference(node.name),
         )
 
         is ProblemNode.Task -> span(
-            span("task"),
+            span("task "),
             reference(node.path),
             span(" of type "),
             reference(node.type)
@@ -500,13 +502,13 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
     fun treeButtonFor(child: Tree.Focus<ProblemNode>, treeIntent: (ProblemTreeIntent) -> Intent): View<Intent> =
         when {
             child.tree.isNotEmpty() -> viewTreeButton(child, treeIntent)
-            else -> squareIcon
+            else -> viewLeafIcon(child)
         }
 
     private
     fun viewTreeButton(child: Tree.Focus<ProblemNode>, treeIntent: (ProblemTreeIntent) -> Intent): View<Intent> = span(
         attributes {
-            className("tree-btn")
+            classNames("invisible-text", "tree-btn")
             if (child.tree.state === Tree.ViewState.Collapsed) {
                 className("collapsed")
             }
@@ -516,28 +518,29 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
             title("Click to ${toggleVerb(child.tree.state)}")
             onClick { treeIntent(TreeView.Intent.Toggle(child)) }
         },
-        when (child.tree.state) {
-            Tree.ViewState.Collapsed -> "› "
-            Tree.ViewState.Expanded -> "⌄ "
-        }
+        copyTextPrefixForTreeNode(child)
     )
 
     private
+    fun viewLeafIcon(child: Tree.Focus<ProblemNode>): View<Intent> = span(
+        attributes { classNames("invisible-text", "leaf-icon") },
+        copyTextPrefixForTreeNode(child)
+    )
+
+    private
+    fun copyTextPrefixForTreeNode(child: Tree.Focus<ProblemNode>) =
+        "    ".repeat(child.depth - 1) + "- "
+
+    private
     val errorIcon = span<Intent>(
-        attributes { className("error-icon") },
-        "⨉"
+        attributes { classNames("invisible-text", "error-icon") },
+        "[error] "
     )
 
     private
     val warningIcon = span<Intent>(
-        attributes { className("warning-icon") },
-        "⚠️"
-    )
-
-    private
-    val squareIcon = span<Intent>(
-        attributes { className("tree-icon") },
-        "■"
+        attributes { classNames("invisible-text", "warning-icon") },
+        "[warn]  " // two spaces to align with [error] prefix
     )
 
     private
@@ -552,11 +555,31 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
 
     private
     fun reference(name: String): View<Intent> = span(
+        invisibleBacktick,
         code(name),
+        invisibleBacktick,
         copyButton(
             text = name,
             tooltip = "Copy reference to the clipboard"
         )
+    )
+
+    private
+    val invisibleBacktick: View<Intent> = invisibleSpanWithTextForCopy("`")
+
+    private
+    val invisibleSpace: View<Intent> = invisibleSpanWithTextForCopy(" ")
+
+    private
+    val invisibleOpenParen: View<Intent> = invisibleSpanWithTextForCopy("(")
+
+    private
+    val invisibleCloseParen: View<Intent> = invisibleSpanWithTextForCopy(")")
+
+    private
+    fun invisibleSpanWithTextForCopy(text: String): View<Intent> = span(
+        attributes { classNames("invisible-text", "text-for-copy") },
+        text
     )
 
     private
@@ -565,8 +588,7 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
             title(tooltip)
             className("copy-button")
             onClick { Intent.Copy(text) }
-        },
-        "📋"
+        }
     )
 
     private
