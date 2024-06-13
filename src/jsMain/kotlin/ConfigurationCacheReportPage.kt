@@ -279,7 +279,15 @@ object ConfigurationCacheReportPage :
         )
 
     private
-    fun displaySummary(model: Model): View<Intent> {
+    fun displaySummary(model: Model): View<Intent> = div(
+        displayHeading(model),
+        small(model.inputsSummary()),
+        br(),
+        small(model.problemsSummary()),
+    )
+
+    private
+    fun displayHeading(model: Model): View<Intent> {
         val buildName = model.buildName
         val requestedTasks = model.requestedTasks
         val manyTasks = requestedTasks?.contains(" ") ?: true
@@ -289,10 +297,6 @@ object ConfigurationCacheReportPage :
             buildName.view { span(" build and ") },
             requestedTasks?.let { code(it) } ?: span("default"),
             span(if (manyTasks) " tasks" else " task"),
-            br(),
-            small(model.inputsSummary()),
-            br(),
-            small(model.problemsSummary()),
         )
     }
 
