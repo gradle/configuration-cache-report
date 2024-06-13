@@ -349,7 +349,10 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
     private
     fun countBalloon(count: Int): View<Intent> = span(
         attributes { className("group-selector__count") },
-        "$count"
+        invisibleSpace,
+        invisibleOpenParen,
+        span("$count"),
+        invisibleCloseParen
     )
 
     private
@@ -565,6 +568,24 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
     val invisibleBacktick: View<Intent> = span(
         attributes { classNames("invisible-text", "text-for-copy") },
         "`"
+    )
+
+    private
+    val invisibleSpace: View<Intent> = span(
+        attributes { classNames("invisible-text", "text-for-copy") },
+        " "
+    )
+
+    private
+    val invisibleOpenParen: View<Intent> = span(
+        attributes { classNames("invisible-text", "text-for-copy") },
+        "("
+    )
+
+    private
+    val invisibleCloseParen: View<Intent> = span(
+        attributes { classNames("invisible-text", "text-for-copy") },
+        ")"
     )
 
     private
