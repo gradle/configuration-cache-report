@@ -565,27 +565,21 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
     )
 
     private
-    val invisibleBacktick: View<Intent> = span(
-        attributes { classNames("invisible-text", "text-for-copy") },
-        "`"
-    )
+    val invisibleBacktick: View<Intent> = invisibleSpanWithTextForCopy("`")
 
     private
-    val invisibleSpace: View<Intent> = span(
-        attributes { classNames("invisible-text", "text-for-copy") },
-        " "
-    )
+    val invisibleSpace: View<Intent> = invisibleSpanWithTextForCopy(" ")
 
     private
-    val invisibleOpenParen: View<Intent> = span(
-        attributes { classNames("invisible-text", "text-for-copy") },
-        "("
-    )
+    val invisibleOpenParen: View<Intent> = invisibleSpanWithTextForCopy("(")
 
     private
-    val invisibleCloseParen: View<Intent> = span(
+    val invisibleCloseParen: View<Intent> = invisibleSpanWithTextForCopy(")")
+
+    private
+    fun invisibleSpanWithTextForCopy(text: String): View<Intent> = span(
         attributes { classNames("invisible-text", "text-for-copy") },
-        ")"
+        text
     )
 
     private
