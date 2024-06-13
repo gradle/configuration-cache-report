@@ -115,6 +115,7 @@ object ConfigurationCacheReportPage :
         val cacheAction: String,
         val requestedTasks: String?,
         val documentationLink: String,
+        val entryInvalidReason: PrettyText?,
         val totalProblems: Int,
         val reportedProblems: Int,
         val messageTree: ProblemTreeModel,
