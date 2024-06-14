@@ -107,11 +107,13 @@ val ProblemTreeModel.childCount: Int
 
 
 internal
-object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Model, ConfigurationCacheReportPage.Intent> {
+object ConfigurationCacheReportPage :
+    Component<ConfigurationCacheReportPage.Model, ConfigurationCacheReportPage.Intent> {
 
     data class Model(
         val buildName: String?,
         val cacheAction: String,
+        val cacheActionDescription: PrettyText?,
         val requestedTasks: String?,
         val documentationLink: String,
         val totalProblems: Int,
@@ -278,7 +280,22 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
         )
 
     private
-    fun displaySummary(model: Model): View<Intent> {
+    fun displaySummary(model: Model): View<Intent> = div(
+        displayHeading(model),
+        model.cacheActionDescription.view { displayActionDescription(it) },
+        model.cacheActionDescription.view { br() },
+        small(model.inputsSummary()),
+        br(),
+        small(model.problemsSummary()),
+    )
+
+    private
+    fun displayActionDescription(description: PrettyText): View<Intent> = small(
+        viewPrettyText(description)
+    )
+
+    private
+    fun displayHeading(model: Model): View<Intent> {
         val buildName = model.buildName
         val requestedTasks = model.requestedTasks
         val manyTasks = requestedTasks?.contains(" ") ?: true
@@ -288,10 +305,6 @@ object ConfigurationCacheReportPage : Component<ConfigurationCacheReportPage.Mod
             buildName.view { span(" build and ") },
             requestedTasks?.let { code(it) } ?: span("default"),
             span(if (manyTasks) " tasks" else " task"),
-            br(),
-            small(model.inputsSummary()),
-            br(),
-            small(model.problemsSummary()),
         )
     }
 

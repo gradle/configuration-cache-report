@@ -305,10 +305,6 @@ h1 code {
     font-weight: bold;
 }
 
-h1 small {
-    font-weight: normal;
-}
-
 ul, ol, dl {
     list-style-position: outside;
     line-height: 1.6;
