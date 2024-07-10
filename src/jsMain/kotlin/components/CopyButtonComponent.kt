@@ -5,6 +5,7 @@ import elmish.View
 import elmish.attributes
 import elmish.small
 
+
 internal
 class CopyButtonComponent<Intent>(
     private val getCopyIntent: (String) -> Intent,
@@ -27,5 +28,4 @@ class CopyButtonComponent<Intent>(
     )
 
     override fun step(intent: Intent, model: Model): Model = model
-
 }

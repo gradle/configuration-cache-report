@@ -14,7 +14,8 @@ class PrettyTextComponent<Intent>(
     getCopyIntent: (String) -> Intent,
 ) : Component<PrettyText, Intent> {
 
-    private val copyButtonComponent = CopyButtonComponent(getCopyIntent)
+    private
+    val copyButtonComponent = CopyButtonComponent(getCopyIntent)
 
     override fun view(model: PrettyText): View<Intent> = viewPrettyText(model)
 
