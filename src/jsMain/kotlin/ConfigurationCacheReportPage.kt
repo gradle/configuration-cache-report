@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+import components.PrettyTextComponent
+import components.invisibleCloseParen
+import components.invisibleOpenParen
+import components.invisibleSpace
+import data.LearnMore
+import data.PrettyText
 import data.mapAt
 import data.sIfPlural
 import elmish.Component
@@ -34,13 +40,6 @@ import elmish.tree.TreeView
 import elmish.tree.viewSubTrees
 import elmish.ul
 import kotlinx.browser.window
-import data.LearnMore
-import data.PrettyText
-import components.PrettyTextComponent
-import components.invisibleBacktick
-import components.invisibleCloseParen
-import components.invisibleOpenParen
-import components.invisibleSpace
 
 
 internal
@@ -381,51 +380,49 @@ object ConfigurationCacheReportPage :
 
     private
     fun viewNode(node: ProblemNode): View<Intent> = when (node) {
-        is ProblemNode.Project -> span(
-            span("project "),
-            reference(node.path)
-        )
+        is ProblemNode.Project -> viewPrettyText {
+            text("project ")
+            ref(node.path)
+        }
 
-        is ProblemNode.Property -> span(
-            span("${node.kind} "),
-            reference(node.name),
-            span(" of "),
-            reference(node.owner)
-        )
+        is ProblemNode.Property -> viewPrettyText {
+            text("${node.kind} ")
+            ref(node.name)
+            text(" of ")
+            ref(node.owner)
+        }
 
-        is ProblemNode.SystemProperty -> span(
-            span("system property "),
-            reference(node.name),
-        )
+        is ProblemNode.SystemProperty -> viewPrettyText {
+            text("system property ")
+            ref(node.name)
+        }
 
-        is ProblemNode.Task -> span(
-            span("task "),
-            reference(node.path),
-            span(" of type "),
-            reference(node.type)
-        )
+        is ProblemNode.Task -> viewPrettyText {
+            text("task ")
+            ref(node.path)
+            text(" of type ")
+            ref(node.type)
+        }
 
-        is ProblemNode.Bean -> span(
-            span("bean of type "),
-            reference(node.type)
-        )
+        is ProblemNode.Bean -> viewPrettyText {
+            text("bean of type ")
+            ref(node.type)
+        }
 
-        is ProblemNode.BuildLogic -> span(
-            span(node.location)
-        )
+        is ProblemNode.BuildLogic -> viewPrettyText {
+            text(node.location)
+        }
 
-        is ProblemNode.BuildLogicClass -> span(
-            span("class "),
-            reference(node.type)
-        )
+        is ProblemNode.BuildLogicClass -> viewPrettyText {
+            text("class ")
+            ref(node.type)
+        }
 
-        is ProblemNode.Label -> span(
-            node.text
-        )
+        is ProblemNode.Label -> viewPrettyText {
+            text(node.text)
+        }
 
-        is ProblemNode.Message -> viewPrettyText(
-            node.prettyText
-        )
+        is ProblemNode.Message -> viewPrettyText(node.prettyText)
 
         is ProblemNode.Link -> a(
             attributes {
@@ -502,18 +499,12 @@ object ConfigurationCacheReportPage :
     )
 
     private
-    fun viewPrettyText(text: PrettyText): View<Intent> = PrettyTextWithCopy.view(text)
+    fun viewPrettyText(text: PrettyText): View<Intent> =
+        PrettyTextWithCopy.view(text)
 
     private
-    fun reference(name: String): View<Intent> = span(
-        invisibleBacktick(),
-        code(name),
-        invisibleBacktick(),
-        copyButton(
-            text = name,
-            tooltip = "Copy reference to the clipboard"
-        )
-    )
+    fun viewPrettyText(textBuilder: PrettyText.Builder.() -> Unit): View<Intent> =
+        PrettyTextWithCopy.view(PrettyText.build(textBuilder))
 
     private
     fun copyButton(text: String, tooltip: String): View<Intent> = small(
