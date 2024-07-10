@@ -18,6 +18,14 @@ data class PrettyText(val fragments: List<Fragment>) {
 
         data class Reference(val name: String) : Fragment()
     }
+
+    companion object {
+
+        fun ofText(text: String): PrettyText {
+            return PrettyText(listOf(Fragment.Text(text)))
+        }
+
+    }
 }
 
 

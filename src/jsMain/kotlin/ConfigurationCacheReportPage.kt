@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 
-import data.found
-import data.itsOrTheir
 import data.mapAt
 import data.sIfPlural
-import data.wasOrWere
 import elmish.Component
 import elmish.View
 import elmish.a
@@ -36,7 +33,6 @@ import elmish.tree.Tree
 import elmish.tree.TreeView
 import elmish.tree.viewSubTrees
 import elmish.ul
-import elmish.view
 import kotlinx.browser.window
 import report.PrettyText
 import report.PrettyTextComponent
@@ -110,17 +106,13 @@ object ConfigurationCacheReportPage :
 
     data class Model(
         val heading: PrettyText,
-        val cacheActionDescription: PrettyText?,
+        val summary: List<PrettyText>,
         val documentationLink: String,
-        val totalProblems: Int,
-        val reportedProblems: Int,
         val messageTree: ProblemTreeModel,
         val locationTree: ProblemTreeModel,
-        val reportedInputs: Int,
         val inputTree: ProblemTreeModel,
-        val reportedIncompatibleTasks: Int,
         val incompatibleTaskTree: ProblemTreeModel,
-        val tab: Tab = if (totalProblems == 0) Tab.Inputs else Tab.ByMessage
+        val tab: Tab
     )
 
     enum class Tab(val text: String) {
@@ -233,10 +225,10 @@ object ConfigurationCacheReportPage :
         ),
         div(
             attributes { className("groups") },
-            displayTabButton(Tab.Inputs, model.tab, model.reportedInputs),
+            displayTabButton(Tab.Inputs, model.tab, model.inputTree.childCount),
             displayTabButton(Tab.ByMessage, model.tab, model.messageTree.childCount),
             displayTabButton(Tab.ByLocation, model.tab, model.locationTree.childCount),
-            displayTabButton(Tab.IncompatibleTasks, model.tab, model.reportedIncompatibleTasks)
+            displayTabButton(Tab.IncompatibleTasks, model.tab, model.incompatibleTaskTree.childCount)
         )
     )
 
@@ -278,34 +270,22 @@ object ConfigurationCacheReportPage :
     private
     fun displaySummary(model: Model): View<Intent> = div(
         displayHeading(model),
-        model.cacheActionDescription.view { displayActionDescription(it) },
-        model.cacheActionDescription.view { br() },
-        small(model.inputsSummary()),
-        br(),
-        small(model.problemsSummary()),
+        viewSummaryParagraphs(model),
     )
 
     private
-    fun displayActionDescription(description: PrettyText): View<Intent> = small(
-        viewPrettyText(description)
+    fun viewSummaryParagraphs(model: Model): View<Intent> = div(
+        model.summary.flatMapIndexed { index, item ->
+            if (index == 0) listOf(viewSummaryParagraph(item))
+            else listOf(br(), viewSummaryParagraph(item))
+        }
     )
+
+    private
+    fun viewSummaryParagraph(content: PrettyText): View<Intent> = small(viewPrettyText(content))
 
     private
     fun displayHeading(model: Model): View<Intent> = h1(PrettyTextNoCopy.view(model.heading))
-
-    private
-    fun Model.inputsSummary() =
-        found(reportedInputs, "build configuration input").let {
-            if (reportedInputs > 0) "$it and will cause the cache to be discarded when ${itsOrTheir(reportedInputs)} value change"
-            else it
-        }
-
-    private
-    fun Model.problemsSummary() =
-        found(totalProblems, "problem").let {
-            if (totalProblems > reportedProblems) "$it, only the first $reportedProblems ${wasOrWere(reportedProblems)} included in this report"
-            else it
-        }
 
     private
     fun displayTabButton(tab: Tab, activeTab: Tab, problemsCount: Int): View<Intent> = div(

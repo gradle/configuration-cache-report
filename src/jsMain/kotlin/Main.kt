@@ -15,6 +15,9 @@
  */
 
 import data.Trie
+import data.found
+import data.itsOrTheir
+import data.wasOrWere
 import elmish.elementById
 import elmish.mountComponentAt
 import elmish.tree.Tree
@@ -165,12 +168,11 @@ data class ImportedProblem(
 private
 fun reportPageModelFromJsModel(jsModel: JsModel): ConfigurationCacheReportPage.Model {
     val diagnostics = importDiagnostics(jsModel.diagnostics)
+    val totalProblems = jsModel.totalProblemCount
     return ConfigurationCacheReportPage.Model(
         heading = headingPrettyText(jsModel),
-        cacheActionDescription = jsModel.cacheActionDescription?.let(::toPrettyText),
+        summary = summaryPrettyText(jsModel, diagnostics),
         documentationLink = jsModel.documentationLink,
-        totalProblems = jsModel.totalProblemCount,
-        reportedProblems = diagnostics.problems.size,
         messageTree = treeModelFor(
             ProblemNode.Label(ConfigurationCacheReportPage.Tab.ByMessage.text),
             problemNodesByMessage(diagnostics.problems)
@@ -179,16 +181,15 @@ fun reportPageModelFromJsModel(jsModel: JsModel): ConfigurationCacheReportPage.M
             ProblemNode.Label(ConfigurationCacheReportPage.Tab.ByLocation.text),
             problemNodesByLocation(diagnostics.problems)
         ),
-        reportedInputs = diagnostics.inputs.size,
         inputTree = treeModelFor(
             ProblemNode.Label(ConfigurationCacheReportPage.Tab.Inputs.text),
             inputNodes(diagnostics.inputs)
         ),
-        reportedIncompatibleTasks = diagnostics.incompatibleTasks.size,
         incompatibleTaskTree = treeModelFor(
             ProblemNode.Label(ConfigurationCacheReportPage.Tab.IncompatibleTasks.text),
             incompatibleTaskNodes(diagnostics.incompatibleTasks)
-        )
+        ),
+        tab = if (totalProblems == 0) ConfigurationCacheReportPage.Tab.Inputs else ConfigurationCacheReportPage.Tab.ByMessage
     )
 }
 
@@ -205,6 +206,41 @@ fun headingPrettyText(model: JsModel): PrettyText {
         requestedTasks?.let { PrettyText.Fragment.Reference(it) } ?: PrettyText.Fragment.Text("default"),
         PrettyText.Fragment.Text(if (manyTasks) " tasks" else " task")
     ))
+}
+
+
+private
+fun summaryPrettyText(jsModel: JsModel, diagnostics: ImportedDiagnostics): List<PrettyText> {
+    val cacheActionDescription = jsModel.cacheActionDescription?.let(::toPrettyText)
+    val inputsSummary = PrettyText.ofText(inputsSummary(diagnostics))
+    val problemsSummary = PrettyText.ofText(problemsSummary(jsModel, diagnostics))
+
+    return listOfNotNull(
+        cacheActionDescription,
+        inputsSummary,
+        problemsSummary,
+    )
+}
+
+
+private
+fun inputsSummary(diagnostics: ImportedDiagnostics): String {
+    val reportedInputs = diagnostics.inputs.size
+    return found(reportedInputs, "build configuration input").let {
+        if (reportedInputs > 0) "$it and will cause the cache to be discarded when ${itsOrTheir(reportedInputs)} value change"
+        else it
+    }
+}
+
+
+private
+fun problemsSummary(jsModel: JsModel, diagnostics: ImportedDiagnostics): String {
+    val totalProblems = jsModel.totalProblemCount
+    val reportedProblems = diagnostics.problems.size
+    return found(totalProblems, "problem").let {
+        if (totalProblems > reportedProblems) "$it, only the first $reportedProblems ${wasOrWere(reportedProblems)} included in this report"
+        else it
+    }
 }
 
 
