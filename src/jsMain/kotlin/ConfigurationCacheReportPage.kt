@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import components.CopyButtonComponent
 import components.PrettyTextComponent
 import components.invisibleCloseParen
 import components.invisibleOpenParen
@@ -507,15 +508,6 @@ object ConfigurationCacheReportPage :
         PrettyTextWithCopy.view(PrettyText.build(textBuilder))
 
     private
-    fun copyButton(text: String, tooltip: String): View<Intent> = small(
-        attributes {
-            title(tooltip)
-            className("copy-button")
-            onClick { Intent.Copy(text) }
-        }
-    )
-
-    private
     fun viewException(
         treeIntent: (ProblemTreeIntent) -> Intent.TreeIntent,
         child: Tree.Focus<ProblemNode>,
@@ -523,7 +515,7 @@ object ConfigurationCacheReportPage :
     ): View<Intent> = div(
         viewTreeButton(child, treeIntent),
         span("Exception"),
-        span(copyButton(text = node.fullText, tooltip = "Copy exception to the clipboard")),
+        span(CopyButton.view(text = node.fullText, tooltip = "Copy exception to the clipboard")),
         node.summary?.let { span(" ") } ?: empty,
         node.summary?.let { viewPrettyText(it) } ?: empty,
         when (child.tree.state) {
@@ -605,4 +597,8 @@ object ConfigurationCacheReportPage :
     private
     val PrettyTextWithCopy =
         PrettyTextComponent(copyableReferences = true) { Intent.Copy(it) }
+
+    private
+    val CopyButton =
+        CopyButtonComponent { Intent.Copy(it) }
 }
