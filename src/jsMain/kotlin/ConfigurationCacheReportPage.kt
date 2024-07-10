@@ -34,6 +34,7 @@ import elmish.tree.TreeView
 import elmish.tree.viewSubTrees
 import elmish.ul
 import kotlinx.browser.window
+import report.LearnMore
 import report.PrettyText
 import report.PrettyTextComponent
 import report.invisibleBacktick
@@ -107,7 +108,7 @@ object ConfigurationCacheReportPage :
     data class Model(
         val heading: PrettyText,
         val summary: List<PrettyText>,
-        val documentationLink: String,
+        val learnMore: LearnMore,
         val messageTree: ProblemTreeModel,
         val locationTree: ProblemTreeModel,
         val inputTree: ProblemTreeModel,
@@ -218,7 +219,7 @@ object ConfigurationCacheReportPage :
     fun viewHeader(model: Model): View<Intent> = div(
         attributes { className("header") },
         div(attributes { className("gradle-logo") }),
-        learnMore(model.documentationLink),
+        learnMore(model.learnMore),
         div(
             attributes { className("title") },
             displaySummary(model),
@@ -313,12 +314,12 @@ object ConfigurationCacheReportPage :
     )
 
     private
-    fun learnMore(documentationLink: String): View<Intent> = div(
+    fun learnMore(learnMore: LearnMore): View<Intent> = div(
         attributes { className("learn-more") },
         span("Learn more about the "),
         a(
-            attributes { href(documentationLink) },
-            "Gradle Configuration Cache"
+            attributes { href(learnMore.documentationLink) },
+            learnMore.text
         ),
         span(".")
     )

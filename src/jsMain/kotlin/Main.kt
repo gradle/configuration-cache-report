@@ -22,6 +22,7 @@ import elmish.elementById
 import elmish.mountComponentAt
 import elmish.tree.Tree
 import elmish.tree.TreeView
+import report.LearnMore
 import report.PrettyText
 import kotlin.js.JSON.stringify
 
@@ -172,7 +173,7 @@ fun reportPageModelFromJsModel(jsModel: JsModel): ConfigurationCacheReportPage.M
     return ConfigurationCacheReportPage.Model(
         heading = headingPrettyText(jsModel),
         summary = summaryPrettyText(jsModel, diagnostics),
-        documentationLink = jsModel.documentationLink,
+        learnMore = LearnMore("Gradle Configuration Cache", jsModel.documentationLink),
         messageTree = treeModelFor(
             ProblemNode.Label(ConfigurationCacheReportPage.Tab.ByMessage.text),
             problemNodesByMessage(diagnostics.problems)
