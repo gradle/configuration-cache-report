@@ -34,6 +34,7 @@ import elmish.tree.viewSubTrees
 import elmish.ul
 import elmish.view
 import kotlinx.browser.window
+import report.PrettyText
 
 
 internal
@@ -78,18 +79,6 @@ sealed class ProblemNode {
         val lines: List<String>,
         val state: Tree.ViewState?
     )
-}
-
-
-internal
-data class PrettyText(val fragments: List<Fragment>) {
-
-    sealed class Fragment {
-
-        data class Text(val text: String) : Fragment()
-
-        data class Reference(val name: String) : Fragment()
-    }
 }
 
 

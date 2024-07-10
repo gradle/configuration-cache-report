@@ -19,6 +19,7 @@ import elmish.elementById
 import elmish.mountComponentAt
 import elmish.tree.Tree
 import elmish.tree.TreeView
+import report.PrettyText
 import kotlin.js.JSON.stringify
 
 
