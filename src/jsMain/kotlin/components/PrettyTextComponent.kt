@@ -3,18 +3,18 @@ package components
 import data.PrettyText
 import elmish.Component
 import elmish.View
-import elmish.attributes
 import elmish.code
 import elmish.empty
-import elmish.small
 import elmish.span
 
 
 internal
 class PrettyTextComponent<Intent>(
     private val copyableReferences: Boolean,
-    private val getCopyIntent: (String) -> Intent,
+    getCopyIntent: (String) -> Intent,
 ) : Component<PrettyText, Intent> {
+
+    private val copyButtonComponent = CopyButtonComponent(getCopyIntent)
 
     override fun view(model: PrettyText): View<Intent> = viewPrettyText(model)
 
@@ -35,18 +35,9 @@ class PrettyTextComponent<Intent>(
         invisibleBacktick(),
         code(name),
         invisibleBacktick(),
-        if (!isCopyable) empty else copyButton(
+        if (!isCopyable) empty else copyButtonComponent.view(
             text = name,
             tooltip = "Copy reference to the clipboard"
         )
-    )
-
-    private
-    fun copyButton(text: String, tooltip: String): View<Intent> = small(
-        attributes {
-            title(tooltip)
-            className("copy-button")
-            onClick { getCopyIntent(text) }
-        }
     )
 }
