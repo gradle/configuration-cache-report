@@ -1,5 +1,6 @@
 package report
 
+import data.PrettyText
 import elmish.Component
 import elmish.View
 import elmish.attributes
@@ -7,25 +8,6 @@ import elmish.code
 import elmish.empty
 import elmish.small
 import elmish.span
-
-
-internal
-data class PrettyText(val fragments: List<Fragment>) {
-
-    sealed class Fragment {
-
-        data class Text(val text: String) : Fragment()
-
-        data class Reference(val name: String) : Fragment()
-    }
-
-    companion object {
-
-        fun ofText(text: String): PrettyText {
-            return PrettyText(listOf(Fragment.Text(text)))
-        }
-    }
-}
 
 
 internal

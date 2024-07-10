@@ -22,8 +22,8 @@ import elmish.elementById
 import elmish.mountComponentAt
 import elmish.tree.Tree
 import elmish.tree.TreeView
-import report.LearnMore
-import report.PrettyText
+import data.LearnMore
+import data.PrettyText
 import kotlin.js.JSON.stringify
 
 

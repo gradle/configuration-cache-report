@@ -34,8 +34,8 @@ import elmish.tree.TreeView
 import elmish.tree.viewSubTrees
 import elmish.ul
 import kotlinx.browser.window
-import report.LearnMore
-import report.PrettyText
+import data.LearnMore
+import data.PrettyText
 import report.PrettyTextComponent
 import report.invisibleBacktick
 import report.invisibleCloseParen
