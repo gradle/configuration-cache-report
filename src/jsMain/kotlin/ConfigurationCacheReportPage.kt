@@ -35,6 +35,7 @@ import elmish.ul
 import elmish.view
 import kotlinx.browser.window
 import report.PrettyText
+import report.PrettyTextComponent
 import report.invisibleBacktick
 import report.invisibleCloseParen
 import report.invisibleOpenParen
@@ -104,10 +105,8 @@ object ConfigurationCacheReportPage :
     Component<ConfigurationCacheReportPage.Model, ConfigurationCacheReportPage.Intent> {
 
     data class Model(
-        val buildName: String?,
-        val cacheAction: String,
+        val heading: PrettyText,
         val cacheActionDescription: PrettyText?,
-        val requestedTasks: String?,
         val documentationLink: String,
         val totalProblems: Int,
         val reportedProblems: Int,
@@ -288,18 +287,7 @@ object ConfigurationCacheReportPage :
     )
 
     private
-    fun displayHeading(model: Model): View<Intent> {
-        val buildName = model.buildName
-        val requestedTasks = model.requestedTasks
-        val manyTasks = requestedTasks?.contains(" ") ?: true
-        return h1(
-            "${model.cacheAction.capitalize()} the configuration cache for ",
-            buildName.view { code(it) },
-            buildName.view { span(" build and ") },
-            requestedTasks?.let { code(it) } ?: span("default"),
-            span(if (manyTasks) " tasks" else " task"),
-        )
-    }
+    fun displayHeading(model: Model): View<Intent> = h1(PrettyTextNoCopy.view(model.heading))
 
     private
     fun Model.inputsSummary() =
@@ -550,14 +538,7 @@ object ConfigurationCacheReportPage :
     )
 
     private
-    fun viewPrettyText(text: PrettyText): View<Intent> = span(
-        text.fragments.map {
-            when (it) {
-                is PrettyText.Fragment.Text -> span(it.text)
-                is PrettyText.Fragment.Reference -> reference(it.name)
-            }
-        }
-    )
+    fun viewPrettyText(text: PrettyText): View<Intent> = PrettyTextWithCopy.view(text)
 
     private
     fun reference(name: String): View<Intent> = span(
@@ -663,6 +644,10 @@ object ConfigurationCacheReportPage :
     }
 
     private
-    fun String.capitalize() =
-        replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+    val PrettyTextNoCopy =
+        PrettyTextComponent(copyableReferences = false) { Intent.Copy(it) }
+
+    private
+    val PrettyTextWithCopy =
+        PrettyTextComponent(copyableReferences = true) { Intent.Copy(it) }
 }

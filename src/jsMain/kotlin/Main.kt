@@ -166,10 +166,8 @@ private
 fun reportPageModelFromJsModel(jsModel: JsModel): ConfigurationCacheReportPage.Model {
     val diagnostics = importDiagnostics(jsModel.diagnostics)
     return ConfigurationCacheReportPage.Model(
-        buildName = jsModel.buildName,
-        cacheAction = jsModel.cacheAction,
+        heading = headingPrettyText(jsModel),
         cacheActionDescription = jsModel.cacheActionDescription?.let(::toPrettyText),
-        requestedTasks = jsModel.requestedTasks,
         documentationLink = jsModel.documentationLink,
         totalProblems = jsModel.totalProblemCount,
         reportedProblems = diagnostics.problems.size,
@@ -192,6 +190,21 @@ fun reportPageModelFromJsModel(jsModel: JsModel): ConfigurationCacheReportPage.M
             incompatibleTaskNodes(diagnostics.incompatibleTasks)
         )
     )
+}
+
+
+private
+fun headingPrettyText(model: JsModel): PrettyText {
+    val buildName = model.buildName
+    val requestedTasks = model.requestedTasks
+    val manyTasks = requestedTasks?.contains(" ") ?: true
+    return PrettyText(listOfNotNull(
+        PrettyText.Fragment.Text("${model.cacheAction.capitalize()} the configuration cache for "),
+        buildName?.let { PrettyText.Fragment.Reference(it) },
+        buildName?.let { PrettyText.Fragment.Text(" build and ") },
+        requestedTasks?.let { PrettyText.Fragment.Reference(it) } ?: PrettyText.Fragment.Text("default"),
+        PrettyText.Fragment.Text(if (manyTasks) " tasks" else " task")
+    ))
 }
 
 
@@ -452,3 +465,8 @@ fun <T> subTreesFromTrie(trie: Trie<T>, state: Tree.ViewState): List<Tree<T>> =
             state
         )
     }.toList()
+
+
+private
+fun String.capitalize() =
+    replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
