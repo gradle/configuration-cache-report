@@ -24,7 +24,6 @@ data class PrettyText(val fragments: List<Fragment>) {
         fun ofText(text: String): PrettyText {
             return PrettyText(listOf(Fragment.Text(text)))
         }
-
     }
 }
 
