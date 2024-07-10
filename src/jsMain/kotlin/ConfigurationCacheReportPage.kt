@@ -35,6 +35,10 @@ import elmish.ul
 import elmish.view
 import kotlinx.browser.window
 import report.PrettyText
+import report.invisibleBacktick
+import report.invisibleCloseParen
+import report.invisibleOpenParen
+import report.invisibleSpace
 
 
 internal
@@ -351,10 +355,10 @@ object ConfigurationCacheReportPage :
     private
     fun countBalloon(count: Int): View<Intent> = span(
         attributes { className("group-selector__count") },
-        invisibleSpace,
-        invisibleOpenParen,
+        invisibleSpace(),
+        invisibleOpenParen(),
         span("$count"),
-        invisibleCloseParen
+        invisibleCloseParen()
     )
 
     private
@@ -557,31 +561,13 @@ object ConfigurationCacheReportPage :
 
     private
     fun reference(name: String): View<Intent> = span(
-        invisibleBacktick,
+        invisibleBacktick(),
         code(name),
-        invisibleBacktick,
+        invisibleBacktick(),
         copyButton(
             text = name,
             tooltip = "Copy reference to the clipboard"
         )
-    )
-
-    private
-    val invisibleBacktick: View<Intent> = invisibleSpanWithTextForCopy("`")
-
-    private
-    val invisibleSpace: View<Intent> = invisibleSpanWithTextForCopy(" ")
-
-    private
-    val invisibleOpenParen: View<Intent> = invisibleSpanWithTextForCopy("(")
-
-    private
-    val invisibleCloseParen: View<Intent> = invisibleSpanWithTextForCopy(")")
-
-    private
-    fun invisibleSpanWithTextForCopy(text: String): View<Intent> = span(
-        attributes { classNames("invisible-text", "text-for-copy") },
-        text
     )
 
     private
