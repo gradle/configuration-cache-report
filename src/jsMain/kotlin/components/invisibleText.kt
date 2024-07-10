@@ -1,4 +1,4 @@
-package report
+package components
 
 import elmish.View
 import elmish.attributes

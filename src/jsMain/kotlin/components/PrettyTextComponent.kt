@@ -1,4 +1,4 @@
-package report
+package components
 
 import data.PrettyText
 import elmish.Component

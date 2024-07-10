@@ -36,11 +36,11 @@ import elmish.ul
 import kotlinx.browser.window
 import data.LearnMore
 import data.PrettyText
-import report.PrettyTextComponent
-import report.invisibleBacktick
-import report.invisibleCloseParen
-import report.invisibleOpenParen
-import report.invisibleSpace
+import components.PrettyTextComponent
+import components.invisibleBacktick
+import components.invisibleCloseParen
+import components.invisibleOpenParen
+import components.invisibleSpace
 
 
 internal
