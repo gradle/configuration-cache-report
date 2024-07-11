@@ -16,6 +16,7 @@
 
 import components.CopyButtonComponent
 import components.PrettyTextComponent
+import components.TreeViewComponent
 import components.invisibleCloseParen
 import components.invisibleOpenParen
 import components.invisibleSpace
@@ -33,12 +34,10 @@ import elmish.div
 import elmish.empty
 import elmish.h1
 import elmish.li
-import elmish.ol
 import elmish.small
 import elmish.span
 import elmish.tree.Tree
 import elmish.tree.TreeView
-import elmish.tree.viewSubTrees
 import elmish.ul
 import kotlinx.browser.window
 
@@ -144,24 +143,42 @@ object ConfigurationCacheReportPage :
         data class SetTab(val tab: Tab) : Intent()
     }
 
+    private val inputsTab = TreeViewComponent({ it: Tree<ProblemNode> ->
+        viewNodeInTree(it, infoCountBalloons = true)
+    }) {
+        Intent.InputTreeIntent(TreeView.Intent.Toggle(it))
+    }
+
+    private val messagesTab = TreeViewComponent(this::viewNodeInTree) {
+        Intent.MessageTreeIntent(TreeView.Intent.Toggle(it))
+    }
+
+    private val locationsTab = TreeViewComponent(this::viewNodeInTree) {
+        Intent.TaskTreeIntent(TreeView.Intent.Toggle(it))
+    }
+
+    private val incompatibleTasksTab = TreeViewComponent(this::viewNodeInTree) {
+        Intent.TaskTreeIntent(TreeView.Intent.Toggle(it))
+    }
+
     override fun step(intent: Intent, model: Model): Model = when (intent) {
         is Intent.TaskTreeIntent -> model.copy(
-            locationTree = TreeView.step(intent.delegate, model.locationTree)
+            locationTree = locationsTab.step(intent.delegate, model.locationTree)
         )
 
         is Intent.MessageTreeIntent -> model.copy(
-            messageTree = TreeView.step(intent.delegate, model.messageTree)
+            messageTree = messagesTab.step(intent.delegate, model.messageTree)
         )
 
         is Intent.InputTreeIntent -> model.copy(
-            inputTree = TreeView.step(intent.delegate, model.inputTree)
+            inputTree = inputsTab.step(intent.delegate, model.inputTree)
         )
 
         is Intent.IncompatibleTaskTreeIntent -> model.copy(
-            incompatibleTaskTree = TreeView.step(intent.delegate, model.incompatibleTaskTree)
+            incompatibleTaskTree = incompatibleTasksTab.step(intent.delegate, model.incompatibleTaskTree)
         )
 
-        is Intent.ToggleStackTracePart -> model.updateNodeAt(intent.location) {
+        is Intent.ToggleStackTracePart -> updateNodeAt(model, intent.location) {
             require(this is ProblemNode.Exception)
             copy(parts = parts.mapAt(intent.partIndex) {
                 it.copy(state = it.state?.toggle())
@@ -179,35 +196,27 @@ object ConfigurationCacheReportPage :
     }
 
     private
-    fun Model.updateNodeAt(
+    fun updateNodeAt(
+        model: Model,
         tree: Intent.TreeIntent,
         update: ProblemNode.() -> ProblemNode
     ) = when (tree) {
-        is Intent.MessageTreeIntent -> copy(
-            messageTree = messageTree.updateNodeAt(tree, update)
+        is Intent.MessageTreeIntent -> model.copy(
+            messageTree = messagesTab.step(tree.delegate, model.messageTree, update)
         )
 
-        is Intent.TaskTreeIntent -> copy(
-            locationTree = locationTree.updateNodeAt(tree, update)
+        is Intent.TaskTreeIntent -> model.copy(
+            locationTree = locationsTab.step(tree.delegate, model.locationTree, update)
         )
 
-        is Intent.InputTreeIntent -> copy(
-            inputTree = inputTree.updateNodeAt(tree, update)
+        is Intent.InputTreeIntent -> model.copy(
+            inputTree = inputsTab.step(tree.delegate, model.inputTree, update)
         )
 
-        is Intent.IncompatibleTaskTreeIntent -> copy(
-            incompatibleTaskTree = incompatibleTaskTree.updateNodeAt(tree, update)
+        is Intent.IncompatibleTaskTreeIntent -> model.copy(
+            incompatibleTaskTree = incompatibleTasksTab.step(tree.delegate, model.incompatibleTaskTree, update)
         )
     }
-
-    private
-    fun ProblemTreeModel.updateNodeAt(
-        tree: Intent.TreeIntent,
-        update: ProblemNode.() -> ProblemNode
-    ): TreeView.Model<ProblemNode> = updateLabelAt(
-        tree.delegate.focus,
-        update
-    )
 
     override fun view(model: Model): View<Intent> = div(
         attributes { className("report-wrapper") },
@@ -239,34 +248,22 @@ object ConfigurationCacheReportPage :
         when (model.tab) {
             Tab.Inputs -> viewInputs(model.inputTree)
             Tab.IncompatibleTasks -> viewIncompatibleTasks(model.incompatibleTaskTree)
-            Tab.ByMessage -> viewTree(model.messageTree, Intent::MessageTreeIntent)
-            Tab.ByLocation -> viewTree(model.locationTree, Intent::TaskTreeIntent)
+            Tab.ByMessage -> messagesTab.view(model.messageTree)
+            Tab.ByLocation -> locationsTab.view(model.locationTree)
         }
     )
 
     private
-    fun viewInputs(inputTree: ProblemTreeModel): View<Intent> =
-        div(
-            attributes { className("inputs") },
-            viewTree(
-                inputTree.tree.focus().children,
-                Intent::InputTreeIntent
-            ) { _, focus ->
-                countBalloon(focus.tree.children.size)
-            }
-        )
+    fun viewInputs(inputTree: ProblemTreeModel): View<Intent> = div(
+        attributes { className("inputs") },
+        inputsTab.view(inputTree)
+    )
 
     private
-    fun viewIncompatibleTasks(incompatibleTaskTree: ProblemTreeModel): View<Intent> =
-        div(
-            attributes { className("incompatibleTasks") },
-            viewTree(
-                incompatibleTaskTree.tree.focus().children,
-                Intent::IncompatibleTaskTreeIntent
-            ) { _, focus ->
-                countBalloon(focus.tree.children.size)
-            }
-        )
+    fun viewIncompatibleTasks(incompatibleTaskTree: ProblemTreeModel): View<Intent> = div(
+        attributes { className("incompatibleTasks") },
+        incompatibleTasksTab.view(incompatibleTaskTree)
+    )
 
     private
     fun displaySummary(model: Model): View<Intent> = div(
@@ -325,58 +322,54 @@ object ConfigurationCacheReportPage :
     )
 
     private
-    fun viewTree(model: ProblemTreeModel, treeIntent: (ProblemTreeIntent) -> Intent.TreeIntent): View<Intent> =
-        viewTree(model.tree.focus().children, treeIntent)
+    fun viewNodeInTree(tree: Tree<ProblemNode>, infoCountBalloons: Boolean = false): View<Intent> = span(
+        when (val labelNode = tree.label) {
+            is ProblemNode.Error -> {
+                treeLabel(
+                    labelNode.label,
+                    labelNode.docLink,
+                    prefix = errorIcon
+                )
+            }
+
+            is ProblemNode.Warning -> {
+                treeLabel(
+                    labelNode.label,
+                    labelNode.docLink,
+                    prefix = warningIcon
+                )
+            }
+
+            is ProblemNode.Info -> {
+                treeLabel(
+                    labelNode.label,
+                    labelNode.docLink,
+                    suffix = if (infoCountBalloons) countBalloon(tree.children.size) else empty
+                )
+            }
+
+            // TODO: handle exception
+//            is ProblemNode.Exception -> {
+//                viewException(treeIntent, focus, labelNode)
+//            }
+
+            else -> {
+                treeLabel(labelNode)
+            }
+        }
+    )
 
     private
-    fun viewTree(
-        subTrees: Sequence<Tree.Focus<ProblemNode>>,
-        treeIntent: (ProblemTreeIntent) -> Intent.TreeIntent,
-        suffixForInfo: (ProblemNode.Info, Tree.Focus<ProblemNode>) -> View<Intent> = { _, _ -> empty }
-    ): View<Intent> = div(
-        ol(
-            viewSubTrees(subTrees) { focus ->
-                when (val labelNode = focus.tree.label) {
-                    is ProblemNode.Error -> {
-                        treeLabel(
-                            treeIntent,
-                            focus,
-                            labelNode.label,
-                            labelNode.docLink,
-                            prefix = errorIcon
-                        )
-                    }
-
-                    is ProblemNode.Warning -> {
-                        treeLabel(
-                            treeIntent,
-                            focus,
-                            labelNode.label,
-                            labelNode.docLink,
-                            prefix = warningIcon
-                        )
-                    }
-
-                    is ProblemNode.Info -> {
-                        treeLabel(
-                            treeIntent,
-                            focus,
-                            labelNode.label,
-                            labelNode.docLink,
-                            suffix = suffixForInfo(labelNode, focus)
-                        )
-                    }
-
-                    is ProblemNode.Exception -> {
-                        viewException(treeIntent, focus, labelNode)
-                    }
-
-                    else -> {
-                        treeLabel(treeIntent, focus, labelNode)
-                    }
-                }
-            }
-        )
+    fun treeLabel(
+        label: ProblemNode,
+        docLink: ProblemNode? = null,
+        prefix: View<Intent> = empty,
+        suffix: View<Intent> = empty
+    ): View<Intent> = span(
+        prefix,
+        viewNode(label),
+        docLink?.let(::viewNode) ?: empty,
+        suffix
     )
 
     private
@@ -439,29 +432,6 @@ object ConfigurationCacheReportPage :
     }
 
     private
-    fun treeLabel(
-        treeIntent: (ProblemTreeIntent) -> Intent,
-        focus: Tree.Focus<ProblemNode>,
-        label: ProblemNode,
-        docLink: ProblemNode? = null,
-        prefix: View<Intent> = empty,
-        suffix: View<Intent> = empty
-    ): View<Intent> = div(
-        treeButtonFor(focus, treeIntent),
-        prefix,
-        viewNode(label),
-        docLink?.let(::viewNode) ?: empty,
-        suffix
-    )
-
-    private
-    fun treeButtonFor(child: Tree.Focus<ProblemNode>, treeIntent: (ProblemTreeIntent) -> Intent): View<Intent> =
-        when {
-            child.tree.isNotEmpty() -> viewTreeButton(child, treeIntent)
-            else -> viewLeafIcon(child)
-        }
-
-    private
     fun viewTreeButton(child: Tree.Focus<ProblemNode>, treeIntent: (ProblemTreeIntent) -> Intent): View<Intent> = span(
         attributes {
             classNames("invisible-text", "tree-btn")
@@ -474,12 +444,6 @@ object ConfigurationCacheReportPage :
             title("Click to ${toggleVerb(child.tree.state)}")
             onClick { treeIntent(TreeView.Intent.Toggle(child)) }
         },
-        copyTextPrefixForTreeNode(child)
-    )
-
-    private
-    fun viewLeafIcon(child: Tree.Focus<ProblemNode>): View<Intent> = span(
-        attributes { classNames("invisible-text", "leaf-icon") },
         copyTextPrefixForTreeNode(child)
     )
 
