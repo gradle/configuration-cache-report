@@ -237,36 +237,12 @@ object ConfigurationCacheReportPage :
     fun viewProblems(model: Model) = div(
         attributes { className("content") },
         when (model.tab) {
-            Tab.Inputs -> viewInputs(model.inputTree)
-            Tab.IncompatibleTasks -> viewIncompatibleTasks(model.incompatibleTaskTree)
+            Tab.Inputs -> viewTree(model.inputTree, Intent::InputTreeIntent)
+            Tab.IncompatibleTasks -> viewTree(model.incompatibleTaskTree, Intent::IncompatibleTaskTreeIntent)
             Tab.ByMessage -> viewTree(model.messageTree, Intent::MessageTreeIntent)
             Tab.ByLocation -> viewTree(model.locationTree, Intent::TaskTreeIntent)
         }
     )
-
-    private
-    fun viewInputs(inputTree: ProblemTreeModel): View<Intent> =
-        div(
-            attributes { className("inputs") },
-            viewTree(
-                inputTree.tree.focus().children,
-                Intent::InputTreeIntent
-            ) { _, focus ->
-                countBalloon(focus.tree.children.size)
-            }
-        )
-
-    private
-    fun viewIncompatibleTasks(incompatibleTaskTree: ProblemTreeModel): View<Intent> =
-        div(
-            attributes { className("incompatibleTasks") },
-            viewTree(
-                incompatibleTaskTree.tree.focus().children,
-                Intent::IncompatibleTaskTreeIntent
-            ) { _, focus ->
-                countBalloon(focus.tree.children.size)
-            }
-        )
 
     private
     fun displaySummary(model: Model): View<Intent> = div(
@@ -331,8 +307,7 @@ object ConfigurationCacheReportPage :
     private
     fun viewTree(
         subTrees: Sequence<Tree.Focus<ProblemNode>>,
-        treeIntent: (ProblemTreeIntent) -> Intent.TreeIntent,
-        suffixForInfo: (ProblemNode.Info, Tree.Focus<ProblemNode>) -> View<Intent> = { _, _ -> empty }
+        treeIntent: (ProblemTreeIntent) -> Intent.TreeIntent
     ): View<Intent> = div(
         ol(
             viewSubTrees(subTrees) { focus ->
@@ -363,7 +338,7 @@ object ConfigurationCacheReportPage :
                             focus,
                             labelNode.label,
                             labelNode.docLink,
-                            suffix = suffixForInfo(labelNode, focus)
+                            suffix = countBalloon(focus.tree.children.size)
                         )
                     }
 
