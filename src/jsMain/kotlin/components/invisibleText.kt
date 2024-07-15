@@ -5,48 +5,28 @@ import elmish.attributes
 import elmish.span
 
 
-@Suppress("UNCHECKED_CAST")
 internal
-fun <Intent> invisibleBacktick(): View<Intent> =
-    invisibleBacktick as View<Intent>
+val invisibleBacktick: View<Nothing> = invisibleSpanWithTextForCopy("`")
 
 
-@Suppress("UNCHECKED_CAST")
 internal
-fun <Intent> invisibleSpace(): View<Intent> =
-    invisibleSpace as View<Intent>
+val invisibleSpace: View<Nothing> = invisibleSpanWithTextForCopy(" ")
 
 
-@Suppress("UNCHECKED_CAST")
 internal
-fun <Intent> invisibleOpenParen(): View<Intent> =
-    invisibleOpenParen as View<Intent>
+val invisibleOpenParen: View<Nothing> = invisibleSpanWithTextForCopy("(")
 
 
-@Suppress("UNCHECKED_CAST")
 internal
-fun <Intent> invisibleCloseParen(): View<Intent> =
-    invisibleCloseParen as View<Intent>
+val invisibleCloseParen: View<Nothing> = invisibleSpanWithTextForCopy(")")
 
 
+/**
+ * Creates an element that is not visible on the page and does not affect the layout,
+ * but is copied in the clipboard as [text] together with the surrounding content.
+ */
 private
-val invisibleBacktick: View<*> = invisibleSpanWithTextForCopy("`")
-
-
-private
-val invisibleSpace: View<*> = invisibleSpanWithTextForCopy(" ")
-
-
-private
-val invisibleOpenParen: View<*> = invisibleSpanWithTextForCopy("(")
-
-
-private
-val invisibleCloseParen: View<*> = invisibleSpanWithTextForCopy(")")
-
-
-private
-fun invisibleSpanWithTextForCopy(text: String): View<Unit> = span(
+fun invisibleSpanWithTextForCopy(text: String): View<Nothing> = span(
     attributes { classNames("invisible-text", "text-for-copy") },
     text
 )

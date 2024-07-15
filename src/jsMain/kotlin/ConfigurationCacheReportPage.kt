@@ -283,10 +283,10 @@ object ConfigurationCacheReportPage :
     private
     fun countBalloon(count: Int): View<Intent> = span(
         attributes { className("group-selector__count") },
-        invisibleSpace(),
-        invisibleOpenParen(),
+        invisibleSpace,
+        invisibleOpenParen,
         span("$count"),
-        invisibleCloseParen()
+        invisibleCloseParen
     )
 
     private

@@ -33,9 +33,9 @@ class PrettyTextComponent<Intent>(
 
     private
     fun reference(name: String, isCopyable: Boolean): View<Intent> = span(
-        invisibleBacktick(),
+        invisibleBacktick,
         code(name),
-        invisibleBacktick(),
+        invisibleBacktick,
         if (!isCopyable) empty else copyButtonComponent.view(
             text = name,
             tooltip = "Copy reference to the clipboard"
