@@ -51,26 +51,6 @@
     margin: 0;
 }
 
-.inputs {
-    font-size: 0.875rem;
-    overflow-x: auto;
-    white-space: nowrap;
-}
-
-.inputs ol:first-of-type {
-    margin: 0;
-}
-
-.incompatibleTasks {
-    font-size: 0.875rem;
-    overflow-x: auto;
-    white-space: nowrap;
-}
-
-.incompatibleTasks ol:first-of-type {
-    margin: 0;
-}
-
 .tree-btn {
     cursor: pointer;
     display: inline-block;

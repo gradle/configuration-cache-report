@@ -14,7 +14,15 @@
  * limitations under the License.
  */
 
+import components.CopyButtonComponent
+import components.PrettyTextComponent
+import components.invisibleCloseParen
+import components.invisibleOpenParen
+import components.invisibleSpace
+import data.LearnMore
+import data.PrettyText
 import data.mapAt
+import data.sIfPlural
 import elmish.Component
 import elmish.View
 import elmish.a
@@ -32,7 +40,6 @@ import elmish.tree.Tree
 import elmish.tree.TreeView
 import elmish.tree.viewSubTrees
 import elmish.ul
-import elmish.view
 import kotlinx.browser.window
 
 
@@ -82,18 +89,6 @@ sealed class ProblemNode {
 
 
 internal
-data class PrettyText(val fragments: List<Fragment>) {
-
-    sealed class Fragment {
-
-        data class Text(val text: String) : Fragment()
-
-        data class Reference(val name: String) : Fragment()
-    }
-}
-
-
-internal
 typealias ProblemTreeModel = TreeView.Model<ProblemNode>
 
 
@@ -111,20 +106,14 @@ object ConfigurationCacheReportPage :
     Component<ConfigurationCacheReportPage.Model, ConfigurationCacheReportPage.Intent> {
 
     data class Model(
-        val buildName: String?,
-        val cacheAction: String,
-        val cacheActionDescription: PrettyText?,
-        val requestedTasks: String?,
-        val documentationLink: String,
-        val totalProblems: Int,
-        val reportedProblems: Int,
+        val heading: PrettyText,
+        val summary: List<PrettyText>,
+        val learnMore: LearnMore,
         val messageTree: ProblemTreeModel,
         val locationTree: ProblemTreeModel,
-        val reportedInputs: Int,
         val inputTree: ProblemTreeModel,
-        val reportedIncompatibleTasks: Int,
         val incompatibleTaskTree: ProblemTreeModel,
-        val tab: Tab = if (totalProblems == 0) Tab.Inputs else Tab.ByMessage
+        val tab: Tab
     )
 
     enum class Tab(val text: String) {
@@ -230,17 +219,17 @@ object ConfigurationCacheReportPage :
     fun viewHeader(model: Model): View<Intent> = div(
         attributes { className("header") },
         div(attributes { className("gradle-logo") }),
-        learnMore(model.documentationLink),
+        learnMore(model.learnMore),
         div(
             attributes { className("title") },
             displaySummary(model),
         ),
         div(
             attributes { className("groups") },
-            displayTabButton(Tab.Inputs, model.tab, model.reportedInputs),
+            displayTabButton(Tab.Inputs, model.tab, model.inputTree.childCount),
             displayTabButton(Tab.ByMessage, model.tab, model.messageTree.childCount),
             displayTabButton(Tab.ByLocation, model.tab, model.locationTree.childCount),
-            displayTabButton(Tab.IncompatibleTasks, model.tab, model.reportedIncompatibleTasks)
+            displayTabButton(Tab.IncompatibleTasks, model.tab, model.incompatibleTaskTree.childCount)
         )
     )
 
@@ -248,100 +237,32 @@ object ConfigurationCacheReportPage :
     fun viewProblems(model: Model) = div(
         attributes { className("content") },
         when (model.tab) {
-            Tab.Inputs -> viewInputs(model.inputTree)
-            Tab.IncompatibleTasks -> viewIncompatibleTasks(model.incompatibleTaskTree)
+            Tab.Inputs -> viewTree(model.inputTree, Intent::InputTreeIntent)
+            Tab.IncompatibleTasks -> viewTree(model.incompatibleTaskTree, Intent::IncompatibleTaskTreeIntent)
             Tab.ByMessage -> viewTree(model.messageTree, Intent::MessageTreeIntent)
             Tab.ByLocation -> viewTree(model.locationTree, Intent::TaskTreeIntent)
         }
     )
 
     private
-    fun viewInputs(inputTree: ProblemTreeModel): View<Intent> =
-        div(
-            attributes { className("inputs") },
-            viewTree(
-                inputTree.tree.focus().children,
-                Intent::InputTreeIntent
-            ) { _, focus ->
-                countBalloon(focus.tree.children.size)
-            }
-        )
-
-    private
-    fun viewIncompatibleTasks(incompatibleTaskTree: ProblemTreeModel): View<Intent> =
-        div(
-            attributes { className("incompatibleTasks") },
-            viewTree(
-                incompatibleTaskTree.tree.focus().children,
-                Intent::IncompatibleTaskTreeIntent
-            ) { _, focus ->
-                countBalloon(focus.tree.children.size)
-            }
-        )
-
-    private
     fun displaySummary(model: Model): View<Intent> = div(
         displayHeading(model),
-        model.cacheActionDescription.view { displayActionDescription(it) },
-        model.cacheActionDescription.view { br() },
-        small(model.inputsSummary()),
-        br(),
-        small(model.problemsSummary()),
+        viewSummaryParagraphs(model),
     )
 
     private
-    fun displayActionDescription(description: PrettyText): View<Intent> = small(
-        viewPrettyText(description)
+    fun viewSummaryParagraphs(model: Model): View<Intent> = div(
+        model.summary.flatMapIndexed { index, item ->
+            if (index == 0) listOf(viewSummaryParagraph(item))
+            else listOf(br(), viewSummaryParagraph(item))
+        }
     )
 
     private
-    fun displayHeading(model: Model): View<Intent> {
-        val buildName = model.buildName
-        val requestedTasks = model.requestedTasks
-        val manyTasks = requestedTasks?.contains(" ") ?: true
-        return h1(
-            "${model.cacheAction.capitalize()} the configuration cache for ",
-            buildName.view { code(it) },
-            buildName.view { span(" build and ") },
-            requestedTasks?.let { code(it) } ?: span("default"),
-            span(if (manyTasks) " tasks" else " task"),
-        )
-    }
+    fun viewSummaryParagraph(content: PrettyText): View<Intent> = small(viewPrettyText(content))
 
     private
-    fun Model.inputsSummary() =
-        found(reportedInputs, "build configuration input").let {
-            if (reportedInputs > 0) "$it and will cause the cache to be discarded when ${itsOrTheir(reportedInputs)} value change"
-            else it
-        }
-
-    private
-    fun Model.problemsSummary() =
-        found(totalProblems, "problem").let {
-            if (totalProblems > reportedProblems) "$it, only the first $reportedProblems ${wasOrWere(reportedProblems)} included in this report"
-            else it
-        }
-
-    private
-    fun found(count: Int, what: String) =
-        "${count.toStringOrNo()} ${what.sIfPlural(count)} ${wasOrWere(count)} found"
-
-    private
-    fun Int.toStringOrNo() =
-        if (this != 0) toString()
-        else "No"
-
-    private
-    fun String.sIfPlural(count: Int) =
-        if (count < 2) this else "${this}s"
-
-    private
-    fun wasOrWere(count: Int) =
-        if (count <= 1) "was" else "were"
-
-    private
-    fun itsOrTheir(count: Int) =
-        if (count <= 1) "its" else "their"
+    fun displayHeading(model: Model): View<Intent> = h1(PrettyTextNoCopy.view(model.heading))
 
     private
     fun displayTabButton(tab: Tab, activeTab: Tab, problemsCount: Int): View<Intent> = div(
@@ -369,12 +290,12 @@ object ConfigurationCacheReportPage :
     )
 
     private
-    fun learnMore(documentationLink: String): View<Intent> = div(
+    fun learnMore(learnMore: LearnMore): View<Intent> = div(
         attributes { className("learn-more") },
         span("Learn more about the "),
         a(
-            attributes { href(documentationLink) },
-            "Gradle Configuration Cache"
+            attributes { href(learnMore.documentationLink) },
+            learnMore.text
         ),
         span(".")
     )
@@ -386,8 +307,7 @@ object ConfigurationCacheReportPage :
     private
     fun viewTree(
         subTrees: Sequence<Tree.Focus<ProblemNode>>,
-        treeIntent: (ProblemTreeIntent) -> Intent.TreeIntent,
-        suffixForInfo: (ProblemNode.Info, Tree.Focus<ProblemNode>) -> View<Intent> = { _, _ -> empty }
+        treeIntent: (ProblemTreeIntent) -> Intent.TreeIntent
     ): View<Intent> = div(
         ol(
             viewSubTrees(subTrees) { focus ->
@@ -418,7 +338,7 @@ object ConfigurationCacheReportPage :
                             focus,
                             labelNode.label,
                             labelNode.docLink,
-                            suffix = suffixForInfo(labelNode, focus)
+                            suffix = countBalloon(focus.tree.children.size)
                         )
                     }
 
@@ -436,51 +356,49 @@ object ConfigurationCacheReportPage :
 
     private
     fun viewNode(node: ProblemNode): View<Intent> = when (node) {
-        is ProblemNode.Project -> span(
-            span("project "),
-            reference(node.path)
-        )
+        is ProblemNode.Project -> viewPrettyText {
+            text("project ")
+            ref(node.path)
+        }
 
-        is ProblemNode.Property -> span(
-            span("${node.kind} "),
-            reference(node.name),
-            span(" of "),
-            reference(node.owner)
-        )
+        is ProblemNode.Property -> viewPrettyText {
+            text("${node.kind} ")
+            ref(node.name)
+            text(" of ")
+            ref(node.owner)
+        }
 
-        is ProblemNode.SystemProperty -> span(
-            span("system property "),
-            reference(node.name),
-        )
+        is ProblemNode.SystemProperty -> viewPrettyText {
+            text("system property ")
+            ref(node.name)
+        }
 
-        is ProblemNode.Task -> span(
-            span("task "),
-            reference(node.path),
-            span(" of type "),
-            reference(node.type)
-        )
+        is ProblemNode.Task -> viewPrettyText {
+            text("task ")
+            ref(node.path)
+            text(" of type ")
+            ref(node.type)
+        }
 
-        is ProblemNode.Bean -> span(
-            span("bean of type "),
-            reference(node.type)
-        )
+        is ProblemNode.Bean -> viewPrettyText {
+            text("bean of type ")
+            ref(node.type)
+        }
 
-        is ProblemNode.BuildLogic -> span(
-            span(node.location)
-        )
+        is ProblemNode.BuildLogic -> viewPrettyText {
+            text(node.location)
+        }
 
-        is ProblemNode.BuildLogicClass -> span(
-            span("class "),
-            reference(node.type)
-        )
+        is ProblemNode.BuildLogicClass -> viewPrettyText {
+            text("class ")
+            ref(node.type)
+        }
 
-        is ProblemNode.Label -> span(
-            node.text
-        )
+        is ProblemNode.Label -> viewPrettyText {
+            text(node.text)
+        }
 
-        is ProblemNode.Message -> viewPrettyText(
-            node.prettyText
-        )
+        is ProblemNode.Message -> viewPrettyText(node.prettyText)
 
         is ProblemNode.Link -> a(
             attributes {
@@ -557,52 +475,12 @@ object ConfigurationCacheReportPage :
     )
 
     private
-    fun viewPrettyText(text: PrettyText): View<Intent> = span(
-        text.fragments.map {
-            when (it) {
-                is PrettyText.Fragment.Text -> span(it.text)
-                is PrettyText.Fragment.Reference -> reference(it.name)
-            }
-        }
-    )
+    fun viewPrettyText(text: PrettyText): View<Intent> =
+        PrettyTextWithCopy.view(text)
 
     private
-    fun reference(name: String): View<Intent> = span(
-        invisibleBacktick,
-        code(name),
-        invisibleBacktick,
-        copyButton(
-            text = name,
-            tooltip = "Copy reference to the clipboard"
-        )
-    )
-
-    private
-    val invisibleBacktick: View<Intent> = invisibleSpanWithTextForCopy("`")
-
-    private
-    val invisibleSpace: View<Intent> = invisibleSpanWithTextForCopy(" ")
-
-    private
-    val invisibleOpenParen: View<Intent> = invisibleSpanWithTextForCopy("(")
-
-    private
-    val invisibleCloseParen: View<Intent> = invisibleSpanWithTextForCopy(")")
-
-    private
-    fun invisibleSpanWithTextForCopy(text: String): View<Intent> = span(
-        attributes { classNames("invisible-text", "text-for-copy") },
-        text
-    )
-
-    private
-    fun copyButton(text: String, tooltip: String): View<Intent> = small(
-        attributes {
-            title(tooltip)
-            className("copy-button")
-            onClick { Intent.Copy(text) }
-        }
-    )
+    fun viewPrettyText(textBuilder: PrettyText.Builder.() -> Unit): View<Intent> =
+        PrettyTextWithCopy.view(PrettyText.build(textBuilder))
 
     private
     fun viewException(
@@ -612,7 +490,7 @@ object ConfigurationCacheReportPage :
     ): View<Intent> = div(
         viewTreeButton(child, treeIntent),
         span("Exception"),
-        span(copyButton(text = node.fullText, tooltip = "Copy exception to the clipboard")),
+        span(CopyButton.view(text = node.fullText, tooltip = "Copy exception to the clipboard")),
         node.summary?.let { span(" ") } ?: empty,
         node.summary?.let { viewPrettyText(it) } ?: empty,
         when (child.tree.state) {
@@ -688,6 +566,14 @@ object ConfigurationCacheReportPage :
     }
 
     private
-    fun String.capitalize() =
-        replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+    val PrettyTextNoCopy =
+        PrettyTextComponent<Intent>()
+
+    private
+    val PrettyTextWithCopy =
+        PrettyTextComponent<Intent> { Intent.Copy(it) }
+
+    private
+    val CopyButton =
+        CopyButtonComponent { Intent.Copy(it) }
 }
