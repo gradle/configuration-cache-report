@@ -10,12 +10,8 @@ import elmish.span
 
 internal
 class PrettyTextComponent<Intent>(
-    private val copyableReferences: Boolean,
-    getCopyIntent: (String) -> Intent,
+    private val getCopyIntent: ((String) -> Intent)? = null
 ) : Component<PrettyText, Intent> {
-
-    private
-    val copyButtonComponent = CopyButtonComponent(getCopyIntent)
 
     override fun view(model: PrettyText): View<Intent> = viewPrettyText(model)
 
@@ -26,19 +22,21 @@ class PrettyTextComponent<Intent>(
         model.fragments.map {
             when (it) {
                 is PrettyText.Fragment.Text -> span(it.text)
-                is PrettyText.Fragment.Reference -> reference(it.name, copyableReferences)
+                is PrettyText.Fragment.Reference -> reference(it.name)
             }
         }
     )
 
     private
-    fun reference(name: String, isCopyable: Boolean): View<Intent> = span(
+    fun reference(name: String): View<Intent> = span(
         invisibleBacktick,
         code(name),
         invisibleBacktick,
-        if (!isCopyable) empty else copyButtonComponent.view(
-            text = name,
-            tooltip = "Copy reference to the clipboard"
-        )
+        getCopyIntent?.let { copy ->
+            CopyButtonComponent(copy).view(
+                text = name,
+                tooltip = "Copy reference to the clipboard"
+            )
+        } ?: empty
     )
 }

@@ -567,11 +567,11 @@ object ConfigurationCacheReportPage :
 
     private
     val PrettyTextNoCopy =
-        PrettyTextComponent(copyableReferences = false) { Intent.Copy(it) }
+        PrettyTextComponent<Intent>()
 
     private
     val PrettyTextWithCopy =
-        PrettyTextComponent(copyableReferences = true) { Intent.Copy(it) }
+        PrettyTextComponent<Intent> { Intent.Copy(it) }
 
     private
     val CopyButton =
