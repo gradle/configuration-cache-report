@@ -2,6 +2,7 @@
 function configurationCacheProblems() {
     return (
         {
+            "reportType": "problems",
             "buildName": "sampleProject",
             "cacheAction": "storing",
             "cacheActionDescription": [{"text": "Calculating task graph as configuration cache cannot be reused because file"}, {"name": "build.gradle"}, {"text": " has changed."}],
@@ -12,6 +13,7 @@ function configurationCacheProblems() {
                 {
                     "trace": [{"kind": "BuildLogic", "location": "build file 'build.gradle'"}],
                     "problem": [{"text": "invocation of "}, {"name": "Task.project"}, {"text": " at execution time is unsupported."}],
+                    "problemDetails": [{"text": "dt1 "}, {"name": "name detail"}, {"text": " dt2."}],
                     "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:requirements:use_project_during_execution",
                     "error": {
                         "summary": [{"text": "at "}, {"name": "build_44nw1yvono72kvlw7g0lm2rd7$_run_closure1$_closure2.doCall(/Users/paul/src/gradle-related/gradle/subprojects/docs/src/snippets/configurationCache/problemsGroovy/groovy/build.gradle:5)"}],

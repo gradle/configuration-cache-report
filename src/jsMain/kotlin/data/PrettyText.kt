@@ -1,7 +1,6 @@
 package data
 
 
-internal
 data class PrettyText(val fragments: List<Fragment>) {
 
     sealed class Fragment {

@@ -28,11 +28,20 @@ import kotlin.js.JSON.stringify
 
 
 fun main() {
-    mountComponentAt(
-        elementById("report"),
-        ConfigurationCacheReportPage,
-        reportPageModelFromJsModel(configurationCacheProblems())
-    )
+    val jsModel = configurationCacheProblems()
+    if (jsModel.reportType == "problems") {
+        mountComponentAt(
+            elementById("report"),
+            ProblemsReportPage,
+            reportProblemsPageModelFromJsModel(jsModel)
+        )
+    } else {
+        mountComponentAt(
+            elementById("report"),
+            ConfigurationCacheReportPage,
+            reportPageModelFromJsModel(jsModel)
+        )
+    }
 }
 
 
@@ -42,9 +51,9 @@ fun main() {
 private
 external val configurationCacheProblems: () -> JsModel
 
-
 private
 external interface JsModel {
+    val reportType: String?
     val buildName: String?
     val cacheAction: String
     val requestedTasks: String?
@@ -137,21 +146,18 @@ external interface JSBuildLogicClass : JsTrace {
 }
 
 
-private
 external interface JsMessageFragment {
     val text: String?
     val name: String?
 }
 
 
-private
 external interface JsError {
     val summary: Array<JsMessageFragment>?
     val parts: Array<JsStackTracePart>?
 }
 
 
-private
 external interface JsStackTracePart {
     val text: String?
     val internalText: String?
@@ -194,6 +200,34 @@ fun reportPageModelFromJsModel(jsModel: JsModel): ConfigurationCacheReportPage.M
     )
 }
 
+private
+fun reportProblemsPageModelFromJsModel(jsModel: JsModel): ProblemsReportPage.Model {
+    val diagnostics = importDiagnostics(jsModel.diagnostics)
+//    val totalProblems = jsModel.totalProblemCount
+    return ProblemsReportPage.Model(
+        heading = headingProblemsReportPrettyText(jsModel),
+        summary = summaryProblemsReportPrettyText(jsModel, diagnostics),
+        learnMore = LearnMore("Problems report", jsModel.documentationLink),
+        messageTree = treeModelFor(
+            ProblemNode.Label(ProblemsReportPage.Tab.ByMessage.text),
+            problemNodesByMessage(diagnostics.problems)
+        ),
+//        locationTree = treeModelFor(
+//            ProblemNode.Label(ProblemsReportPage.Tab.ByLocation.text),
+//            problemNodesByLocation(diagnostics.problems)
+//        ),
+//        inputTree = treeModelFor(
+//            ProblemNode.Label(ProblemsReportPage.Tab.Inputs.text),
+//            inputNodes(diagnostics.inputs)
+//        ),
+//        incompatibleTaskTree = treeModelFor(
+//            ProblemNode.Label(ProblemsReportPage.Tab.IncompatibleTasks.text),
+//            incompatibleTaskNodes(diagnostics.incompatibleTasks)
+//        ),
+        tab = ProblemsReportPage.Tab.ByMessage
+    )
+}
+
 
 private
 fun headingPrettyText(model: JsModel): PrettyText {
@@ -211,7 +245,36 @@ fun headingPrettyText(model: JsModel): PrettyText {
 
 
 private
+fun headingProblemsReportPrettyText(model: JsModel): PrettyText {
+    val buildName = model.buildName
+    val requestedTasks = model.requestedTasks
+    val manyTasks = requestedTasks?.contains(" ") ?: true
+    return PrettyText(listOfNotNull(
+        PrettyText.Fragment.Text("Problems report for "),
+        buildName?.let { PrettyText.Fragment.Reference(it) },
+        buildName?.let { PrettyText.Fragment.Text(" build and ") },
+        requestedTasks?.let { PrettyText.Fragment.Reference(it) } ?: PrettyText.Fragment.Text("default"),
+        PrettyText.Fragment.Text(if (manyTasks) " tasks" else " task")
+    ))
+}
+
+
+private
 fun summaryPrettyText(jsModel: JsModel, diagnostics: ImportedDiagnostics): List<PrettyText> {
+    val cacheActionDescription = jsModel.cacheActionDescription?.let(::toPrettyText)
+    val inputsSummary = PrettyText.ofText(inputsSummary(diagnostics))
+    val problemsSummary = PrettyText.ofText(problemsSummary(jsModel, diagnostics))
+
+    return listOfNotNull(
+        cacheActionDescription,
+        inputsSummary,
+        problemsSummary,
+    )
+}
+
+
+private
+fun summaryProblemsReportPrettyText(jsModel: JsModel, diagnostics: ImportedDiagnostics): List<PrettyText> {
     val cacheActionDescription = jsModel.cacheActionDescription?.let(::toPrettyText)
     val inputsSummary = PrettyText.ofText(inputsSummary(diagnostics))
     val problemsSummary = PrettyText.ofText(problemsSummary(jsModel, diagnostics))

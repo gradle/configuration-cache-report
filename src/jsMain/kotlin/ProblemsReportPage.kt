@@ -43,82 +43,26 @@ import elmish.ul
 import kotlinx.browser.window
 
 
-sealed class ProblemNode {
-
-    data class Error(val label: ProblemNode, val docLink: ProblemNode?) : ProblemNode()
-
-    data class Warning(val label: ProblemNode, val docLink: ProblemNode?) : ProblemNode()
-
-    data class Info(val label: ProblemNode, val docLink: ProblemNode?) : ProblemNode()
-
-    data class Project(val path: String) : ProblemNode()
-
-    data class Task(val path: String, val type: String) : ProblemNode()
-
-    data class TaskPath(val path: String) : ProblemNode()
-
-    data class Bean(val type: String) : ProblemNode()
-
-    data class SystemProperty(val name: String) : ProblemNode()
-
-    data class Property(val kind: String, val name: String, val owner: String) : ProblemNode()
-
-    data class BuildLogic(val location: String) : ProblemNode()
-
-    data class BuildLogicClass(val type: String) : ProblemNode()
-
-    data class Label(val text: String) : ProblemNode()
-
-    data class Link(val href: String, val label: String) : ProblemNode()
-
-    data class Message(val prettyText: PrettyText) : ProblemNode()
-
-    data class Exception(
-        val summary: PrettyText?,
-        val fullText: String,
-        val parts: List<StackTracePart>
-    ) : ProblemNode()
-
-    data class StackTracePart(
-        val lines: List<String>,
-        val state: Tree.ViewState?
-    )
-}
-
-
 internal
-typealias ProblemTreeModel = TreeView.Model<ProblemNode>
-
-
-internal
-typealias ProblemTreeIntent = TreeView.Intent<ProblemNode>
-
-
-internal
-val ProblemTreeModel.childCount: Int
-    get() = tree.children.size
-
-
-internal
-object ConfigurationCacheReportPage :
-    Component<ConfigurationCacheReportPage.Model, ConfigurationCacheReportPage.Intent> {
+object ProblemsReportPage :
+    Component<ProblemsReportPage.Model, ProblemsReportPage.Intent> {
 
     data class Model(
         val heading: PrettyText,
         val summary: List<PrettyText>,
         val learnMore: LearnMore,
         val messageTree: ProblemTreeModel,
-        val locationTree: ProblemTreeModel,
-        val inputTree: ProblemTreeModel,
-        val incompatibleTaskTree: ProblemTreeModel,
+//        val locationTree: ProblemTreeModel,
+//        val inputTree: ProblemTreeModel,
+//        val incompatibleTaskTree: ProblemTreeModel,
         val tab: Tab
     )
 
     enum class Tab(val text: String) {
-        Inputs("Build configuration inputs"),
+//        Inputs("Build configuration inputs"),
         ByMessage("Problems grouped by message"),
-        ByLocation("Problems grouped by location"),
-        IncompatibleTasks("Incompatible tasks")
+//        ByLocation("Problems grouped by location"),
+//        IncompatibleTasks("Incompatible tasks")
     }
 
     sealed class Intent {
@@ -127,13 +71,13 @@ object ConfigurationCacheReportPage :
             abstract val delegate: ProblemTreeIntent
         }
 
-        data class TaskTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
+//        data class TaskTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
         data class MessageTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
-        data class InputTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
+//        data class InputTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
-        data class IncompatibleTaskTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
+//        data class IncompatibleTaskTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
         data class ToggleStackTracePart(val partIndex: Int, val location: TreeIntent) : Intent()
 
@@ -143,21 +87,21 @@ object ConfigurationCacheReportPage :
     }
 
     override fun step(intent: Intent, model: Model): Model = when (intent) {
-        is Intent.TaskTreeIntent -> model.copy(
-            locationTree = TreeView.step(intent.delegate, model.locationTree)
-        )
+//        is Intent.TaskTreeIntent -> model.copy(
+//            locationTree = TreeView.step(intent.delegate, model.locationTree)
+//        )
 
         is Intent.MessageTreeIntent -> model.copy(
             messageTree = TreeView.step(intent.delegate, model.messageTree)
         )
 
-        is Intent.InputTreeIntent -> model.copy(
-            inputTree = TreeView.step(intent.delegate, model.inputTree)
-        )
-
-        is Intent.IncompatibleTaskTreeIntent -> model.copy(
-            incompatibleTaskTree = TreeView.step(intent.delegate, model.incompatibleTaskTree)
-        )
+//        is Intent.InputTreeIntent -> model.copy(
+//            inputTree = TreeView.step(intent.delegate, model.inputTree)
+//        )
+//
+//        is Intent.IncompatibleTaskTreeIntent -> model.copy(
+//            incompatibleTaskTree = TreeView.step(intent.delegate, model.incompatibleTaskTree)
+//        )
 
         is Intent.ToggleStackTracePart -> model.updateNodeAt(intent.location) {
             require(this is ProblemNode.Exception)
@@ -185,17 +129,17 @@ object ConfigurationCacheReportPage :
             messageTree = messageTree.updateNodeAt(tree, update)
         )
 
-        is Intent.TaskTreeIntent -> copy(
-            locationTree = locationTree.updateNodeAt(tree, update)
-        )
-
-        is Intent.InputTreeIntent -> copy(
-            inputTree = inputTree.updateNodeAt(tree, update)
-        )
-
-        is Intent.IncompatibleTaskTreeIntent -> copy(
-            incompatibleTaskTree = incompatibleTaskTree.updateNodeAt(tree, update)
-        )
+//        is Intent.TaskTreeIntent -> copy(
+//            locationTree = locationTree.updateNodeAt(tree, update)
+//        )
+//
+//        is Intent.InputTreeIntent -> copy(
+//            inputTree = inputTree.updateNodeAt(tree, update)
+//        )
+//
+//        is Intent.IncompatibleTaskTreeIntent -> copy(
+//            incompatibleTaskTree = incompatibleTaskTree.updateNodeAt(tree, update)
+//        )
     }
 
     private
@@ -224,10 +168,10 @@ object ConfigurationCacheReportPage :
         ),
         div(
             attributes { className("groups") },
-            displayTabButton(Tab.Inputs, model.tab, model.inputTree.childCount),
+//            displayTabButton(Tab.Inputs, model.tab, model.inputTree.childCount),
             displayTabButton(Tab.ByMessage, model.tab, model.messageTree.childCount),
-            displayTabButton(Tab.ByLocation, model.tab, model.locationTree.childCount),
-            displayTabButton(Tab.IncompatibleTasks, model.tab, model.incompatibleTaskTree.childCount)
+//            displayTabButton(Tab.ByLocation, model.tab, model.locationTree.childCount),
+//            displayTabButton(Tab.IncompatibleTasks, model.tab, model.incompatibleTaskTree.childCount)
         )
     )
 
@@ -235,10 +179,10 @@ object ConfigurationCacheReportPage :
     fun viewProblems(model: Model) = div(
         attributes { className("content") },
         when (model.tab) {
-            Tab.Inputs -> viewTree(model.inputTree, Intent::InputTreeIntent)
-            Tab.IncompatibleTasks -> viewTree(model.incompatibleTaskTree, Intent::IncompatibleTaskTreeIntent)
+//            Tab.Inputs -> viewTree(model.inputTree, Intent::InputTreeIntent)
+//            Tab.IncompatibleTasks -> viewTree(model.incompatibleTaskTree, Intent::IncompatibleTaskTreeIntent)
             Tab.ByMessage -> viewTree(model.messageTree, Intent::MessageTreeIntent)
-            Tab.ByLocation -> viewTree(model.locationTree, Intent::TaskTreeIntent)
+//            Tab.ByLocation -> viewTree(model.locationTree, Intent::TaskTreeIntent)
         }
     )
 
