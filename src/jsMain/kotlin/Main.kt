@@ -19,6 +19,7 @@ import configurationCache.JsModel
 import configurationCache.reportPageModelFromJsModel
 import elmish.elementById
 import elmish.mountComponentAt
+import problemReport.JsProblem
 import problemReport.ProblemReportJsModel
 import problemReport.ProblemsReportPage
 import problemReport.reportProblemsReportPageModelFromJsModel
@@ -34,10 +35,11 @@ fun main() {
         )
     }
     else {
+        val problemReportJsModel = jsModel.problemsReport.unsafeCast<ProblemReportJsModel>()
         mountComponentAt(
             elementById("report"),
             ProblemsReportPage,
-            reportProblemsReportPageModelFromJsModel(jsModel.problemsReport.unsafeCast<ProblemReportJsModel>())
+            reportProblemsReportPageModelFromJsModel(problemReportJsModel, jsModel.diagnostics.unsafeCast<Array<JsProblem>>())
         )
     }
 }

@@ -17,7 +17,7 @@ external interface JsProblem {
 external interface ProblemReportJsModel{
     val buildName: String?
     val requestedTasks: String?
-    val cacheActionDescription: Array<JsMessageFragment>
+    val description: Array<JsMessageFragment>?
     val documentationLink: String
     val totalProblemCount: Int
     val diagnostics: Array<JsProblem>
