@@ -1,9 +1,9 @@
 package configurationCache
 
 import components.ProblemNode
-import data.*
 import data.LearnMore
 import data.PrettyText
+import data.Trie
 import data.found
 import data.itsOrTheir
 import data.wasOrWere
@@ -46,8 +46,10 @@ fun reportPageModelFromJsModel(jsModel: JsModel): ConfigurationCacheReportPage.M
     )
 }
 
+
 fun String.capitalize() =
     replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+
 
 private
 fun headingPrettyText(model: JsModel): PrettyText {
@@ -205,6 +207,7 @@ fun problemNodeFor(problem: ImportedProblem) = errorOrWarningNodeFor(
     docLinkFor(problem.problem)
 )
 
+
 private
 fun toProblemNode(trace: JsTrace): ProblemNode = when (trace.kind) {
     "Project" -> trace.unsafeCast<JsTraceProject>().run {
@@ -272,6 +275,7 @@ fun errorCauseNodeFor(diagnostic: JsDiagnostic): ProblemNode? {
     val error = diagnostic.error ?: return null
     return problemNodeForError(error)
 }
+
 
 fun problemNodeForError(error: JsError): ProblemNode? {
     val parts = error.parts
@@ -349,4 +353,3 @@ fun <T> subTreesFromTrie(trie: Trie<T>, state: Tree.ViewState): List<Tree<T>> =
             state
         )
     }.toList()
-

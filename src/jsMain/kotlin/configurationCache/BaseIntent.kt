@@ -11,6 +11,7 @@ typealias ProblemTreeModel = TreeView.Model<ProblemNode>
 internal
 typealias ProblemTreeIntent = TreeView.Intent<ProblemNode>
 
+
 open class BaseIntent {
     data class Copy(val text: String) : BaseIntent()
 

@@ -1,9 +1,8 @@
 package problemReport
 
-import configurationCache.JsDiagnostic
 import configurationCache.JsError
 import configurationCache.JsMessageFragment
-import configurationCache.JsTrace
+
 
 external interface JsProblem {
     val problem: Array<JsMessageFragment>?
@@ -14,7 +13,8 @@ external interface JsProblem {
     val additionalData: Map<String, String>?
 }
 
-external interface ProblemReportJsModel{
+
+external interface ProblemReportJsModel {
     val buildName: String?
     val requestedTasks: String?
     val description: Array<JsMessageFragment>?
@@ -22,4 +22,3 @@ external interface ProblemReportJsModel{
     val totalProblemCount: Int
     val diagnostics: Array<JsProblem>
 }
-

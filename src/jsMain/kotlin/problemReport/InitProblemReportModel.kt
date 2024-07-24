@@ -11,13 +11,16 @@ import data.PrettyText
 import elmish.tree.Tree
 
 
-fun reportProblemsReportPageModelFromJsModel(problemReportJsModel: ProblemReportJsModel, problems: Array<JsProblem>): ProblemsReportPage.Model {
+fun reportProblemsReportPageModelFromJsModel(
+    problemReportJsModel: ProblemReportJsModel,
+    problems: Array<JsProblem>
+): ProblemsReportPage.Model {
     return ProblemsReportPage.Model(
         heading = PrettyText.ofText("Problems Report"),
 //        summary = listOf(PrettyText.ofText("§")), //problemReportJsModel.cacheActionDescription.let { listOf(toPrettyText(it)) },
         summary = description(problemReportJsModel),
         learnMore = LearnMore(
-            text = "Learn more",
+            text = "reporting problems",
             documentationLink = problemReportJsModel.documentationLink
         ),
         createTree(problems),
@@ -25,8 +28,11 @@ fun reportProblemsReportPageModelFromJsModel(problemReportJsModel: ProblemReport
     )
 }
 
-private fun description(problemReportJsModel: ProblemReportJsModel) =
+
+private
+fun description(problemReportJsModel: ProblemReportJsModel) =
     problemReportJsModel.description?.let { listOf(toPrettyText(it)) } ?: listOf()
+
 
 fun createTree(problems: Array<JsProblem>): ProblemTreeModel {
     val problemList = problems.filterNot { it.problem == null }
@@ -40,7 +46,9 @@ fun createTree(problems: Array<JsProblem>): ProblemTreeModel {
     )
 }
 
-private fun getChildren(jsProblem: JsProblem): List<Tree<ProblemNode>> {
+
+private
+fun getChildren(jsProblem: JsProblem): List<Tree<ProblemNode>> {
     val children = jsProblem.problemDetails?.let {
         mutableListOf(Tree<ProblemNode>(ProblemApiNode.Message(toPrettyText(it))))
     } ?: mutableListOf()

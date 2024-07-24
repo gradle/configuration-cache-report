@@ -27,22 +27,25 @@ import problemReport.reportProblemsReportPageModelFromJsModel
 
 fun main() {
     val jsModel = configurationCacheProblems()
-    if(jsModel.problemsReport == null) {
+    if (jsModel.problemsReport == null) {
         mountComponentAt(
             elementById("report"),
             ConfigurationCacheReportPage,
             reportPageModelFromJsModel(jsModel)
         )
-    }
-    else {
+    } else {
         val problemReportJsModel = jsModel.problemsReport.unsafeCast<ProblemReportJsModel>()
         mountComponentAt(
             elementById("report"),
             ProblemsReportPage,
-            reportProblemsReportPageModelFromJsModel(problemReportJsModel, jsModel.diagnostics.unsafeCast<Array<JsProblem>>())
+            reportProblemsReportPageModelFromJsModel(
+                problemReportJsModel,
+                jsModel.diagnostics.unsafeCast<Array<JsProblem>>()
+            )
         )
     }
 }
+
 
 private
 inline fun <reified T> Any.uncheckedCast(): T = this as T

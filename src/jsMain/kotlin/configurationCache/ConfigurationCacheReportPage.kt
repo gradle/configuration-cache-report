@@ -14,9 +14,9 @@ package configurationCache/*
  * limitations under the License.
  */
 
-import components.*
 import components.CopyButtonComponent
 import components.PrettyTextComponent
+import components.ProblemNode
 import components.invisibleCloseParen
 import components.invisibleOpenParen
 import components.invisibleSpace
@@ -46,7 +46,7 @@ import elmish.ul
 import kotlinx.browser.window
 
 
-sealed class ProblemCCNode: ProblemNode() {
+sealed class ProblemCCNode : ProblemNode() {
 
     data class Error(val label: ProblemNode, val docLink: ProblemNode?) : ProblemNode()
 
@@ -77,6 +77,7 @@ sealed class ProblemCCNode: ProblemNode() {
     data class Message(val prettyText: PrettyText) : ProblemNode()
 }
 
+
 fun <I> viewTreeButton(child: Tree.Focus<ProblemNode>, treeIntent: (ProblemTreeIntent) -> I): View<I> = span(
     attributes {
         classNames("invisible-text", "tree-btn")
@@ -92,29 +93,36 @@ fun <I> viewTreeButton(child: Tree.Focus<ProblemNode>, treeIntent: (ProblemTreeI
     copyTextPrefixForTreeNode(child)
 )
 
+
 fun copyTextPrefixForTreeNode(child: Tree.Focus<ProblemNode>) =
     "    ".repeat(child.depth - 1) + "- "
+
 
 fun toggleVerb(state: Tree.ViewState): String = when (state) {
     Tree.ViewState.Collapsed -> "expand"
     Tree.ViewState.Expanded -> "collapse"
 }
 
+
 private
 fun viewPrettyText(text: PrettyText): View<BaseIntent> =
     PrettyTextWithCopy.view(text)
+
 
 private
 fun viewPrettyText(textBuilder: PrettyText.Builder.() -> Unit): View<BaseIntent> =
     PrettyTextWithCopy.view(PrettyText.build(textBuilder))
 
+
 private
 val PrettyTextNoCopy =
     PrettyTextComponent<Intent>()
 
+
 private
 val PrettyTextWithCopy =
     PrettyTextComponent<BaseIntent> { BaseIntent.Copy(it) }
+
 
 fun <I> treeButtonFor(child: Tree.Focus<ProblemNode>, treeIntent: (ProblemTreeIntent) -> I): View<I> =
     when {
@@ -122,10 +130,12 @@ fun <I> treeButtonFor(child: Tree.Focus<ProblemNode>, treeIntent: (ProblemTreeIn
         else -> viewLeafIcon(child)
     }
 
+
 fun <I> viewLeafIcon(child: Tree.Focus<ProblemNode>): View<I> = span(
     attributes { classNames("invisible-text", "leaf-icon") },
     copyTextPrefixForTreeNode(child)
 )
+
 
 fun viewException(
     treeIntent: (ProblemTreeIntent) -> TreeIntent,
@@ -143,11 +153,13 @@ fun viewException(
     }
 )
 
+
 private
 fun visibilityToggleVerb(state: Tree.ViewState): String = when (state) {
     Tree.ViewState.Collapsed -> "show"
     Tree.ViewState.Expanded -> "hide"
 }
+
 
 private
 fun visibility(state: Tree.ViewState): String = when (state) {
@@ -155,9 +167,11 @@ fun visibility(state: Tree.ViewState): String = when (state) {
     Tree.ViewState.Expanded -> "shown"
 }
 
+
 private
 val CopyButton =
     CopyButtonComponent { BaseIntent.Copy(it) }
+
 
 private
 fun internalLinesToggle(
@@ -176,14 +190,17 @@ fun internalLinesToggle(
     "($hiddenLinesCount internal ${"line".sIfPlural(hiddenLinesCount)} ${visibility(state)})"
 )
 
+
 private
 fun exceptionPart(lines: List<String>, firstLineTail: View<Intent> = empty): View<Intent> = ul(
     lines.mapIndexed { i, line -> exceptionLine(line, if (i == 0) firstLineTail else empty) }
 )
 
+
 private
 fun exceptionLine(line: String, lineTail: View<Intent> = empty): View<Intent> =
     li(code(line), lineTail)
+
 
 fun exception(node: ProblemNode.Exception, owner: () -> TreeIntent): View<Intent> = div(
     attributes { className("java-exception") },
@@ -205,6 +222,7 @@ fun exception(node: ProblemNode.Exception, owner: () -> TreeIntent): View<Intent
         }
     }
 )
+
 
 internal
 val ProblemTreeModel.childCount: Int
@@ -232,7 +250,7 @@ object ConfigurationCacheReportPage :
         IncompatibleTasks("Incompatible tasks")
     }
 
-    sealed class Intent: BaseIntent() {
+    sealed class Intent : BaseIntent() {
 
         data class TaskTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 

@@ -16,22 +16,42 @@
 
 package problemReport
 
-import components.*
-import configurationCache.*
+import components.CopyButtonComponent
+import components.PrettyTextComponent
+import components.ProblemNode
+import components.invisibleCloseParen
+import components.invisibleOpenParen
+import components.invisibleSpace
+import configurationCache.BaseIntent
+import configurationCache.ProblemTreeIntent
+import configurationCache.ProblemTreeModel
+import configurationCache.treeButtonFor
+import configurationCache.viewException
 import data.LearnMore
 import data.PrettyText
-import elmish.*
+import elmish.Component
+import elmish.View
+import elmish.a
+import elmish.attributes
+import elmish.br
+import elmish.div
+import elmish.h1
+import elmish.ol
+import elmish.small
+import elmish.span
 import elmish.tree.Tree
 import elmish.tree.TreeView
 import elmish.tree.viewSubTrees
 import kotlinx.browser.window
 import configurationCache.BaseIntent.TreeIntent as BaseIntentTreeIntent
 
+
 sealed class ProblemApiNode : ProblemNode() {
     data class Text(val text: String) : ProblemApiNode()
     data class Message(val prettyText: PrettyText) : ProblemApiNode()
     data class Label(val prettyText: PrettyText) : ProblemApiNode()
 }
+
 
 object ProblemsReportPage :
     Component<ProblemsReportPage.Model, BaseIntent> {
