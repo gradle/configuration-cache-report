@@ -6,7 +6,7 @@ function configurationCacheProblems() {
                 "buildName": "sampleProject",
                 "cacheActionDescription": [{"text": "some problems report explanation"}, {"name": "build.gradle"}, {"text": " has changed."}],
                 "requestedTasks": "clean build",
-                "documentationLink": "https://docs.gradle.org/current/userguide/kjdkd.html",
+                "documentationLink": "https://docs.gradle.org/current/userguide/implementing_gradle_plugins_binary.html#reporting_problems",
                 "totalProblemCount": 4
             },
             "buildName": "sampleProject",
@@ -25,11 +25,11 @@ function configurationCacheProblems() {
                         [{"text": "details 2"}, {"name": "Task.project"}, {"text": " text. 2"}],
                     ],
                     "category": [{
-                        "name": "type9",
-                        "displayName": "label9",
+                        "name": "type-validation",
+                        "displayName": "Gradle type validation",
                     }, {
-                        "name": "generic",
-                        "displayName": "Generic"
+                        "name": "validation",
+                        "displayName": "Validation"
                     }],
                     "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:requirements:use_project_during_execution",
                     "error": {
@@ -54,11 +54,11 @@ function configurationCacheProblems() {
                     "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:requirements:disallowed_types",
                     "category":
                         [{
-                            "name": "type0",
-                            "displayName": "label0"
+                            "name": "property-validation",
+                            "displayName": "Gradle property validation"
                         }, {
-                            "name": "generic",
-                            "displayName": "Generic"
+                            "name": "validation",
+                            "displayName": "Validation"
                         }]
 
                 }, {
@@ -73,11 +73,11 @@ function configurationCacheProblems() {
                     ],
                     "problem": [{"text": "Project "}, {"name": ":sub-b"}, {"text": " cannot dynamically lookup a "}, {"text": "property"}, {"text": " in the parent project "}, {"name": ":"}],
                     "category": [{
-                        "name": "type9",
-                        "displayName": "label9",
+                        "name": "type-validation",
+                        "displayName": "Gradle type validation",
                     }, {
-                        "name": "generic",
-                        "displayName": "Generic"
+                        "name": "validation",
+                        "displayName": "Validation"
                     }],
                     "error": {
                         "parts": [{

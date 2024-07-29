@@ -40,15 +40,13 @@ fun main() {
             ProblemsReportPage,
             reportProblemsReportPageModelFromJsModel(
                 problemReportJsModel,
+                // We are reusing this array for JsProblems, because the diagnostics are written in a predefined order on the fly to the html report file.
+                // Having this separate would require more changes to the way diagnostics/problems are written in the file.
                 jsModel.diagnostics.unsafeCast<Array<JsProblem>>()
             )
         )
     }
 }
-
-
-private
-inline fun <reified T> Any.uncheckedCast(): T = this as T
 
 
 /**

@@ -179,7 +179,7 @@ object ProblemsReportPage :
     private
     fun learnMore(learnMore: LearnMore): View<Intent> = div(
         attributes { className("learn-more") },
-        span("Learn more about the "),
+        span("Learn more about "),
         a(
             attributes { href(learnMore.documentationLink) },
             learnMore.text

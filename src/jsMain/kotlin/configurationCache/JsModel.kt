@@ -21,6 +21,8 @@ import kotlin.js.JSON.stringify
 
 
 external interface JsModel {
+    // This is a shortcut to separate problem report details from the CC related parts
+    // There should be more explicit separation in the future
     val problemsReport: Any?
     val buildName: String?
     val cacheAction: String

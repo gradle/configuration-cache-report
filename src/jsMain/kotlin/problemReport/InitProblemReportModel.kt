@@ -32,7 +32,6 @@ fun reportProblemsReportPageModelFromJsModel(
 ): ProblemsReportPage.Model {
     return ProblemsReportPage.Model(
         heading = PrettyText.ofText("Problems Report"),
-//        summary = listOf(PrettyText.ofText("§")), //problemReportJsModel.cacheActionDescription.let { listOf(toPrettyText(it)) },
         summary = description(problemReportJsModel),
         learnMore = LearnMore(
             text = "reporting problems",
