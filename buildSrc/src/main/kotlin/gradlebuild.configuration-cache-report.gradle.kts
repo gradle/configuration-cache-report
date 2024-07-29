@@ -18,7 +18,7 @@ import gradlebuild.configcachereport.tasks.VerifyDevWorkflow
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
 // Uncomment the next line for better debugging experience
-// import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig.Mode
+ import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig.Mode
 import org.jlleitschuh.gradle.ktlint.tasks.KtLintCheckTask
 
 plugins {
@@ -32,7 +32,7 @@ kotlin {
             webpackTask(Action {
                 sourceMaps = true
 // uncomment the folloing line for better deubgging experience
-//                mode = Mode.DEVELOPMENT
+                mode = Mode.DEVELOPMENT
             })
         }
 

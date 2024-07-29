@@ -24,6 +24,13 @@ function configurationCacheProblems() {
                         [{"text": "details 1 "}, {"name": "Task.project"}, {"text": " text. 1"}],
                         [{"text": "details 2"}, {"name": "Task.project"}, {"text": " text. 2"}],
                     ],
+                    "category": [{
+                        "name": "type9",
+                        "displayName": "label9",
+                    }, {
+                        "name": "generic",
+                        "displayName": "Generic"
+                    }],
                     "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:requirements:use_project_during_execution",
                     "error": {
                         "summary": [{"text": "at "}, {"name": "build_44nw1yvono72kvlw7g0lm2rd7$_run_closure1$_closure2.doCall(/Users/paul/src/gradle-related/gradle/subprojects/docs/src/snippets/configurationCache/problemsGroovy/groovy/build.gradle:5)"}],
@@ -44,7 +51,16 @@ function configurationCacheProblems() {
                     ],
                     "problem": [{"text": "cannot "}, {"text": "serialize"}, {"text": " object of type "}, {"name": "java.lang.Thread"}, {"text": ", a subtype of "}, {"name": "java.lang.Thread"}, {"text": ","}, {"text": " as these are not supported with the configuration cache."}],
                     "problemDetails": [{"text": "details "}, {"name": "Task.project"}, {"text": " text."}],
-                    "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:requirements:disallowed_types"
+                    "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:requirements:disallowed_types",
+                    "category":
+                        [{
+                            "name": "type0",
+                            "displayName": "label0"
+                        }, {
+                            "name": "generic",
+                            "displayName": "Generic"
+                        }]
+
                 }, {
                     "trace": [{"kind": "BuildLogic", "location": "build file 'build.gradle'"}],
                     "input": [{"text": "system property "}, {"name": "someMessage"}],
@@ -56,6 +72,13 @@ function configurationCacheProblems() {
                         {"kind": "BuildLogic", "location": "build file 'sub-b/build.gradle'"}
                     ],
                     "problem": [{"text": "Project "}, {"name": ":sub-b"}, {"text": " cannot dynamically lookup a "}, {"text": "property"}, {"text": " in the parent project "}, {"name": ":"}],
+                    "category": [{
+                        "name": "type9",
+                        "displayName": "label9",
+                    }, {
+                        "name": "generic",
+                        "displayName": "Generic"
+                    }],
                     "error": {
                         "parts": [{
                             "text": "org.gradle.api.InvalidUserCodeException: Project ':sub-b' cannot dynamically lookup a property in the parent project ':'\n"
@@ -163,5 +186,7 @@ function configurationCacheProblems() {
             //     }
             // ]
         }
-    );
+
+    )
+        ;
 }

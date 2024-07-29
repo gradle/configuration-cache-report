@@ -50,6 +50,7 @@ sealed class ProblemApiNode : ProblemNode() {
     data class Text(val text: String) : ProblemApiNode()
     data class Message(val prettyText: PrettyText) : ProblemApiNode()
     data class Label(val prettyText: PrettyText) : ProblemApiNode()
+    data class Category(val prettyText: PrettyText) : ProblemApiNode()
 }
 
 
@@ -61,20 +62,26 @@ object ProblemsReportPage :
         val summary: List<PrettyText>,
         val learnMore: LearnMore,
         val messageTree: ProblemTreeModel,
+        val categoryTree: ProblemTreeModel,
         val tab: Tab
     )
 
     enum class Tab(val text: String) {
         ByMessage("Problems grouped by message"),
+        ByCategory("Problems grouped by category"),
     }
 
     sealed class Intent : BaseIntent() {
         data class MessageTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
+        data class CategoryTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
         data class SetTab(val tab: Tab) : Intent()
     }
 
     override fun step(intent: BaseIntent, model: Model): Model = when (intent) {
+        is Intent.CategoryTreeIntent -> model.copy(
+            categoryTree = TreeView.step(intent.delegate, model.categoryTree)
+        )
         is Intent.MessageTreeIntent -> model.copy(
             messageTree = TreeView.step(intent.delegate, model.messageTree)
         )
@@ -111,6 +118,7 @@ object ProblemsReportPage :
         div(
             attributes { className("groups") },
             displayTabButton(Tab.ByMessage, model.tab, model.messageTree.tree.children.size),
+            displayTabButton(Tab.ByCategory, model.tab, model.categoryTree.tree.children.size),
         )
     )
 
@@ -119,6 +127,7 @@ object ProblemsReportPage :
         attributes { className("content") },
         when (model.tab) {
             Tab.ByMessage -> viewTree(model.messageTree, Intent::MessageTreeIntent)
+            Tab.ByCategory -> viewTree(model.categoryTree, Intent::CategoryTreeIntent)
         }
     )
 
@@ -191,6 +200,13 @@ object ProblemsReportPage :
             viewSubTrees(subTrees) { focus ->
                 when (val labelNode = focus.tree.label) {
                     is ProblemApiNode.Text -> viewPrettyText(PrettyText.ofText(labelNode.text))
+                    is ProblemApiNode.Category -> {
+                        div(
+                            treeButtonFor(focus, treeIntent),
+                            viewPrettyText(labelNode.prettyText)
+                        )
+                    }
+
                     is ProblemNode.Exception -> viewException(treeIntent, focus, labelNode)
                     is ProblemApiNode.Message -> {
                         viewPrettyText(labelNode.prettyText)

@@ -4,8 +4,15 @@ import configurationCache.JsError
 import configurationCache.JsMessageFragment
 
 
+external interface JsCategoryElement {
+    val name: String
+    val displayName: String
+}
+
+
 external interface JsProblem {
     val problem: Array<JsMessageFragment>?
+    val category: Array<JsCategoryElement>?
     val documentationLink: String?
     val error: JsError?
     val problemDetails: Array<JsMessageFragment>?
