@@ -40,11 +40,11 @@ fun createCategoryTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> 
 
     val categoryToTreeMap = mutableMapOf<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>()
     val rootNodes = problems.filterNot { it.problem == null }.map { problem ->
-        var firstCategoryNode: Tree<ProblemNode>? = null
+        var firstCategoryNode: MutableList<Tree<ProblemNode>>? = null
         val categories = problem.category?.copyOf()
         categories?.reverse()
         val leafCategoryNodePair =
-            categories?.fold(null as Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>?) { previousCategoryNodePair, cat ->
+            categories?.foldRight(null as Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>?) { cat, previousCategoryNodePair ->
                 val categoryText = "${cat.displayName} (${cat.name})"
                 val categoryNodePair = categoryToTreeMap.getOrPut(categoryText) {
                     val children: MutableList<Tree<ProblemNode>> = mutableListOf()
@@ -53,22 +53,25 @@ fun createCategoryTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> 
                         ref(cat.name)
                     }), children), children)
                 }
-                if (firstCategoryNode == null) {
-                    firstCategoryNode = categoryNodePair.first
-                }
-                previousCategoryNodePair?.second?.let {
-                    if (it.contains(categoryNodePair.first).not()) {
-                        it.add(categoryNodePair.first)
+
+                val currentNodeChildren = categoryNodePair.second
+                previousCategoryNodePair?.first?.let {
+                    if (currentNodeChildren.contains(it).not()) {
+                        currentNodeChildren.add(it)
                     }
                 }
+                if (firstCategoryNode == null) {
+                    firstCategoryNode = currentNodeChildren
+                }
+
                 categoryNodePair
             }
         if (firstCategoryNode == null) {
             uncategorizedProblems.add(createMessageTreeElement(problem))
             uncategorizedNode
         } else {
-            leafCategoryNodePair?.second?.add(createMessageTreeElement(problem))
-            firstCategoryNode!!
+            firstCategoryNode?.add(createMessageTreeElement(problem))
+            leafCategoryNodePair!!.first
         }
     }.distinct().toList()
 
@@ -124,15 +127,17 @@ fun getMessageChildren(jsProblem: JsProblem): List<Tree<ProblemNode>> {
     }
 
     jsProblem.category?.let { category ->
-        val tn: Tree<ProblemNode>? = category.fold(null as Tree<ProblemNode>?) { previousCategoryNode, cat ->
+        category.fold(null as Tree<ProblemNode>?) { previousCategoryNode, cat ->
             Tree(
                 ProblemApiNode.Category(
-                    PrettyText.ofText("Group: ${cat.displayName} (${cat.name})")
+                    PrettyText.build {
+                        text(cat.displayName)
+                        ref(cat.name)
+                    }
                 ),
-                if (previousCategoryNode == null) emptyList() else listOf(previousCategoryNode)
+                if (previousCategoryNode == null) listOf() else listOf(previousCategoryNode)
             )
         }
-        tn?.let { children.add(it) }
-    }
+    }?.let { children.add(it) }
     return children.toList()
 }
