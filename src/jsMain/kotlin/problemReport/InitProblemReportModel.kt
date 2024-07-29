@@ -87,7 +87,7 @@ fun createCategoryTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> 
             firstCategoryNode?.add(createMessageTreeElement(problem))
             leafCategoryNodePair!!.first
         }
-    }.distinct().toList()
+    }.distinct()
 
     return ProblemTreeModel(Tree(ProblemApiNode.Text("text"), rootNodes))
 }
@@ -100,9 +100,7 @@ fun description(problemReportJsModel: ProblemReportJsModel) =
 
 fun createMessageTree(problems: Array<JsProblem>): ProblemTreeModel {
     val problemList = problems.filterNot { it.problem == null }
-        .map { jsProblem ->
-            createMessageTreeElement(jsProblem)
-        }.toList()
+        .map(::createMessageTreeElement)
     return ProblemTreeModel(
         Tree(ProblemApiNode.Text("text"), problemList)
     )
@@ -126,19 +124,15 @@ fun getMessageChildren(jsProblem: JsProblem): List<Tree<ProblemNode>> {
     jsProblem.solutions?.let {
         val solutions = it.map { solution ->
             Tree<ProblemNode>(ProblemApiNode.Message(toPrettyText(solution)))
-        }.toList()
+        }
 
         children.add(
             Tree(ProblemApiNode.Label(PrettyText.ofText("Solutions")), solutions)
         )
     }
-    jsProblem.error?.let {
-        problemNodeForError(it)?.let { errorNode ->
-            children.add(
-                Tree(errorNode)
-            )
-        }
-    }
+    jsProblem.error
+        ?.let { problemNodeForError(it) }
+        ?.let { errorNode -> children.add(Tree(errorNode)) }
 
     jsProblem.category?.let { category ->
         category.fold(null as Tree<ProblemNode>?) { previousCategoryNode, cat ->
@@ -153,5 +147,5 @@ fun getMessageChildren(jsProblem: JsProblem): List<Tree<ProblemNode>> {
             )
         }
     }?.let { children.add(it) }
-    return children.toList()
+    return children
 }
