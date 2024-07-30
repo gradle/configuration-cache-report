@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
+package configurationCache
+
 import components.CopyButtonComponent
 import components.PrettyTextComponent
+import components.ProblemNode
 import components.invisibleCloseParen
 import components.invisibleOpenParen
 import components.invisibleSpace
+import configurationCache.BaseIntent.TreeIntent
+import configurationCache.ConfigurationCacheReportPage.Intent
 import data.LearnMore
 import data.PrettyText
 import data.mapAt
@@ -43,8 +48,7 @@ import elmish.ul
 import kotlinx.browser.window
 
 
-internal
-sealed class ProblemNode {
+sealed class ProblemCCNode : ProblemNode() {
 
     data class Error(val label: ProblemNode, val docLink: ProblemNode?) : ProblemNode()
 
@@ -73,27 +77,153 @@ sealed class ProblemNode {
     data class Link(val href: String, val label: String) : ProblemNode()
 
     data class Message(val prettyText: PrettyText) : ProblemNode()
-
-    data class Exception(
-        val summary: PrettyText?,
-        val fullText: String,
-        val parts: List<StackTracePart>
-    ) : ProblemNode()
-
-    internal
-    data class StackTracePart(
-        val lines: List<String>,
-        val state: Tree.ViewState?
-    )
 }
 
 
-internal
-typealias ProblemTreeModel = TreeView.Model<ProblemNode>
+fun <I> viewTreeButton(child: Tree.Focus<ProblemNode>, treeIntent: (ProblemTreeIntent) -> I): View<I> = span(
+    attributes {
+        classNames("invisible-text", "tree-btn")
+        if (child.tree.state === Tree.ViewState.Collapsed) {
+            className("collapsed")
+        }
+        if (child.tree.state === Tree.ViewState.Expanded) {
+            className("expanded")
+        }
+        title("Click to ${toggleVerb(child.tree.state)}")
+        onClick { treeIntent(TreeView.Intent.Toggle(child)) }
+    },
+    copyTextPrefixForTreeNode(child)
+)
 
 
-internal
-typealias ProblemTreeIntent = TreeView.Intent<ProblemNode>
+fun copyTextPrefixForTreeNode(child: Tree.Focus<ProblemNode>) =
+    "    ".repeat(child.depth - 1) + "- "
+
+
+fun toggleVerb(state: Tree.ViewState): String = when (state) {
+    Tree.ViewState.Collapsed -> "expand"
+    Tree.ViewState.Expanded -> "collapse"
+}
+
+
+private
+fun viewPrettyText(text: PrettyText): View<BaseIntent> =
+    PrettyTextWithCopy.view(text)
+
+
+private
+fun viewPrettyText(textBuilder: PrettyText.Builder.() -> Unit): View<BaseIntent> =
+    PrettyTextWithCopy.view(PrettyText.build(textBuilder))
+
+
+private
+val PrettyTextNoCopy =
+    PrettyTextComponent<Intent>()
+
+
+private
+val PrettyTextWithCopy =
+    PrettyTextComponent<BaseIntent> { BaseIntent.Copy(it) }
+
+
+fun <I> treeButtonFor(child: Tree.Focus<ProblemNode>, treeIntent: (ProblemTreeIntent) -> I): View<I> =
+    when {
+        child.tree.isNotEmpty() -> viewTreeButton(child, treeIntent)
+        else -> viewLeafIcon(child)
+    }
+
+
+fun <I> viewLeafIcon(child: Tree.Focus<ProblemNode>): View<I> = span(
+    attributes { classNames("invisible-text", "leaf-icon") },
+    copyTextPrefixForTreeNode(child)
+)
+
+
+fun viewException(
+    treeIntent: (ProblemTreeIntent) -> TreeIntent,
+    child: Tree.Focus<ProblemNode>,
+    node: ProblemNode.Exception
+): View<BaseIntent> = div(
+    viewTreeButton(child, treeIntent),
+    span("Exception"),
+    span(CopyButton.view(text = node.fullText, tooltip = "Copy exception to the clipboard")),
+    node.summary?.let { span(" ") } ?: empty,
+    node.summary?.let { viewPrettyText(it) } ?: empty,
+    when (child.tree.state) {
+        Tree.ViewState.Collapsed -> empty
+        Tree.ViewState.Expanded -> exception(node) { treeIntent(TreeView.Intent.Toggle(child)) }
+    }
+)
+
+
+private
+fun visibilityToggleVerb(state: Tree.ViewState): String = when (state) {
+    Tree.ViewState.Collapsed -> "show"
+    Tree.ViewState.Expanded -> "hide"
+}
+
+
+private
+fun visibility(state: Tree.ViewState): String = when (state) {
+    Tree.ViewState.Collapsed -> "hidden"
+    Tree.ViewState.Expanded -> "shown"
+}
+
+
+private
+val CopyButton =
+    CopyButtonComponent { BaseIntent.Copy(it) }
+
+
+private
+fun internalLinesToggle(
+    hiddenLinesCount: Int,
+    partIndex: Int,
+    state: Tree.ViewState,
+    location: () -> TreeIntent
+): View<BaseIntent> = span(
+    attributes {
+        className("java-exception-part-toggle")
+        onClick {
+            BaseIntent.ToggleStackTracePart(partIndex, location())
+        }
+        title("Click to ${visibilityToggleVerb(state)}")
+    },
+    "($hiddenLinesCount internal ${"line".sIfPlural(hiddenLinesCount)} ${visibility(state)})"
+)
+
+
+private
+fun exceptionPart(lines: List<String>, firstLineTail: View<BaseIntent> = empty): View<BaseIntent> = ul(
+    lines.mapIndexed { i, line -> exceptionLine(line, if (i == 0) firstLineTail else empty) }
+)
+
+
+private
+fun exceptionLine(line: String, lineTail: View<BaseIntent> = empty): View<BaseIntent> =
+    li(code(line), lineTail)
+
+
+fun exception(node: ProblemNode.Exception, owner: () -> TreeIntent): View<BaseIntent> = div(
+    attributes { className("java-exception") },
+    node.parts.mapIndexed { index, part ->
+        if (part.state != null) {
+            val collapsableLineCount = part.lines.size
+            val internalLinesToggle = internalLinesToggle(collapsableLineCount, index, part.state, owner)
+            when (part.state) {
+                Tree.ViewState.Collapsed -> {
+                    exceptionPart(part.lines.takeLast(1), internalLinesToggle)
+                }
+
+                Tree.ViewState.Expanded -> {
+                    exceptionPart(part.lines, internalLinesToggle)
+                }
+            }
+        } else {
+            exceptionPart(part.lines)
+        }
+    }
+)
 
 
 internal
@@ -101,9 +231,8 @@ val ProblemTreeModel.childCount: Int
     get() = tree.children.size
 
 
-internal
 object ConfigurationCacheReportPage :
-    Component<ConfigurationCacheReportPage.Model, ConfigurationCacheReportPage.Intent> {
+    Component<ConfigurationCacheReportPage.Model, BaseIntent> {
 
     data class Model(
         val heading: PrettyText,
@@ -123,11 +252,7 @@ object ConfigurationCacheReportPage :
         IncompatibleTasks("Incompatible tasks")
     }
 
-    sealed class Intent {
-
-        sealed class TreeIntent : Intent() {
-            abstract val delegate: ProblemTreeIntent
-        }
+    sealed class Intent : BaseIntent() {
 
         data class TaskTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
@@ -137,14 +262,10 @@ object ConfigurationCacheReportPage :
 
         data class IncompatibleTaskTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
-        data class ToggleStackTracePart(val partIndex: Int, val location: TreeIntent) : Intent()
-
-        data class Copy(val text: String) : Intent()
-
         data class SetTab(val tab: Tab) : Intent()
     }
 
-    override fun step(intent: Intent, model: Model): Model = when (intent) {
+    override fun step(intent: BaseIntent, model: Model): Model = when (intent) {
         is Intent.TaskTreeIntent -> model.copy(
             locationTree = TreeView.step(intent.delegate, model.locationTree)
         )
@@ -161,14 +282,14 @@ object ConfigurationCacheReportPage :
             incompatibleTaskTree = TreeView.step(intent.delegate, model.incompatibleTaskTree)
         )
 
-        is Intent.ToggleStackTracePart -> model.updateNodeAt(intent.location) {
+        is BaseIntent.ToggleStackTracePart -> model.updateNodeAt(intent.location) {
             require(this is ProblemNode.Exception)
             copy(parts = parts.mapAt(intent.partIndex) {
                 it.copy(state = it.state?.toggle())
             })
         }
 
-        is Intent.Copy -> {
+        is BaseIntent.Copy -> {
             window.navigator.clipboard.writeText(intent.text)
             model
         }
@@ -176,47 +297,48 @@ object ConfigurationCacheReportPage :
         is Intent.SetTab -> model.copy(
             tab = intent.tab
         )
+
+        else -> {
+            console.error("Unhandled intent: $intent")
+            model
+        }
     }
 
     private
     fun Model.updateNodeAt(
-        tree: Intent.TreeIntent,
+        tree: TreeIntent,
         update: ProblemNode.() -> ProblemNode
     ) = when (tree) {
         is Intent.MessageTreeIntent -> copy(
-            messageTree = messageTree.updateNodeAt(tree, update)
+            messageTree = messageTree.updateNodeTreeAt(tree, update)
         )
 
         is Intent.TaskTreeIntent -> copy(
-            locationTree = locationTree.updateNodeAt(tree, update)
+            locationTree = locationTree.updateNodeTreeAt(tree, update)
         )
 
         is Intent.InputTreeIntent -> copy(
-            inputTree = inputTree.updateNodeAt(tree, update)
+            inputTree = inputTree.updateNodeTreeAt(tree, update)
         )
 
         is Intent.IncompatibleTaskTreeIntent -> copy(
-            incompatibleTaskTree = incompatibleTaskTree.updateNodeAt(tree, update)
+            incompatibleTaskTree = incompatibleTaskTree.updateNodeTreeAt(tree, update)
         )
+
+        else -> {
+            console.error("Unhandled tree intent: $tree")
+            this
+        }
     }
 
-    private
-    fun ProblemTreeModel.updateNodeAt(
-        tree: Intent.TreeIntent,
-        update: ProblemNode.() -> ProblemNode
-    ): TreeView.Model<ProblemNode> = updateLabelAt(
-        tree.delegate.focus,
-        update
-    )
-
-    override fun view(model: Model): View<Intent> = div(
+    override fun view(model: Model): View<BaseIntent> = div(
         attributes { className("report-wrapper") },
         viewHeader(model),
         viewProblems(model)
     )
 
     private
-    fun viewHeader(model: Model): View<Intent> = div(
+    fun viewHeader(model: Model): View<BaseIntent> = div(
         attributes { className("header") },
         div(attributes { className("gradle-logo") }),
         learnMore(model.learnMore),
@@ -245,13 +367,13 @@ object ConfigurationCacheReportPage :
     )
 
     private
-    fun displaySummary(model: Model): View<Intent> = div(
+    fun displaySummary(model: Model): View<BaseIntent> = div(
         displayHeading(model),
         viewSummaryParagraphs(model),
     )
 
     private
-    fun viewSummaryParagraphs(model: Model): View<Intent> = div(
+    fun viewSummaryParagraphs(model: Model): View<BaseIntent> = div(
         model.summary.flatMapIndexed { index, item ->
             if (index == 0) listOf(viewSummaryParagraph(item))
             else listOf(br(), viewSummaryParagraph(item))
@@ -259,7 +381,7 @@ object ConfigurationCacheReportPage :
     )
 
     private
-    fun viewSummaryParagraph(content: PrettyText): View<Intent> = small(viewPrettyText(content))
+    fun viewSummaryParagraph(content: PrettyText): View<BaseIntent> = small(viewPrettyText(content))
 
     private
     fun displayHeading(model: Model): View<Intent> = h1(PrettyTextNoCopy.view(model.heading))
@@ -301,18 +423,18 @@ object ConfigurationCacheReportPage :
     )
 
     private
-    fun viewTree(model: ProblemTreeModel, treeIntent: (ProblemTreeIntent) -> Intent.TreeIntent): View<Intent> =
+    fun viewTree(model: ProblemTreeModel, treeIntent: (ProblemTreeIntent) -> TreeIntent): View<BaseIntent> =
         viewTree(model.tree.focus().children, treeIntent)
 
     private
     fun viewTree(
         subTrees: Sequence<Tree.Focus<ProblemNode>>,
-        treeIntent: (ProblemTreeIntent) -> Intent.TreeIntent
-    ): View<Intent> = div(
+        treeIntent: (ProblemTreeIntent) -> TreeIntent
+    ): View<BaseIntent> = div(
         ol(
             viewSubTrees(subTrees) { focus ->
                 when (val labelNode = focus.tree.label) {
-                    is ProblemNode.Error -> {
+                    is ProblemCCNode.Error -> {
                         treeLabel(
                             treeIntent,
                             focus,
@@ -322,7 +444,7 @@ object ConfigurationCacheReportPage :
                         )
                     }
 
-                    is ProblemNode.Warning -> {
+                    is ProblemCCNode.Warning -> {
                         treeLabel(
                             treeIntent,
                             focus,
@@ -332,7 +454,7 @@ object ConfigurationCacheReportPage :
                         )
                     }
 
-                    is ProblemNode.Info -> {
+                    is ProblemCCNode.Info -> {
                         treeLabel(
                             treeIntent,
                             focus,
@@ -355,52 +477,52 @@ object ConfigurationCacheReportPage :
     )
 
     private
-    fun viewNode(node: ProblemNode): View<Intent> = when (node) {
-        is ProblemNode.Project -> viewPrettyText {
+    fun viewNode(node: ProblemNode): View<BaseIntent> = when (node) {
+        is ProblemCCNode.Project -> viewPrettyText {
             text("project ")
             ref(node.path)
         }
 
-        is ProblemNode.Property -> viewPrettyText {
+        is ProblemCCNode.Property -> viewPrettyText {
             text("${node.kind} ")
             ref(node.name)
             text(" of ")
             ref(node.owner)
         }
 
-        is ProblemNode.SystemProperty -> viewPrettyText {
+        is ProblemCCNode.SystemProperty -> viewPrettyText {
             text("system property ")
             ref(node.name)
         }
 
-        is ProblemNode.Task -> viewPrettyText {
+        is ProblemCCNode.Task -> viewPrettyText {
             text("task ")
             ref(node.path)
             text(" of type ")
             ref(node.type)
         }
 
-        is ProblemNode.Bean -> viewPrettyText {
+        is ProblemCCNode.Bean -> viewPrettyText {
             text("bean of type ")
             ref(node.type)
         }
 
-        is ProblemNode.BuildLogic -> viewPrettyText {
+        is ProblemCCNode.BuildLogic -> viewPrettyText {
             text(node.location)
         }
 
-        is ProblemNode.BuildLogicClass -> viewPrettyText {
+        is ProblemCCNode.BuildLogicClass -> viewPrettyText {
             text("class ")
             ref(node.type)
         }
 
-        is ProblemNode.Label -> viewPrettyText {
+        is ProblemCCNode.Label -> viewPrettyText {
             text(node.text)
         }
 
-        is ProblemNode.Message -> viewPrettyText(node.prettyText)
+        is ProblemCCNode.Message -> viewPrettyText(node.prettyText)
 
-        is ProblemNode.Link -> a(
+        is ProblemCCNode.Link -> a(
             attributes {
                 className("documentation-button")
                 href(node.href)
@@ -415,52 +537,19 @@ object ConfigurationCacheReportPage :
 
     private
     fun treeLabel(
-        treeIntent: (ProblemTreeIntent) -> Intent,
+        treeIntent: (ProblemTreeIntent) -> BaseIntent,
         focus: Tree.Focus<ProblemNode>,
         label: ProblemNode,
         docLink: ProblemNode? = null,
-        prefix: View<Intent> = empty,
-        suffix: View<Intent> = empty
-    ): View<Intent> = div(
+        prefix: View<BaseIntent> = empty,
+        suffix: View<BaseIntent> = empty
+    ): View<BaseIntent> = div(
         treeButtonFor(focus, treeIntent),
         prefix,
         viewNode(label),
-        docLink?.let(::viewNode) ?: empty,
+        docLink?.let(ConfigurationCacheReportPage::viewNode) ?: empty,
         suffix
     )
-
-    private
-    fun treeButtonFor(child: Tree.Focus<ProblemNode>, treeIntent: (ProblemTreeIntent) -> Intent): View<Intent> =
-        when {
-            child.tree.isNotEmpty() -> viewTreeButton(child, treeIntent)
-            else -> viewLeafIcon(child)
-        }
-
-    private
-    fun viewTreeButton(child: Tree.Focus<ProblemNode>, treeIntent: (ProblemTreeIntent) -> Intent): View<Intent> = span(
-        attributes {
-            classNames("invisible-text", "tree-btn")
-            if (child.tree.state === Tree.ViewState.Collapsed) {
-                className("collapsed")
-            }
-            if (child.tree.state === Tree.ViewState.Expanded) {
-                className("expanded")
-            }
-            title("Click to ${toggleVerb(child.tree.state)}")
-            onClick { treeIntent(TreeView.Intent.Toggle(child)) }
-        },
-        copyTextPrefixForTreeNode(child)
-    )
-
-    private
-    fun viewLeafIcon(child: Tree.Focus<ProblemNode>): View<Intent> = span(
-        attributes { classNames("invisible-text", "leaf-icon") },
-        copyTextPrefixForTreeNode(child)
-    )
-
-    private
-    fun copyTextPrefixForTreeNode(child: Tree.Focus<ProblemNode>) =
-        "    ".repeat(child.depth - 1) + "- "
 
     private
     val errorIcon = span<Intent>(
@@ -473,107 +562,4 @@ object ConfigurationCacheReportPage :
         attributes { classNames("invisible-text", "warning-icon") },
         "[warn]  " // two spaces to align with [error] prefix
     )
-
-    private
-    fun viewPrettyText(text: PrettyText): View<Intent> =
-        PrettyTextWithCopy.view(text)
-
-    private
-    fun viewPrettyText(textBuilder: PrettyText.Builder.() -> Unit): View<Intent> =
-        PrettyTextWithCopy.view(PrettyText.build(textBuilder))
-
-    private
-    fun viewException(
-        treeIntent: (ProblemTreeIntent) -> Intent.TreeIntent,
-        child: Tree.Focus<ProblemNode>,
-        node: ProblemNode.Exception
-    ): View<Intent> = div(
-        viewTreeButton(child, treeIntent),
-        span("Exception"),
-        span(CopyButton.view(text = node.fullText, tooltip = "Copy exception to the clipboard")),
-        node.summary?.let { span(" ") } ?: empty,
-        node.summary?.let { viewPrettyText(it) } ?: empty,
-        when (child.tree.state) {
-            Tree.ViewState.Collapsed -> empty
-            Tree.ViewState.Expanded -> exception(node) { treeIntent(TreeView.Intent.Toggle(child)) }
-        }
-    )
-
-    private
-    fun exception(node: ProblemNode.Exception, owner: () -> Intent.TreeIntent): View<Intent> = div(
-        attributes { className("java-exception") },
-        node.parts.mapIndexed { index, part ->
-            if (part.state != null) {
-                val collapsableLineCount = part.lines.size
-                val internalLinesToggle = internalLinesToggle(collapsableLineCount, index, part.state, owner)
-                when (part.state) {
-                    Tree.ViewState.Collapsed -> {
-                        exceptionPart(part.lines.takeLast(1), internalLinesToggle)
-                    }
-
-                    Tree.ViewState.Expanded -> {
-                        exceptionPart(part.lines, internalLinesToggle)
-                    }
-                }
-            } else {
-                exceptionPart(part.lines)
-            }
-        }
-    )
-
-    private
-    fun internalLinesToggle(
-        hiddenLinesCount: Int,
-        partIndex: Int,
-        state: Tree.ViewState,
-        location: () -> Intent.TreeIntent
-    ): View<Intent> = span(
-        attributes {
-            className("java-exception-part-toggle")
-            onClick {
-                Intent.ToggleStackTracePart(partIndex, location())
-            }
-            title("Click to ${visibilityToggleVerb(state)}")
-        },
-        "($hiddenLinesCount internal ${"line".sIfPlural(hiddenLinesCount)} ${visibility(state)})"
-    )
-
-    private
-    fun exceptionPart(lines: List<String>, firstLineTail: View<Intent> = empty): View<Intent> = ul(
-        lines.mapIndexed { i, line -> exceptionLine(line, if (i == 0) firstLineTail else empty) }
-    )
-
-    private
-    fun exceptionLine(line: String, lineTail: View<Intent> = empty): View<Intent> =
-        li(code(line), lineTail)
-
-    private
-    fun toggleVerb(state: Tree.ViewState): String = when (state) {
-        Tree.ViewState.Collapsed -> "expand"
-        Tree.ViewState.Expanded -> "collapse"
-    }
-
-    private
-    fun visibilityToggleVerb(state: Tree.ViewState): String = when (state) {
-        Tree.ViewState.Collapsed -> "show"
-        Tree.ViewState.Expanded -> "hide"
-    }
-
-    private
-    fun visibility(state: Tree.ViewState): String = when (state) {
-        Tree.ViewState.Collapsed -> "hidden"
-        Tree.ViewState.Expanded -> "shown"
-    }
-
-    private
-    val PrettyTextNoCopy =
-        PrettyTextComponent<Intent>()
-
-    private
-    val PrettyTextWithCopy =
-        PrettyTextComponent<Intent> { Intent.Copy(it) }
-
-    private
-    val CopyButton =
-        CopyButtonComponent { Intent.Copy(it) }
 }

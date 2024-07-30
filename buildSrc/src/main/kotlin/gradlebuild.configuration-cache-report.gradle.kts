@@ -17,6 +17,8 @@ import gradlebuild.configcachereport.tasks.MergeReportAssets
 import gradlebuild.configcachereport.tasks.VerifyDevWorkflow
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
+// Uncomment the next line for better debugging experience
+// import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig.Mode
 import org.jlleitschuh.gradle.ktlint.tasks.KtLintCheckTask
 
 plugins {
@@ -28,7 +30,9 @@ kotlin {
     js {
         browser {
             webpackTask(Action {
-                sourceMaps = false
+                sourceMaps = true
+                // uncomment the following line for better debugging experience
+                // mode = Mode.DEVELOPMENT
             })
         }
 

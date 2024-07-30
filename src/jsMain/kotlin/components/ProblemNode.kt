@@ -14,30 +14,21 @@
  * limitations under the License.
  */
 
-package data
+package components
+
+import data.PrettyText
+import elmish.tree.Tree
 
 
-internal
-fun found(count: Int, what: String) =
-    "${count.toStringOrNo()} ${what.sIfPlural(count)} ${wasOrWere(count)} found"
+open class ProblemNode {
+    data class Exception(
+        val summary: PrettyText?,
+        val fullText: String,
+        val parts: List<StackTracePart>
+    ) : ProblemNode()
 
-
-internal
-fun Int.toStringOrNo() =
-    if (this != 0) toString()
-    else "No"
-
-
-internal
-fun String.sIfPlural(count: Int) =
-    if (count < 2) this else "${this}s"
-
-
-internal
-fun wasOrWere(count: Int) =
-    if (count <= 1) "was" else "were"
-
-
-internal
-fun itsOrTheir(count: Int) =
-    if (count <= 1) "its" else "their"
+    data class StackTracePart(
+        val lines: List<String>,
+        val state: Tree.ViewState?
+    )
+}
