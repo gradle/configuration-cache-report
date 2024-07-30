@@ -18,19 +18,22 @@ function configurationCacheProblems() {
             "diagnostics": [
                 {
                     "trace": [{"kind": "BuildLogic", "location": "build file 'build.gradle'"}],
-                    "problem": [{"text": "invocation of "}, {"name": "Task.project"}, {"text": " at execution time is unsupported."}],
                     "problemDetails": [{"text": "details "}, {"name": "Task.project"}, {"text": " text."}],
                     "solutions": [
                         [{"text": "details 1 "}, {"name": "Task.project"}, {"text": " text. 1"}],
                         [{"text": "details 2"}, {"name": "Task.project"}, {"text": " text. 2"}],
                     ],
-                    "category": [{
-                        "name": "type-validation",
-                        "displayName": "Gradle type validation",
-                    }, {
-                        "name": "validation",
-                        "displayName": "Validation"
-                    }],
+                    "category": [
+                        {
+                            "name": "invocation-of-Task-project-at-execution-time-is-unsupported",
+                            "displayName": "invocation of `Task.project` at execution time is unsupported",
+                        }, {
+                            "name": "type-validation",
+                            "displayName": "Gradle type validation",
+                        }, {
+                            "name": "validation",
+                            "displayName": "Validation"
+                        }],
                     "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:requirements:use_project_during_execution",
                     "error": {
                         "summary": [{"text": "at "}, {"name": "build_44nw1yvono72kvlw7g0lm2rd7$_run_closure1$_closure2.doCall(/Users/paul/src/gradle-related/gradle/subprojects/docs/src/snippets/configurationCache/problemsGroovy/groovy/build.gradle:5)"}],
@@ -49,11 +52,13 @@ function configurationCacheProblems() {
                         {"kind": "SystemProperty", "name": "org.example.property"},
                         {"kind": "BuildLogic", "location": "build file 'build.gradle.kts'"}
                     ],
-                    "problem": [{"text": "cannot "}, {"text": "serialize"}, {"text": " object of type "}, {"name": "java.lang.Thread"}, {"text": ", a subtype of "}, {"name": "java.lang.Thread"}, {"text": ","}, {"text": " as these are not supported with the configuration cache."}],
                     "problemDetails": [{"text": "details "}, {"name": "Task.project"}, {"text": " text."}],
                     "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:requirements:disallowed_types",
                     "category":
                         [{
+                            "name": "cannot-serialize-object-of-type-java-lang-Thread-a-subtype-of-java-lang-Thread-as-these-are-not-supported-with-the-configuration-cache",
+                            "displayName": "cannot serialize object of type `java.lang.Thread`, a subtype of `java.lang.Thread`, as these are not supported with the configuration cache."
+                        }, {
                             "name": "property-validation",
                             "displayName": "Gradle property validation"
                         }, {
@@ -62,23 +67,22 @@ function configurationCacheProblems() {
                         }]
 
                 }, {
-                    "trace": [{"kind": "BuildLogic", "location": "build file 'build.gradle'"}],
-                    "input": [{"text": "system property "}, {"name": "someMessage"}],
-                    "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:requirements:reading_sys_props_and_env_vars"
-                }, {
                     "trace": [
                         {"kind": "PropertyUsage", "name": "foo", "from": ":sub-b"},
                         {"kind": "Project", "path": ":sub-b"},
                         {"kind": "BuildLogic", "location": "build file 'sub-b/build.gradle'"}
                     ],
-                    "problem": [{"text": "Project "}, {"name": ":sub-b"}, {"text": " cannot dynamically lookup a "}, {"text": "property"}, {"text": " in the parent project "}, {"name": ":"}],
-                    "category": [{
-                        "name": "type-validation",
-                        "displayName": "Gradle type validation",
-                    }, {
-                        "name": "validation",
-                        "displayName": "Validation"
-                    }],
+                    "category": [
+                        {
+                            "name": "Project-sub-b-cannot-dynamically-lookup-a-property-in-the-parent-project",
+                            "displayName": "Project `:sub-b` cannot dynamically lookup a property in the parent project",
+                        }, {
+                            "name": "type-validation",
+                            "displayName": "Gradle type validation",
+                        }, {
+                            "name": "validation",
+                            "displayName": "Validation"
+                        }],
                     "error": {
                         "parts": [{
                             "text": "org.gradle.api.InvalidUserCodeException: Project ':sub-b' cannot dynamically lookup a property in the parent project ':'\n"
@@ -96,22 +100,12 @@ function configurationCacheProblems() {
                         {"kind": "Project", "path": ":sub-b"},
                         {"kind": "BuildLogic", "location": "build file 'sub-c/build.gradle'"}
                     ],
-                    "problem": [{"text": "Project "}, {"name": ":sub-c"}, {"text": " cannot dynamically lookup a "}, {"text": "property"}, {"text": " in the parent project "}, {"name": ":"}],
+                    "category": [
+                        {
+                            "name": "Project-sub-c-cannot-dynamically-lookup-a-property-in-the-parent-project",
+                            "displayName": "Project `:sub-c` cannot dynamically lookup a property in the parent project",
+                        }],
                     "error": {}
-                }, {
-                    "trace": [{"kind": "TaskPath", "path": ":anotherReportedlyIncompatible"}],
-                    "incompatibleTask": [
-                        {"text": "task "}, {"name": ":anotherReportedlyIncompatible"}, {"text": " is incompatible with the configuration cache. "},
-                        {"text": "Reason: "}, {"text": "some other reason"}, {"text": "."}
-                    ],
-                    "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:task_opt_out"
-                }, {
-                    "trace": [{"kind": "TaskPath", "path": ":reportedlyIncompatible"}],
-                    "incompatibleTask": [
-                        {"text": "task "}, {"name": ":reportedlyIncompatible"}, {"text": " is incompatible with the configuration cache. "},
-                        {"text": "Reason: "}, {"text": "declares itself as not compatible"}, {"text": "."}
-                    ],
-                    "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:task_opt_out"
                 }
             ]
             // diagnostics for the CC case

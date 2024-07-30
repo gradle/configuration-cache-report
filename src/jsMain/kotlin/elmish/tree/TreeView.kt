@@ -73,7 +73,7 @@ object TreeView {
 data class Tree<T>(
     val label: T,
     val children: List<Tree<T>> = emptyList(),
-    val state: ViewState = ViewState.Collapsed
+    val state: ViewState = ViewState.Expanded
 ) {
 
     enum class ViewState {

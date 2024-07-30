@@ -52,12 +52,11 @@ fun createCategoryTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> 
     )
 
     val categoryToTreeMap = mutableMapOf<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>()
-    val rootNodes = problems.filterNot { it.problem == null }.map { problem ->
+    val rootNodes = problems.map { problem ->
         var firstCategoryNode: MutableList<Tree<ProblemNode>>? = null
-        val categories = problem.category?.copyOf()
-        categories?.reverse()
+        val categories = problem.category.copyOf().drop(1).reversed()
         val leafCategoryNodePair =
-            categories?.foldRight(null as Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>?) { cat, previousCategoryNodePair ->
+            categories.foldRight(null as Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>?) { cat, previousCategoryNodePair ->
                 val categoryText = "${cat.displayName} (${cat.name})"
                 val categoryNodePair = categoryToTreeMap.getOrPut(categoryText) {
                     val children: MutableList<Tree<ProblemNode>> = mutableListOf()
@@ -98,7 +97,7 @@ fun description(problemReportJsModel: ProblemReportJsModel) =
 
 
 fun createMessageTree(problems: Array<JsProblem>): ProblemTreeModel {
-    val problemList = problems.filterNot { it.problem == null }
+    val problemList = problems
         .map(::createMessageTreeElement)
     return ProblemTreeModel(
         Tree(ProblemApiNode.Text("text"), problemList)
@@ -108,7 +107,10 @@ fun createMessageTree(problems: Array<JsProblem>): ProblemTreeModel {
 
 private
 fun createMessageTreeElement(jsProblem: JsProblem): Tree<ProblemNode> {
-    val t = toPrettyText(jsProblem.problem!!)
+    val t = PrettyText.build {
+        text(jsProblem.category[0].displayName)
+        ref(jsProblem.category[0].name)
+    }
     val children = getMessageChildren(jsProblem)
     return Tree(ProblemApiNode.Label(t), children)
 }
@@ -133,7 +135,7 @@ fun getMessageChildren(jsProblem: JsProblem): List<Tree<ProblemNode>> {
         ?.let { problemNodeForError(it) }
         ?.let { errorNode -> children.add(Tree(errorNode)) }
 
-    jsProblem.category?.let { category ->
+    jsProblem.category.copyOf().drop(1).let { category ->
         category.fold(null as Tree<ProblemNode>?) { previousCategoryNode, cat ->
             Tree(
                 ProblemApiNode.Category(

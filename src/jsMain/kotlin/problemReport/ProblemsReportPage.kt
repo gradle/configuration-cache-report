@@ -23,12 +23,15 @@ import components.invisibleCloseParen
 import components.invisibleOpenParen
 import components.invisibleSpace
 import configurationCache.BaseIntent
+import configurationCache.BaseIntent.TreeIntent
+import configurationCache.updateNodeTreeAt
 import configurationCache.ProblemTreeIntent
 import configurationCache.ProblemTreeModel
 import configurationCache.treeButtonFor
 import configurationCache.viewException
 import data.LearnMore
 import data.PrettyText
+import data.mapAt
 import elmish.Component
 import elmish.View
 import elmish.a
@@ -78,6 +81,24 @@ object ProblemsReportPage :
         data class SetTab(val tab: Tab) : Intent()
     }
 
+
+    private
+    fun Model.updateNodeAt(
+        tree: TreeIntent,
+        update: ProblemNode.() -> ProblemNode
+    ) = when (tree) {
+        is Intent.MessageTreeIntent -> copy(
+            messageTree = messageTree.updateNodeTreeAt(tree, update)
+        )
+        is Intent.CategoryTreeIntent -> copy(
+            categoryTree = categoryTree.updateNodeTreeAt(tree, update)
+        )
+        else -> {
+            console.error("Unhandled tree intent: $tree")
+            this
+        }
+    }
+
     override fun step(intent: BaseIntent, model: Model): Model = when (intent) {
         is Intent.CategoryTreeIntent -> model.copy(
             categoryTree = TreeView.step(intent.delegate, model.categoryTree)
@@ -86,6 +107,12 @@ object ProblemsReportPage :
             messageTree = TreeView.step(intent.delegate, model.messageTree)
         )
 
+        is BaseIntent.ToggleStackTracePart -> model.updateNodeAt(intent.location) {
+            require(this is ProblemNode.Exception)
+            copy(parts = parts.mapAt(intent.partIndex) {
+                it.copy(state = it.state?.toggle())
+            })
+        }
         is BaseIntent.Copy -> {
             window.navigator.clipboard.writeText(intent.text)
             model

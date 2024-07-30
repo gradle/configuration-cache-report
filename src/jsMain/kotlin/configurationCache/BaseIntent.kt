@@ -17,11 +17,21 @@
 package configurationCache
 
 import components.ProblemNode
+import configurationCache.BaseIntent.TreeIntent
 import elmish.tree.TreeView
 
 
 internal
 typealias ProblemTreeModel = TreeView.Model<ProblemNode>
+
+
+fun ProblemTreeModel.updateNodeTreeAt(
+    tree: TreeIntent,
+    update: ProblemNode.() -> ProblemNode
+): TreeView.Model<ProblemNode> = updateLabelAt(
+    tree.delegate.focus,
+    update
+)
 
 
 internal
@@ -34,4 +44,6 @@ open class BaseIntent {
     abstract class TreeIntent : BaseIntent() {
         abstract val delegate: ProblemTreeIntent
     }
+
+    data class ToggleStackTracePart(val partIndex: Int, val location: TreeIntent) : BaseIntent()
 }

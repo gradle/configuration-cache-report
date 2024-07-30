@@ -181,11 +181,11 @@ fun internalLinesToggle(
     partIndex: Int,
     state: Tree.ViewState,
     location: () -> TreeIntent
-): View<Intent> = span(
+): View<BaseIntent> = span(
     attributes {
         className("java-exception-part-toggle")
         onClick {
-            Intent.ToggleStackTracePart(partIndex, location())
+            BaseIntent.ToggleStackTracePart(partIndex, location())
         }
         title("Click to ${visibilityToggleVerb(state)}")
     },
@@ -194,17 +194,17 @@ fun internalLinesToggle(
 
 
 private
-fun exceptionPart(lines: List<String>, firstLineTail: View<Intent> = empty): View<Intent> = ul(
+fun exceptionPart(lines: List<String>, firstLineTail: View<BaseIntent> = empty): View<BaseIntent> = ul(
     lines.mapIndexed { i, line -> exceptionLine(line, if (i == 0) firstLineTail else empty) }
 )
 
 
 private
-fun exceptionLine(line: String, lineTail: View<Intent> = empty): View<Intent> =
+fun exceptionLine(line: String, lineTail: View<BaseIntent> = empty): View<BaseIntent> =
     li(code(line), lineTail)
 
 
-fun exception(node: ProblemNode.Exception, owner: () -> TreeIntent): View<Intent> = div(
+fun exception(node: ProblemNode.Exception, owner: () -> TreeIntent): View<BaseIntent> = div(
     attributes { className("java-exception") },
     node.parts.mapIndexed { index, part ->
         if (part.state != null) {
@@ -262,8 +262,6 @@ object ConfigurationCacheReportPage :
 
         data class IncompatibleTaskTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
-        data class ToggleStackTracePart(val partIndex: Int, val location: TreeIntent) : Intent()
-
         data class SetTab(val tab: Tab) : Intent()
     }
 
@@ -284,7 +282,7 @@ object ConfigurationCacheReportPage :
             incompatibleTaskTree = TreeView.step(intent.delegate, model.incompatibleTaskTree)
         )
 
-        is Intent.ToggleStackTracePart -> model.updateNodeAt(intent.location) {
+        is BaseIntent.ToggleStackTracePart -> model.updateNodeAt(intent.location) {
             require(this is ProblemNode.Exception)
             copy(parts = parts.mapAt(intent.partIndex) {
                 it.copy(state = it.state?.toggle())
@@ -312,19 +310,19 @@ object ConfigurationCacheReportPage :
         update: ProblemNode.() -> ProblemNode
     ) = when (tree) {
         is Intent.MessageTreeIntent -> copy(
-            messageTree = messageTree.updateNodeAt(tree, update)
+            messageTree = messageTree.updateNodeTreeAt(tree, update)
         )
 
         is Intent.TaskTreeIntent -> copy(
-            locationTree = locationTree.updateNodeAt(tree, update)
+            locationTree = locationTree.updateNodeTreeAt(tree, update)
         )
 
         is Intent.InputTreeIntent -> copy(
-            inputTree = inputTree.updateNodeAt(tree, update)
+            inputTree = inputTree.updateNodeTreeAt(tree, update)
         )
 
         is Intent.IncompatibleTaskTreeIntent -> copy(
-            incompatibleTaskTree = incompatibleTaskTree.updateNodeAt(tree, update)
+            incompatibleTaskTree = incompatibleTaskTree.updateNodeTreeAt(tree, update)
         )
 
         else -> {
@@ -332,15 +330,6 @@ object ConfigurationCacheReportPage :
             this
         }
     }
-
-    private
-    fun ProblemTreeModel.updateNodeAt(
-        tree: TreeIntent,
-        update: ProblemNode.() -> ProblemNode
-    ): TreeView.Model<ProblemNode> = updateLabelAt(
-        tree.delegate.focus,
-        update
-    )
 
     override fun view(model: Model): View<BaseIntent> = div(
         attributes { className("report-wrapper") },
