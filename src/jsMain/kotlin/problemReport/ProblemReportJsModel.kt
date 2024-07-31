@@ -29,6 +29,7 @@ external interface JsCategoryElement {
 external interface JsProblem {
     val category: Array<JsCategoryElement>
     val documentationLink: String?
+    val severity: String
     val error: JsError?
     val problemDetails: Array<JsMessageFragment>?
     val solutions: Array<Array<JsMessageFragment>>?

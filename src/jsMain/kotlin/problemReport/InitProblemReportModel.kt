@@ -40,16 +40,13 @@ fun reportProblemsReportPageModelFromJsModel(
         createMessageTree(problems),
         createCategoryTree(problems),
         ProblemsReportPage.Tab.ByCategory,
+        problems.size
     )
 }
 
 
 fun createCategoryTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> {
-    val uncategorizedProblems = mutableListOf<Tree<ProblemNode>>()
-    val uncategorizedNode = Tree(
-        ProblemApiNode.Category(PrettyText.ofText("Uncategorized")),
-        uncategorizedProblems
-    )
+    val (uncategorizedProblems, uncategorizedNode) = createUncategorizedArtifacts()
 
     val categoryToTreeMap = mutableMapOf<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>()
     val rootNodes = problems.map { problem ->
@@ -60,10 +57,15 @@ fun createCategoryTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> 
                 val categoryText = "${cat.displayName} (${cat.name})"
                 val categoryNodePair = categoryToTreeMap.getOrPut(categoryText) {
                     val children: MutableList<Tree<ProblemNode>> = mutableListOf()
-                    Pair(Tree(ProblemApiNode.Category(PrettyText.build {
-                        text(cat.displayName)
-                        ref(cat.name)
-                    }), children), children)
+                    Pair(
+                        Tree(
+                            ProblemApiNode.Category(PrettyText.build {
+                                text(cat.displayName)
+                                ref(cat.name)
+                            }), children,
+                            Tree.ViewState.Expanded
+                        ), children
+                    )
                 }
 
                 val currentNodeChildren = categoryNodePair.second
@@ -78,16 +80,28 @@ fun createCategoryTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> 
 
                 categoryNodePair
             }
+        val messageTreeElement = createMessageTreeElement(problem)
         if (firstCategoryNode == null) {
-            uncategorizedProblems.add(createMessageTreeElement(problem))
+            uncategorizedProblems.add(messageTreeElement)
             uncategorizedNode
         } else {
-            firstCategoryNode?.add(createMessageTreeElement(problem))
+            firstCategoryNode!!.add(messageTreeElement)
             leafCategoryNodePair!!.first
         }
     }.distinct()
 
     return ProblemTreeModel(Tree(ProblemApiNode.Text("text"), rootNodes))
+}
+
+
+private
+fun createUncategorizedArtifacts(): Pair<MutableList<Tree<ProblemNode>>, Tree<ProblemNode>> {
+    val uncategorizedProblems = mutableListOf<Tree<ProblemNode>>()
+    val uncategorizedNode = Tree(
+        ProblemApiNode.Category(PrettyText.ofText("Uncategorized")),
+        uncategorizedProblems
+    )
+    return uncategorizedProblems to uncategorizedNode
 }
 
 
@@ -107,28 +121,47 @@ fun createMessageTree(problems: Array<JsProblem>): ProblemTreeModel {
 
 private
 fun createMessageTreeElement(jsProblem: JsProblem): Tree<ProblemNode> {
-    val t = PrettyText.build {
+    val problemLabel = PrettyText.build {
         text(jsProblem.category[0].displayName)
         ref(jsProblem.category[0].name)
     }
+    val label = ProblemNode.Message(problemLabel)
     val children = getMessageChildren(jsProblem)
-    return Tree(ProblemApiNode.Label(t), children)
+    val messageNode = when (jsProblem.severity) {
+        "WARNING" -> {
+            console.error("Warning severity")
+            ProblemNode.Warning(label, jsProblem.documentationLink?.let { ProblemNode.Link(it, "") })
+        }
+
+        "ERROR" -> {
+            console.error("Error severity")
+
+            ProblemNode.Error(label, jsProblem.documentationLink?.let { ProblemNode.Link(it, "") })
+        }
+
+        else -> {
+            console.error("no severity ${jsProblem.severity}")
+            label
+        }
+    }
+
+    return Tree(messageNode, children)
 }
 
 
 private
 fun getMessageChildren(jsProblem: JsProblem): List<Tree<ProblemNode>> {
     val children = jsProblem.problemDetails?.let {
-        mutableListOf(Tree<ProblemNode>(ProblemApiNode.Message(toPrettyText(it))))
+        mutableListOf(Tree<ProblemNode>(ProblemNode.Message(toPrettyText(it))))
     } ?: mutableListOf()
 
     jsProblem.solutions?.let {
         val solutions = it.map { solution ->
-            Tree<ProblemNode>(ProblemApiNode.Message(toPrettyText(solution)))
+            Tree<ProblemNode>(ProblemNode.Message(toPrettyText(solution)))
         }
 
         children.add(
-            Tree(ProblemApiNode.Label(PrettyText.ofText("Solutions")), solutions)
+            Tree(ProblemNode.Message(PrettyText.ofText("Solutions")), solutions)
         )
     }
     jsProblem.error

@@ -49,11 +49,6 @@ import kotlinx.browser.window
 
 
 sealed class ProblemCCNode : ProblemNode() {
-
-    data class Error(val label: ProblemNode, val docLink: ProblemNode?) : ProblemNode()
-
-    data class Warning(val label: ProblemNode, val docLink: ProblemNode?) : ProblemNode()
-
     data class Info(val label: ProblemNode, val docLink: ProblemNode?) : ProblemNode()
 
     data class Project(val path: String) : ProblemNode()
@@ -71,12 +66,38 @@ sealed class ProblemCCNode : ProblemNode() {
     data class BuildLogic(val location: String) : ProblemNode()
 
     data class BuildLogicClass(val type: String) : ProblemNode()
+}
 
-    data class Label(val text: String) : ProblemNode()
 
-    data class Link(val href: String, val label: String) : ProblemNode()
+val errorIcon = span<BaseIntent>(
+    attributes { classNames("invisible-text", "error-icon") },
+    "[error] "
+)
 
-    data class Message(val prettyText: PrettyText) : ProblemNode()
+
+val warningIcon = span<BaseIntent>(
+    attributes { classNames("invisible-text", "warning-icon") },
+    "[warn]  " // two spaces to align with [error] prefix
+)
+
+
+fun treeLabel(
+    treeIntent: (ProblemTreeIntent) -> BaseIntent,
+    viewNode: (node: ProblemNode) -> View<BaseIntent>,
+    focus: Tree.Focus<ProblemNode>,
+    label: ProblemNode,
+    docLink: ProblemNode? = null,
+    prefix: View<BaseIntent> = empty,
+    suffix: View<BaseIntent> = empty
+): View<BaseIntent> {
+    console.error("treeLabel: $label")
+    return div(
+        treeButtonFor(focus, treeIntent),
+        prefix,
+        viewNode(label),
+        docLink?.let(viewNode) ?: empty,
+        suffix
+    )
 }
 
 
@@ -434,9 +455,10 @@ object ConfigurationCacheReportPage :
         ol(
             viewSubTrees(subTrees) { focus ->
                 when (val labelNode = focus.tree.label) {
-                    is ProblemCCNode.Error -> {
+                    is ProblemNode.Error -> {
                         treeLabel(
                             treeIntent,
+                            ::viewNode,
                             focus,
                             labelNode.label,
                             labelNode.docLink,
@@ -444,9 +466,10 @@ object ConfigurationCacheReportPage :
                         )
                     }
 
-                    is ProblemCCNode.Warning -> {
+                    is ProblemNode.Warning -> {
                         treeLabel(
                             treeIntent,
+                            ::viewNode,
                             focus,
                             labelNode.label,
                             labelNode.docLink,
@@ -457,6 +480,7 @@ object ConfigurationCacheReportPage :
                     is ProblemCCNode.Info -> {
                         treeLabel(
                             treeIntent,
+                            ::viewNode,
                             focus,
                             labelNode.label,
                             labelNode.docLink,
@@ -469,7 +493,10 @@ object ConfigurationCacheReportPage :
                     }
 
                     else -> {
-                        treeLabel(treeIntent, focus, labelNode)
+                        treeLabel(
+                            treeIntent, ::viewNode,
+                            focus, labelNode
+                        )
                     }
                 }
             }
@@ -516,50 +543,25 @@ object ConfigurationCacheReportPage :
             ref(node.type)
         }
 
-        is ProblemCCNode.Label -> viewPrettyText {
+        is ProblemNode.Label -> viewPrettyText {
             text(node.text)
         }
 
-        is ProblemCCNode.Message -> viewPrettyText(node.prettyText)
+        is ProblemNode.Message -> viewPrettyText(node.prettyText)
 
-        is ProblemCCNode.Link -> a(
-            attributes {
-                className("documentation-button")
-                href(node.href)
-            },
-            node.label
-        )
+        is ProblemNode.Link -> viewDocLink(node)
 
         else -> span(
             node.toString()
         )
     }
-
-    private
-    fun treeLabel(
-        treeIntent: (ProblemTreeIntent) -> BaseIntent,
-        focus: Tree.Focus<ProblemNode>,
-        label: ProblemNode,
-        docLink: ProblemNode? = null,
-        prefix: View<BaseIntent> = empty,
-        suffix: View<BaseIntent> = empty
-    ): View<BaseIntent> = div(
-        treeButtonFor(focus, treeIntent),
-        prefix,
-        viewNode(label),
-        docLink?.let(ConfigurationCacheReportPage::viewNode) ?: empty,
-        suffix
-    )
-
-    private
-    val errorIcon = span<Intent>(
-        attributes { classNames("invisible-text", "error-icon") },
-        "[error] "
-    )
-
-    private
-    val warningIcon = span<Intent>(
-        attributes { classNames("invisible-text", "warning-icon") },
-        "[warn]  " // two spaces to align with [error] prefix
-    )
 }
+
+
+fun viewDocLink(node: ProblemNode.Link): View<BaseIntent> = a(
+    attributes {
+        className("documentation-button")
+        href(node.href)
+    },
+    node.label
+)

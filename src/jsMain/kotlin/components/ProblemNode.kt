@@ -21,14 +21,18 @@ import elmish.tree.Tree
 
 
 open class ProblemNode {
-    data class Exception(
-        val summary: PrettyText?,
-        val fullText: String,
-        val parts: List<StackTracePart>
-    ) : ProblemNode()
+    data class Exception(val summary: PrettyText?, val fullText: String, val parts: List<StackTracePart>) :
+        ProblemNode()
 
-    data class StackTracePart(
-        val lines: List<String>,
-        val state: Tree.ViewState?
-    )
+    data class StackTracePart(val lines: List<String>, val state: Tree.ViewState?)
+
+    data class Error(val label: ProblemNode, val docLink: ProblemNode?) : ProblemNode()
+
+    data class Warning(val label: ProblemNode, val docLink: ProblemNode?) : ProblemNode()
+
+    data class Message(val prettyText: PrettyText) : ProblemNode()
+
+    data class Link(val href: String, val label: String) : ProblemNode()
+
+    data class Label(val text: String) : ProblemNode()
 }
