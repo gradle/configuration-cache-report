@@ -24,7 +24,6 @@ import elmish.empty
 import elmish.span
 
 
-internal
 class PrettyTextComponent<Intent>(
     private val getCopyIntent: ((String) -> Intent)? = null
 ) : Component<PrettyText, Intent> {

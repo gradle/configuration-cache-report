@@ -42,6 +42,4 @@ external interface ProblemReportJsModel {
     val requestedTasks: String?
     val description: Array<JsMessageFragment>?
     val documentationLink: String
-    val totalProblemCount: Int
-    val diagnostics: Array<JsProblem>
 }

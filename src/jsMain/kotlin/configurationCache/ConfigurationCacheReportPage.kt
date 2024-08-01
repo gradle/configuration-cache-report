@@ -17,13 +17,12 @@
 package configurationCache
 
 import components.CopyButtonComponent
-import components.PrettyTextComponent
 import components.ProblemNode
 import components.invisibleCloseParen
 import components.invisibleOpenParen
 import components.invisibleSpace
-import configurationCache.BaseIntent.TreeIntent
-import configurationCache.ConfigurationCacheReportPage.Intent
+import reporting.BaseIntent.TreeIntent
+import reporting.viewPrettyText
 import data.LearnMore
 import data.PrettyText
 import data.mapAt
@@ -46,6 +45,17 @@ import elmish.tree.TreeView
 import elmish.tree.viewSubTrees
 import elmish.ul
 import kotlinx.browser.window
+import reporting.BaseIntent
+import reporting.PrettyTextNoCopy
+import reporting.PrettyTextWithCopy
+import reporting.ProblemTreeIntent
+import reporting.ProblemTreeModel
+import reporting.copyTextPrefixForTreeNode
+import reporting.errorIcon
+import reporting.treeLabel
+import reporting.updateNodeTreeAt
+import reporting.viewTreeButton
+import reporting.warningIcon
 
 
 sealed class ProblemCCNode : ProblemNode() {
@@ -69,88 +79,16 @@ sealed class ProblemCCNode : ProblemNode() {
 }
 
 
-val errorIcon = span<BaseIntent>(
-    attributes { classNames("invisible-text", "error-icon") },
-    "[error] "
-)
-
-
-val warningIcon = span<BaseIntent>(
-    attributes { classNames("invisible-text", "warning-icon") },
-    "[warn]  " // two spaces to align with [error] prefix
-)
-
-
-fun treeLabel(
-    treeIntent: (ProblemTreeIntent) -> BaseIntent,
-    viewNode: (node: ProblemNode) -> View<BaseIntent>,
-    focus: Tree.Focus<ProblemNode>,
-    label: ProblemNode,
-    docLink: ProblemNode? = null,
-    prefix: View<BaseIntent> = empty,
-    suffix: View<BaseIntent> = empty
-): View<BaseIntent> {
-    console.error("treeLabel: $label")
-    return div(
-        treeButtonFor(focus, treeIntent),
-        prefix,
-        viewNode(label),
-        docLink?.let(viewNode) ?: empty,
-        suffix
-    )
-}
-
-
-fun <I> viewTreeButton(child: Tree.Focus<ProblemNode>, treeIntent: (ProblemTreeIntent) -> I): View<I> = span(
-    attributes {
-        classNames("invisible-text", "tree-btn")
-        if (child.tree.state === Tree.ViewState.Collapsed) {
-            className("collapsed")
-        }
-        if (child.tree.state === Tree.ViewState.Expanded) {
-            className("expanded")
-        }
-        title("Click to ${toggleVerb(child.tree.state)}")
-        onClick { treeIntent(TreeView.Intent.Toggle(child)) }
-    },
-    copyTextPrefixForTreeNode(child)
-)
-
-
-fun copyTextPrefixForTreeNode(child: Tree.Focus<ProblemNode>) =
-    "    ".repeat(child.depth - 1) + "- "
-
-
-fun toggleVerb(state: Tree.ViewState): String = when (state) {
-    Tree.ViewState.Collapsed -> "expand"
-    Tree.ViewState.Expanded -> "collapse"
-}
-
-
-private
-fun viewPrettyText(text: PrettyText): View<BaseIntent> =
-    PrettyTextWithCopy.view(text)
-
-
 private
 fun viewPrettyText(textBuilder: PrettyText.Builder.() -> Unit): View<BaseIntent> =
     PrettyTextWithCopy.view(PrettyText.build(textBuilder))
 
 
-private
-val PrettyTextNoCopy =
-    PrettyTextComponent<Intent>()
-
-
-private
-val PrettyTextWithCopy =
-    PrettyTextComponent<BaseIntent> { BaseIntent.Copy(it) }
-
-
 fun <I> treeButtonFor(child: Tree.Focus<ProblemNode>, treeIntent: (ProblemTreeIntent) -> I): View<I> =
-    when {
-        child.tree.isNotEmpty() -> viewTreeButton(child, treeIntent)
-        else -> viewLeafIcon(child)
+    if (child.tree.isNotEmpty()) {
+        viewTreeButton(child, treeIntent)
+    } else {
+        viewLeafIcon(child)
     }
 
 

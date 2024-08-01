@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package configurationCache
+package reporting
 
 import components.ProblemNode
-import configurationCache.BaseIntent.TreeIntent
+import reporting.BaseIntent.TreeIntent
 import elmish.tree.TreeView
 
 

@@ -16,23 +16,13 @@
 
 package problemReport
 
-import components.CopyButtonComponent
-import components.PrettyTextComponent
 import components.ProblemNode
 import components.invisibleCloseParen
 import components.invisibleOpenParen
 import components.invisibleSpace
-import configurationCache.BaseIntent
-import configurationCache.BaseIntent.TreeIntent
-import configurationCache.updateNodeTreeAt
-import configurationCache.ProblemTreeIntent
-import configurationCache.ProblemTreeModel
-import configurationCache.errorIcon
 import configurationCache.treeButtonFor
-import configurationCache.treeLabel
 import configurationCache.viewDocLink
 import configurationCache.viewException
-import configurationCache.warningIcon
 import data.LearnMore
 import data.PrettyText
 import data.mapAt
@@ -50,12 +40,23 @@ import elmish.tree.Tree
 import elmish.tree.TreeView
 import elmish.tree.viewSubTrees
 import kotlinx.browser.window
-import configurationCache.BaseIntent.TreeIntent as BaseIntentTreeIntent
+import reporting.BaseIntent
+import reporting.BaseIntent.TreeIntent
+import reporting.PrettyTextNoCopy
+import reporting.ProblemTreeIntent
+import reporting.ProblemTreeModel
+import reporting.enumIcon
+import reporting.errorIcon
+import reporting.treeLabel
+import reporting.updateNodeTreeAt
+import reporting.viewPrettyText
+import reporting.warningIcon
+import reporting.BaseIntent.TreeIntent as BaseIntentTreeIntent
 
 
 sealed class ProblemApiNode : ProblemNode() {
     data class Text(val text: String) : ProblemApiNode()
-    data class Category(val prettyText: PrettyText) : ProblemApiNode()
+    data class Category(val prettyText: PrettyText, val separator: Boolean = false) : ProblemApiNode()
 }
 
 
@@ -261,14 +262,35 @@ object ProblemsReportPage :
         is ProblemApiNode.Text -> viewPrettyText(PrettyText.ofText(label.text))
         is ProblemApiNode.Category -> {
             div(
-                treeButtonFor(focus, treeIntent),
-                viewPrettyText(label.prettyText)
+                attributes {
+                    if (label.separator) {
+                        className("uncategorized")
+                    }
+                },
+                div(
+                    treeButtonFor(focus, treeIntent),
+                    viewPrettyText(label.prettyText)
+                )
             )
         }
 
         is ProblemNode.Exception -> viewException(treeIntent, focus, label)
         is ProblemNode.Message -> {
             viewPrettyText(label.prettyText)
+        }
+
+        is ProblemNode.ListElement -> {
+            div(
+                enumIcon,
+                viewPrettyText(label.prettyText)
+            )
+        }
+
+        is ProblemNode.TreeNode -> {
+            div(
+                treeButtonFor(focus, treeIntent),
+                viewPrettyText(label.prettyText)
+            )
         }
 
         is ProblemNode.Error -> {
@@ -307,20 +329,4 @@ object ProblemsReportPage :
             )
         }
     }
-
-    private
-    fun viewPrettyText(text: PrettyText): View<BaseIntent> =
-        PrettyTextWithCopy.view(text)
-
-    private
-    val PrettyTextNoCopy =
-        PrettyTextComponent() { BaseIntent.Copy(it) }
-
-    private
-    val PrettyTextWithCopy =
-        PrettyTextComponent() { BaseIntent.Copy(it) }
-
-    private
-    val CopyButton =
-        CopyButtonComponent { BaseIntent.Copy(it) }
 }

@@ -17,7 +17,7 @@
 package problemReport
 
 import components.ProblemNode
-import configurationCache.ProblemTreeModel
+import reporting.ProblemTreeModel
 import configurationCache.problemNodeForError
 import configurationCache.toPrettyText
 import data.LearnMore
@@ -32,7 +32,7 @@ fun reportProblemsReportPageModelFromJsModel(
 ): ProblemsReportPage.Model {
     return ProblemsReportPage.Model(
         heading = PrettyText.ofText("Problems Report"),
-        summary = description(problemReportJsModel),
+        summary = description(problemReportJsModel, problems),
         learnMore = LearnMore(
             text = "reporting problems",
             documentationLink = problemReportJsModel.documentationLink
@@ -98,16 +98,28 @@ private
 fun createUncategorizedArtifacts(): Pair<MutableList<Tree<ProblemNode>>, Tree<ProblemNode>> {
     val uncategorizedProblems = mutableListOf<Tree<ProblemNode>>()
     val uncategorizedNode = Tree(
-        ProblemApiNode.Category(PrettyText.ofText("Uncategorized")),
-        uncategorizedProblems
+        ProblemApiNode.Category(PrettyText.ofText("Uncategorized"), true), uncategorizedProblems
     )
     return uncategorizedProblems to uncategorizedNode
 }
 
 
 private
-fun description(problemReportJsModel: ProblemReportJsModel) =
-    problemReportJsModel.description?.let { listOf(toPrettyText(it)) } ?: listOf()
+fun description(problemReportJsModel: ProblemReportJsModel, problems: Array<JsProblem>) =
+    problemReportJsModel.description?.let {
+        listOf(toPrettyText(it))
+    }
+        ?: listOf(PrettyText.build {
+            text("${problems.size} problems have been reported during the execution")
+            problemReportJsModel.buildName?.let { buildName ->
+                text(" of build ")
+                ref(buildName)
+            }
+            problemReportJsModel.requestedTasks?.let { requestedTasks ->
+                text(" for the following tasks:")
+                ref(requestedTasks)
+            }
+        })
 
 
 fun createMessageTree(problems: Array<JsProblem>): ProblemTreeModel {
@@ -129,13 +141,10 @@ fun createMessageTreeElement(jsProblem: JsProblem): Tree<ProblemNode> {
     val children = getMessageChildren(jsProblem)
     val messageNode = when (jsProblem.severity) {
         "WARNING" -> {
-            console.error("Warning severity")
             ProblemNode.Warning(label, jsProblem.documentationLink?.let { ProblemNode.Link(it, "") })
         }
 
         "ERROR" -> {
-            console.error("Error severity")
-
             ProblemNode.Error(label, jsProblem.documentationLink?.let { ProblemNode.Link(it, "") })
         }
 
@@ -156,16 +165,18 @@ fun getMessageChildren(jsProblem: JsProblem): List<Tree<ProblemNode>> {
     } ?: mutableListOf()
 
     jsProblem.solutions?.let {
-        val solutions = it.map { solution ->
-            Tree<ProblemNode>(ProblemNode.Message(toPrettyText(solution)))
+        if (it.isNotEmpty()) {
+            children.add(
+                Tree(
+                    ProblemNode.TreeNode(PrettyText.ofText("Solutions")),
+                    it.map { solution ->
+                        Tree(ProblemNode.ListElement(toPrettyText(solution)))
+                    })
+            )
         }
-
-        children.add(
-            Tree(ProblemNode.Message(PrettyText.ofText("Solutions")), solutions)
-        )
     }
     jsProblem.error
-        ?.let { problemNodeForError(it) }
+        ?.let(::problemNodeForError)
         ?.let { errorNode -> children.add(Tree(errorNode)) }
 
     jsProblem.category.copyOf().drop(1).let { category ->
