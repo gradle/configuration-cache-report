@@ -51,9 +51,7 @@ function configurationCacheProblems() {
                     "problemDetails": [{"text": "details "}, {"name": "Task.project"}, {"text": " text."}],
                     "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:requirements:disallowed_types",
                     fileLocations:[
-                        {"path": "project1/build.gradle", "line": 5, "column": 0, length: 4},
-                        {"path": "project2/build.gradle"},
-                        {"path": "project3/build.gradle", "line": 5, "column": 0},
+                        {"path": "project3/build.gradle", "line": 5, "column": 4},
                     ],
                     "category":
                         [{
@@ -69,7 +67,7 @@ function configurationCacheProblems() {
                     severity: "WARNING",
                 }, {
                     fileLocations:[
-                        {"path": "project1/build.gradle", "line": 5, "column": 0, length: 4},
+                        {"path": "project1/build.gradle", "line": 5, "column": 0, "length": 4},
                         {"path": "project2/build.gradle"},
                         {"path": "project3/build.gradle", "line": 5, "column": 0},
                     ],
@@ -99,7 +97,7 @@ function configurationCacheProblems() {
                     severity: "ERROR"
                 }, {
                     fileLocations:[
-                        {"path": "project1/build.gradle", "line": 5, "column": 0, length: 4},
+                        {"path": "project1/build.gradle", "line": 5, "column": 0, "length": 4},
                         {"path": "project2/build.gradle"},
                         {"path": "project3/build.gradle", "line": 5, "column": 0},
                     ],

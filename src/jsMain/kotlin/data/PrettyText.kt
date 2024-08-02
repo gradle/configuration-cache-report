@@ -23,7 +23,7 @@ data class PrettyText(val fragments: List<Fragment>) {
 
         data class Text(val text: String) : Fragment()
 
-        data class Reference(val name: String) : Fragment()
+        data class Reference(val name: String, val clipboardString: String) : Fragment()
     }
 
     class Builder {
@@ -33,7 +33,7 @@ data class PrettyText(val fragments: List<Fragment>) {
 
         fun text(text: String) = apply { fragments.add(Fragment.Text(text)) }
 
-        fun ref(reference: String) = apply { fragments.add(Fragment.Reference(reference)) }
+        fun ref(reference: String, clipboardString: String = reference) = apply { fragments.add(Fragment.Reference(reference, clipboardString)) }
 
         fun build() = PrettyText(fragments.toList())
     }

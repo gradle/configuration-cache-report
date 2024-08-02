@@ -17,7 +17,6 @@
 package configurationCache
 
 import data.PrettyText
-import kotlin.js.JSON.stringify
 
 
 external interface JsModel {
@@ -122,10 +121,17 @@ external interface JsStackTracePart {
 }
 
 
-fun toPrettyText(message: Array<JsMessageFragment>) = PrettyText(
-    message.map {
-        it.text?.let(PrettyText.Fragment::Text)
-            ?: it.name?.let(PrettyText.Fragment::Reference)
-            ?: PrettyText.Fragment.Text("Unrecognised message fragment: ${stringify(it)}")
+fun toPrettyText(message: Array<JsMessageFragment>): PrettyText =
+    PrettyText.build {
+        message.forEach { fragment ->
+            fragment.text?.let { text(it) }
+            fragment.name?.let { ref(it) }
+        }
     }
-)
+//    return PrettyText(
+//        message.map {
+//            it.text?.let(PrettyText.Fragment::Text)
+//                ?: it.name?.let(PrettyText.Fragment::Reference)
+//                ?: PrettyText.Fragment.Text("Unrecognised message fragment: ${stringify(it)}")
+//        }
+//    )

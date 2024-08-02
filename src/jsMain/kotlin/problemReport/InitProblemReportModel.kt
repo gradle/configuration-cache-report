@@ -53,18 +53,21 @@ fun createFileLocationsTree(problems: Array<JsProblem>): TreeView.Model<ProblemN
     val locationMap = mutableMapOf<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>()
     problems.forEach { problem ->
         problem.fileLocations
-            ?.map { "${it.path}  line ${it.line ?: "<no line>"} column ${it.column ?: "<no column>"} length ${it.length ?: "<no length>"}" }
-            ?.forEach { location ->
+            ?.forEach {
+                val location =
+                    "${it.path}"
                 val locationNodePair = locationMap.getOrPut(location) {
                     val categoryChildren = mutableListOf<Tree<ProblemNode>>()
                     val tree = Tree(
-                        Category(PrettyText.ofText(location)),
+                        Category(PrettyText.build {
+                            ref(it.path)
+                        }),
                         categoryChildren,
                         Expanded
                     )
                     tree to categoryChildren
                 }
-                locationNodePair.second.add(createMessageTreeElement(problem))
+                locationNodePair.second.add(createMessageTreeElement(problem, it))
             }
 
         if (problem.fileLocations.isNullOrEmpty()) {
@@ -178,14 +181,10 @@ fun createMessageTree(problems: Array<JsProblem>): ProblemTreeModel {
 
 
 private
-fun createMessageTreeElement(jsProblem: JsProblem): Tree<ProblemNode> {
-    val problemLabel = PrettyText.build {
-        val firstCategoryElement = jsProblem.category.first()
-        text(firstCategoryElement.displayName)
-        ref(firstCategoryElement.name)
-    }
+fun createMessageTreeElement(jsProblem: JsProblem, fileLocation: JsFileLocation? = null): Tree<ProblemNode> {
+    val problemLabel = createProblemLabel(jsProblem, fileLocation)
     val label = ProblemNode.Message(problemLabel)
-    val children = getMessageChildren(jsProblem)
+    val children = getMessageChildren(jsProblem, fileLocation == null)
     val messageNode = when (jsProblem.severity) {
         "WARNING" -> {
             ProblemNode.Warning(label, jsProblem.documentationLink?.let { ProblemNode.Link(it, "") })
@@ -206,26 +205,84 @@ fun createMessageTreeElement(jsProblem: JsProblem): Tree<ProblemNode> {
 
 
 private
-fun getMessageChildren(jsProblem: JsProblem): List<Tree<ProblemNode>> {
+fun createProblemLabel(
+    jsProblem: JsProblem,
+    fileLocation: JsFileLocation?
+) = PrettyText.build {
+    text(jsProblem.category.first().displayName)
+    fileLocation?.let {
+        if (it.line != null) {
+            val reference = getLineReferencePart(it)
+            ref(reference, "${it.path}$reference")
+        }
+    }
+}
+
+
+private
+fun getLineReferencePart(location: JsFileLocation) =
+    location.line?.let { _ ->
+        val column = location.column?.let { ":$it" } ?: ""
+        val length = location.length?.let { ":$it" } ?: ""
+        ":${location.line}" + column + length
+    } ?: ""
+
+
+private
+fun getMessageChildren(jsProblem: JsProblem, addLocationNodes: Boolean): List<Tree<ProblemNode>> {
     val children = jsProblem.problemDetails?.let {
         mutableListOf(Tree<ProblemNode>(ProblemNode.Message(toPrettyText(it))))
     } ?: mutableListOf()
 
-    jsProblem.solutions?.let {
-        if (it.isNotEmpty()) {
-            children.add(
-                Tree(
-                    ProblemNode.TreeNode(PrettyText.ofText("Solutions")),
-                    it.map { solution ->
-                        Tree(ProblemNode.ListElement(toPrettyText(solution)))
-                    })
-            )
-        }
-    }
+    getSolutionsNode(jsProblem)?.let { children.add(it) }
+
     jsProblem.error
         ?.let(::problemNodeForError)
         ?.let { errorNode -> children.add(Tree(errorNode)) }
 
+    children.add(Tree(ProblemNode.Message(PrettyText.build {
+        text("ID: ")
+        ref(jsProblem.category.first().name)
+    })))
+
+    createCategoryNode(jsProblem)?.let { children.add(it) }
+
+    if (addLocationNodes) {
+        children.add(getLocationsNode(jsProblem))
+    }
+    return children
+}
+
+
+private
+fun getLocationsNode(jsProblem: JsProblem): Tree<ProblemNode> {
+    val locationNodes = jsProblem.fileLocations
+        ?.map { location ->
+            Tree<ProblemNode>(ProblemNode.Message(PrettyText.build {
+                text("- ")
+                ref("${location.path}${getLineReferencePart(location)}")
+            }))
+        }
+    return Tree(ProblemNode.Label("Locations"), locationNodes ?: listOf())
+}
+
+
+private
+fun getSolutionsNode(
+    jsProblem: JsProblem
+): Tree<ProblemNode>? {
+    if (jsProblem.solutions.isNullOrEmpty()) {
+        return null
+    }
+    return Tree(
+        ProblemNode.TreeNode(PrettyText.ofText("Solutions")), jsProblem.solutions!!.map { solution ->
+            Tree(ProblemNode.ListElement(toPrettyText(solution)))
+        })
+}
+
+
+private
+fun createCategoryNode(jsProblem: JsProblem) =
     jsProblem.category.copyOf().drop(1).let { category ->
         category.fold(null as Tree<ProblemNode>?) { previousCategoryNode, cat ->
             Tree(
@@ -235,9 +292,7 @@ fun getMessageChildren(jsProblem: JsProblem): List<Tree<ProblemNode>> {
                         ref(cat.name)
                     }
                 ),
-                if (previousCategoryNode == null) listOf() else listOf(previousCategoryNode)
+                previousCategoryNode?.let { listOf(it) } ?: listOf()
             )
         }
-    }?.let { children.add(it) }
-    return children
-}
+    }

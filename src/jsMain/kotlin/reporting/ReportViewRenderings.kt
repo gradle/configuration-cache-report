@@ -55,7 +55,6 @@ fun viewPrettyText(textBuilder: PrettyText.Builder.() -> Unit): View<BaseIntent>
 
 
 fun <I> treeButtonFor(child: Tree.Focus<ProblemNode>, treeIntent: (ProblemTreeIntent) -> I): View<I> {
-    console.log("treeButtonFor: ${child.tree.state} ${child.tree.label}")
     return if (child.tree.isNotEmpty()) {
         viewTreeButton(child, treeIntent)
     } else {

@@ -72,13 +72,13 @@ fun headingPrettyText(model: JsModel): PrettyText {
     val buildName = model.buildName
     val requestedTasks = model.requestedTasks
     val manyTasks = requestedTasks?.contains(" ") ?: true
-    return PrettyText(listOfNotNull(
-        PrettyText.Fragment.Text("${model.cacheAction.capitalize()} the configuration cache for "),
-        buildName?.let { PrettyText.Fragment.Reference(it) },
-        buildName?.let { PrettyText.Fragment.Text(" build and ") },
-        requestedTasks?.let { PrettyText.Fragment.Reference(it) } ?: PrettyText.Fragment.Text("default"),
-        PrettyText.Fragment.Text(if (manyTasks) " tasks" else " task")
-    ))
+    return PrettyText.build {
+        text("${model.cacheAction.capitalize()} the configuration cache for ")
+        buildName?.let { ref(it) }
+        buildName?.let { text(" build and ") }
+        requestedTasks?.let { ref(it) } ?: text("default")
+        text(if (manyTasks) " tasks" else " task")
+    }
 }
 
 

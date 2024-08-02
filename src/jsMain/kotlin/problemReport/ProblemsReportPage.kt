@@ -275,7 +275,6 @@ object ProblemsReportPage :
     ): View<BaseIntent> = when (label) {
         is ProblemApiNode.Text -> viewPrettyText(PrettyText.ofText(label.text))
         is ProblemApiNode.Category -> {
-            console.log("Category: $label")
             div(
                 attributes {
                     if (label.separator) {
