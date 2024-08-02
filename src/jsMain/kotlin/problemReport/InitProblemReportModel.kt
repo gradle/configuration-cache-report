@@ -23,7 +23,9 @@ import configurationCache.toPrettyText
 import data.LearnMore
 import data.PrettyText
 import elmish.tree.Tree
+import elmish.tree.Tree.ViewState.Expanded
 import elmish.tree.TreeView
+import problemReport.ProblemApiNode.Category
 
 
 fun reportProblemsReportPageModelFromJsModel(
@@ -39,9 +41,53 @@ fun reportProblemsReportPageModelFromJsModel(
         ),
         createMessageTree(problems),
         createCategoryTree(problems),
-        ProblemsReportPage.Tab.ByCategory,
+        createFileLocationsTree(problems), // file locations
+        ProblemsReportPage.Tab.ByFileLocation,
         problems.size
     )
+}
+
+
+fun createFileLocationsTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> {
+    val unlocatedProblems = mutableListOf<Tree<ProblemNode>>()
+    val locationMap = mutableMapOf<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>()
+    problems.forEach { problem ->
+        problem.fileLocations
+            ?.map { "${it.path}  line ${it.line ?: "<no line>"} column ${it.column ?: "<no column>"} length ${it.length ?: "<no length>"}" }
+            ?.forEach { location ->
+                val locationNodePair = locationMap.getOrPut(location) {
+                    val categoryChildren = mutableListOf<Tree<ProblemNode>>()
+                    val tree = Tree(
+                        Category(PrettyText.ofText(location)),
+                        categoryChildren,
+                        Expanded
+                    )
+                    tree to categoryChildren
+                }
+                locationNodePair.second.add(createMessageTreeElement(problem))
+            }
+
+        if (problem.fileLocations.isNullOrEmpty()) {
+            unlocatedProblems.add(createMessageTreeElement(problem))
+        }
+    }
+
+    val rootNodes = getRootNodes(locationMap, unlocatedProblems)
+
+    return ProblemTreeModel(Tree(ProblemApiNode.Text("text"), rootNodes))
+}
+
+
+private
+fun getRootNodes(
+    locationMap: Map<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>,
+    unlocatedProblems: List<Tree<ProblemNode>>
+): List<Tree<ProblemNode>> {
+    val locationNodes = locationMap.values.map { it.first }
+    return if (unlocatedProblems.isEmpty())
+        locationNodes
+    else
+        locationNodes + Tree(Category(PrettyText.ofText("no location"), true), unlocatedProblems)
 }
 
 
@@ -59,11 +105,11 @@ fun createCategoryTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> 
                     val children: MutableList<Tree<ProblemNode>> = mutableListOf()
                     Pair(
                         Tree(
-                            ProblemApiNode.Category(PrettyText.build {
+                            Category(PrettyText.build {
                                 text(cat.displayName)
                                 ref(cat.name)
                             }), children,
-                            Tree.ViewState.Expanded
+                            Expanded
                         ), children
                     )
                 }
@@ -98,7 +144,7 @@ private
 fun createUncategorizedArtifacts(): Pair<MutableList<Tree<ProblemNode>>, Tree<ProblemNode>> {
     val uncategorizedProblems = mutableListOf<Tree<ProblemNode>>()
     val uncategorizedNode = Tree(
-        ProblemApiNode.Category(PrettyText.ofText("Uncategorized"), true), uncategorizedProblems
+        Category(PrettyText.ofText("Uncategorized"), true), uncategorizedProblems
     )
     return uncategorizedProblems to uncategorizedNode
 }
@@ -134,8 +180,9 @@ fun createMessageTree(problems: Array<JsProblem>): ProblemTreeModel {
 private
 fun createMessageTreeElement(jsProblem: JsProblem): Tree<ProblemNode> {
     val problemLabel = PrettyText.build {
-        text(jsProblem.category[0].displayName)
-        ref(jsProblem.category[0].name)
+        val firstCategoryElement = jsProblem.category.first()
+        text(firstCategoryElement.displayName)
+        ref(firstCategoryElement.name)
     }
     val label = ProblemNode.Message(problemLabel)
     val children = getMessageChildren(jsProblem)
@@ -182,7 +229,7 @@ fun getMessageChildren(jsProblem: JsProblem): List<Tree<ProblemNode>> {
     jsProblem.category.copyOf().drop(1).let { category ->
         category.fold(null as Tree<ProblemNode>?) { previousCategoryNode, cat ->
             Tree(
-                ProblemApiNode.Category(
+                Category(
                     PrettyText.build {
                         text(cat.displayName)
                         ref(cat.name)

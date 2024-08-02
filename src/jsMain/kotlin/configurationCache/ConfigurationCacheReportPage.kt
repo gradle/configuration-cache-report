@@ -16,45 +16,37 @@
 
 package configurationCache
 
-import components.CopyButtonComponent
 import components.ProblemNode
 import components.invisibleCloseParen
 import components.invisibleOpenParen
 import components.invisibleSpace
-import reporting.BaseIntent.TreeIntent
-import reporting.viewPrettyText
 import data.LearnMore
 import data.PrettyText
 import data.mapAt
-import data.sIfPlural
 import elmish.Component
 import elmish.View
 import elmish.a
 import elmish.attributes
 import elmish.br
-import elmish.code
 import elmish.div
-import elmish.empty
 import elmish.h1
-import elmish.li
 import elmish.ol
 import elmish.small
 import elmish.span
 import elmish.tree.Tree
 import elmish.tree.TreeView
 import elmish.tree.viewSubTrees
-import elmish.ul
 import kotlinx.browser.window
 import reporting.BaseIntent
+import reporting.BaseIntent.TreeIntent
 import reporting.PrettyTextNoCopy
-import reporting.PrettyTextWithCopy
 import reporting.ProblemTreeIntent
 import reporting.ProblemTreeModel
-import reporting.copyTextPrefixForTreeNode
 import reporting.errorIcon
 import reporting.treeLabel
 import reporting.updateNodeTreeAt
-import reporting.viewTreeButton
+import reporting.viewException
+import reporting.viewPrettyText
 import reporting.warningIcon
 
 
@@ -77,112 +69,6 @@ sealed class ProblemCCNode : ProblemNode() {
 
     data class BuildLogicClass(val type: String) : ProblemNode()
 }
-
-
-private
-fun viewPrettyText(textBuilder: PrettyText.Builder.() -> Unit): View<BaseIntent> =
-    PrettyTextWithCopy.view(PrettyText.build(textBuilder))
-
-
-fun <I> treeButtonFor(child: Tree.Focus<ProblemNode>, treeIntent: (ProblemTreeIntent) -> I): View<I> =
-    if (child.tree.isNotEmpty()) {
-        viewTreeButton(child, treeIntent)
-    } else {
-        viewLeafIcon(child)
-    }
-
-
-fun <I> viewLeafIcon(child: Tree.Focus<ProblemNode>): View<I> = span(
-    attributes { classNames("invisible-text", "leaf-icon") },
-    copyTextPrefixForTreeNode(child)
-)
-
-
-fun viewException(
-    treeIntent: (ProblemTreeIntent) -> TreeIntent,
-    child: Tree.Focus<ProblemNode>,
-    node: ProblemNode.Exception
-): View<BaseIntent> = div(
-    viewTreeButton(child, treeIntent),
-    span("Exception"),
-    span(CopyButton.view(text = node.fullText, tooltip = "Copy exception to the clipboard")),
-    node.summary?.let { span(" ") } ?: empty,
-    node.summary?.let { viewPrettyText(it) } ?: empty,
-    when (child.tree.state) {
-        Tree.ViewState.Collapsed -> empty
-        Tree.ViewState.Expanded -> exception(node) { treeIntent(TreeView.Intent.Toggle(child)) }
-    }
-)
-
-
-private
-fun visibilityToggleVerb(state: Tree.ViewState): String = when (state) {
-    Tree.ViewState.Collapsed -> "show"
-    Tree.ViewState.Expanded -> "hide"
-}
-
-
-private
-fun visibility(state: Tree.ViewState): String = when (state) {
-    Tree.ViewState.Collapsed -> "hidden"
-    Tree.ViewState.Expanded -> "shown"
-}
-
-
-private
-val CopyButton =
-    CopyButtonComponent { BaseIntent.Copy(it) }
-
-
-private
-fun internalLinesToggle(
-    hiddenLinesCount: Int,
-    partIndex: Int,
-    state: Tree.ViewState,
-    location: () -> TreeIntent
-): View<BaseIntent> = span(
-    attributes {
-        className("java-exception-part-toggle")
-        onClick {
-            BaseIntent.ToggleStackTracePart(partIndex, location())
-        }
-        title("Click to ${visibilityToggleVerb(state)}")
-    },
-    "($hiddenLinesCount internal ${"line".sIfPlural(hiddenLinesCount)} ${visibility(state)})"
-)
-
-
-private
-fun exceptionPart(lines: List<String>, firstLineTail: View<BaseIntent> = empty): View<BaseIntent> = ul(
-    lines.mapIndexed { i, line -> exceptionLine(line, if (i == 0) firstLineTail else empty) }
-)
-
-
-private
-fun exceptionLine(line: String, lineTail: View<BaseIntent> = empty): View<BaseIntent> =
-    li(code(line), lineTail)
-
-
-fun exception(node: ProblemNode.Exception, owner: () -> TreeIntent): View<BaseIntent> = div(
-    attributes { className("java-exception") },
-    node.parts.mapIndexed { index, part ->
-        if (part.state != null) {
-            val collapsableLineCount = part.lines.size
-            val internalLinesToggle = internalLinesToggle(collapsableLineCount, index, part.state, owner)
-            when (part.state) {
-                Tree.ViewState.Collapsed -> {
-                    exceptionPart(part.lines.takeLast(1), internalLinesToggle)
-                }
-
-                Tree.ViewState.Expanded -> {
-                    exceptionPart(part.lines, internalLinesToggle)
-                }
-            }
-        } else {
-            exceptionPart(part.lines)
-        }
-    }
-)
 
 
 internal
@@ -343,7 +229,7 @@ object ConfigurationCacheReportPage :
     fun viewSummaryParagraph(content: PrettyText): View<BaseIntent> = small(viewPrettyText(content))
 
     private
-    fun displayHeading(model: Model): View<Intent> = h1(PrettyTextNoCopy.view(model.heading))
+    fun displayHeading(model: Model): View<BaseIntent> = h1(PrettyTextNoCopy.view(model.heading))
 
     private
     fun displayTabButton(tab: Tab, activeTab: Tab, problemsCount: Int): View<Intent> = div(

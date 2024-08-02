@@ -50,6 +50,11 @@ function configurationCacheProblems() {
                 }, {
                     "problemDetails": [{"text": "details "}, {"name": "Task.project"}, {"text": " text."}],
                     "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:requirements:disallowed_types",
+                    fileLocations:[
+                        {"path": "project1/build.gradle", "line": 5, "column": 0, length: 4},
+                        {"path": "project2/build.gradle"},
+                        {"path": "project3/build.gradle", "line": 5, "column": 0},
+                    ],
                     "category":
                         [{
                             "name": "cannot-serialize-object-of-type-java-lang-Thread-a-subtype-of-java-lang-Thread-as-these-are-not-supported-with-the-configuration-cache",
@@ -63,6 +68,11 @@ function configurationCacheProblems() {
                         }],
                     severity: "WARNING",
                 }, {
+                    fileLocations:[
+                        {"path": "project1/build.gradle", "line": 5, "column": 0, length: 4},
+                        {"path": "project2/build.gradle"},
+                        {"path": "project3/build.gradle", "line": 5, "column": 0},
+                    ],
                     "category": [
                         {
                             "name": "Project-sub-b-cannot-dynamically-lookup-a-property-in-the-parent-project",
@@ -88,6 +98,11 @@ function configurationCacheProblems() {
                     },
                     severity: "ERROR"
                 }, {
+                    fileLocations:[
+                        {"path": "project1/build.gradle", "line": 5, "column": 0, length: 4},
+                        {"path": "project2/build.gradle"},
+                        {"path": "project3/build.gradle", "line": 5, "column": 0},
+                    ],
                     "category": [
                         {
                             "name": "Project-sub-c-cannot-dynamically-lookup-a-property-in-the-parent-project",

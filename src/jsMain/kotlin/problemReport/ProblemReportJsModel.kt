@@ -26,6 +26,14 @@ external interface JsCategoryElement {
 }
 
 
+external interface JsFileLocation {
+    val path: String
+    val line: Int?
+    val column: Int?
+    val length: Int?
+}
+
+
 external interface JsProblem {
     val category: Array<JsCategoryElement>
     val documentationLink: String?
@@ -33,6 +41,7 @@ external interface JsProblem {
     val error: JsError?
     val problemDetails: Array<JsMessageFragment>?
     val solutions: Array<Array<JsMessageFragment>>?
+    val fileLocations: Array<JsFileLocation>?
     val additionalData: Map<String, String>?
 }
 

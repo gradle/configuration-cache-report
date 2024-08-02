@@ -20,9 +20,7 @@ import components.ProblemNode
 import components.invisibleCloseParen
 import components.invisibleOpenParen
 import components.invisibleSpace
-import configurationCache.treeButtonFor
 import configurationCache.viewDocLink
-import configurationCache.viewException
 import data.LearnMore
 import data.PrettyText
 import data.mapAt
@@ -47,8 +45,10 @@ import reporting.ProblemTreeIntent
 import reporting.ProblemTreeModel
 import reporting.enumIcon
 import reporting.errorIcon
+import reporting.treeButtonFor
 import reporting.treeLabel
 import reporting.updateNodeTreeAt
+import reporting.viewException
 import reporting.viewPrettyText
 import reporting.warningIcon
 import reporting.BaseIntent.TreeIntent as BaseIntentTreeIntent
@@ -69,6 +69,7 @@ object ProblemsReportPage :
         val learnMore: LearnMore,
         val messageTree: ProblemTreeModel,
         val categoryTree: ProblemTreeModel,
+        val fileLocationTree: ProblemTreeModel,
         val tab: Tab,
         val problemCount: Int
     )
@@ -76,12 +77,14 @@ object ProblemsReportPage :
     enum class Tab(val text: String) {
         ByMessage("Problems grouped by message"),
         ByCategory("Problems grouped by category"),
+        ByFileLocation("Problems grouped by file location"),
     }
 
     sealed class Intent : BaseIntent() {
         data class MessageTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
         data class CategoryTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
+        data class FileLocationTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
         data class SetTab(val tab: Tab) : Intent()
     }
@@ -100,6 +103,10 @@ object ProblemsReportPage :
             categoryTree = categoryTree.updateNodeTreeAt(tree, update)
         )
 
+        is Intent.FileLocationTreeIntent -> copy(
+            fileLocationTree = fileLocationTree.updateNodeTreeAt(tree, update)
+        )
+
         else -> {
             console.error("Unhandled tree intent: $tree")
             this
@@ -107,6 +114,10 @@ object ProblemsReportPage :
     }
 
     override fun step(intent: BaseIntent, model: Model): Model = when (intent) {
+        is Intent.FileLocationTreeIntent -> model.copy(
+            fileLocationTree = TreeView.step(intent.delegate, model.fileLocationTree)
+        )
+
         is Intent.CategoryTreeIntent -> model.copy(
             categoryTree = TreeView.step(intent.delegate, model.categoryTree)
         )
@@ -132,6 +143,7 @@ object ProblemsReportPage :
         )
 
         else -> {
+            console.error("Unhandled intent: $intent")
             model
         }
     }
@@ -155,6 +167,7 @@ object ProblemsReportPage :
             attributes { className("groups") },
             displayTabButton(Tab.ByMessage, model.tab, model.problemCount),
             displayTabButton(Tab.ByCategory, model.tab, model.problemCount),
+            displayTabButton(Tab.ByFileLocation, model.tab, model.problemCount),
         )
     )
 
@@ -164,6 +177,7 @@ object ProblemsReportPage :
         when (model.tab) {
             Tab.ByMessage -> viewTree(model.messageTree, Intent::MessageTreeIntent)
             Tab.ByCategory -> viewTree(model.categoryTree, Intent::CategoryTreeIntent)
+            Tab.ByFileLocation -> viewTree(model.fileLocationTree, Intent::FileLocationTreeIntent)
         }
     )
 
@@ -261,6 +275,7 @@ object ProblemsReportPage :
     ): View<BaseIntent> = when (label) {
         is ProblemApiNode.Text -> viewPrettyText(PrettyText.ofText(label.text))
         is ProblemApiNode.Category -> {
+            console.log("Category: $label")
             div(
                 attributes {
                     if (label.separator) {
@@ -323,10 +338,7 @@ object ProblemsReportPage :
         }
 
         else -> {
-            div(
-                treeButtonFor(focus, treeIntent),
-                span("Unknown node type viewNode: $label")
-            )
+            span("Unknown node type viewNode: $label")
         }
     }
 }
