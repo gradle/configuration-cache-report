@@ -128,10 +128,3 @@ fun toPrettyText(message: Array<JsMessageFragment>): PrettyText =
             fragment.name?.let { ref(it) }
         }
     }
-//    return PrettyText(
-//        message.map {
-//            it.text?.let(PrettyText.Fragment::Text)
-//                ?: it.name?.let(PrettyText.Fragment::Reference)
-//                ?: PrettyText.Fragment.Text("Unrecognised message fragment: ${stringify(it)}")
-//        }
-//    )

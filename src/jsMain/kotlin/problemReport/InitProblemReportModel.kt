@@ -213,18 +213,24 @@ fun createProblemLabel(
     fileLocation?.let {
         if (it.line != null) {
             val reference = getLineReferencePart(it)
-            ref(reference, "${it.path}$reference")
+            ref("$reference${getLengthPart(it)}", "${it.path}$reference")
         }
     }
 }
 
 
 private
+fun getLengthPart(jsFileLocation: JsFileLocation) =
+    if (jsFileLocation.line == null || jsFileLocation.length == null) {
+        ""
+    } else
+        "-${jsFileLocation.length}"
+
+
+private
 fun getLineReferencePart(location: JsFileLocation) =
     location.line?.let { _ ->
-        val column = location.column?.let { ":$it" } ?: ""
-        val length = location.length?.let { ":$it" } ?: ""
-        ":${location.line}" + column + length
+        ":${location.line}" + (location.column?.let { ":$it" } ?: "")
     } ?: ""
 
 
