@@ -16,19 +16,11 @@
 
 package problemReport
 
-import components.CopyButtonComponent
-import components.PrettyTextComponent
 import components.ProblemNode
 import components.invisibleCloseParen
 import components.invisibleOpenParen
 import components.invisibleSpace
-import configurationCache.BaseIntent
-import configurationCache.BaseIntent.TreeIntent
-import configurationCache.updateNodeTreeAt
-import configurationCache.ProblemTreeIntent
-import configurationCache.ProblemTreeModel
-import configurationCache.treeButtonFor
-import configurationCache.viewException
+import configurationCache.viewDocLink
 import data.LearnMore
 import data.PrettyText
 import data.mapAt
@@ -46,14 +38,25 @@ import elmish.tree.Tree
 import elmish.tree.TreeView
 import elmish.tree.viewSubTrees
 import kotlinx.browser.window
-import configurationCache.BaseIntent.TreeIntent as BaseIntentTreeIntent
+import reporting.BaseIntent
+import reporting.BaseIntent.TreeIntent
+import reporting.PrettyTextNoCopy
+import reporting.ProblemTreeIntent
+import reporting.ProblemTreeModel
+import reporting.enumIcon
+import reporting.errorIcon
+import reporting.treeButtonFor
+import reporting.treeLabel
+import reporting.updateNodeTreeAt
+import reporting.viewException
+import reporting.viewPrettyText
+import reporting.warningIcon
+import reporting.BaseIntent.TreeIntent as BaseIntentTreeIntent
 
 
 sealed class ProblemApiNode : ProblemNode() {
     data class Text(val text: String) : ProblemApiNode()
-    data class Message(val prettyText: PrettyText) : ProblemApiNode()
-    data class Label(val prettyText: PrettyText) : ProblemApiNode()
-    data class Category(val prettyText: PrettyText) : ProblemApiNode()
+    data class Category(val prettyText: PrettyText, val separator: Boolean = false) : ProblemApiNode()
 }
 
 
@@ -66,17 +69,23 @@ object ProblemsReportPage :
         val learnMore: LearnMore,
         val messageTree: ProblemTreeModel,
         val categoryTree: ProblemTreeModel,
-        val tab: Tab
+        val fileLocationTree: ProblemTreeModel,
+        val tab: Tab,
+        val problemCount: Int
     )
 
     enum class Tab(val text: String) {
         ByMessage("Problems grouped by message"),
         ByCategory("Problems grouped by category"),
+        ByFileLocation("Problems grouped by file location"),
     }
 
     sealed class Intent : BaseIntent() {
         data class MessageTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
+
         data class CategoryTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
+
+        data class FileLocationTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
         data class SetTab(val tab: Tab) : Intent()
     }
@@ -90,9 +99,15 @@ object ProblemsReportPage :
         is Intent.MessageTreeIntent -> copy(
             messageTree = messageTree.updateNodeTreeAt(tree, update)
         )
+
         is Intent.CategoryTreeIntent -> copy(
             categoryTree = categoryTree.updateNodeTreeAt(tree, update)
         )
+
+        is Intent.FileLocationTreeIntent -> copy(
+            fileLocationTree = fileLocationTree.updateNodeTreeAt(tree, update)
+        )
+
         else -> {
             console.error("Unhandled tree intent: $tree")
             this
@@ -100,9 +115,14 @@ object ProblemsReportPage :
     }
 
     override fun step(intent: BaseIntent, model: Model): Model = when (intent) {
+        is Intent.FileLocationTreeIntent -> model.copy(
+            fileLocationTree = TreeView.step(intent.delegate, model.fileLocationTree)
+        )
+
         is Intent.CategoryTreeIntent -> model.copy(
             categoryTree = TreeView.step(intent.delegate, model.categoryTree)
         )
+
         is Intent.MessageTreeIntent -> model.copy(
             messageTree = TreeView.step(intent.delegate, model.messageTree)
         )
@@ -113,6 +133,7 @@ object ProblemsReportPage :
                 it.copy(state = it.state?.toggle())
             })
         }
+
         is BaseIntent.Copy -> {
             window.navigator.clipboard.writeText(intent.text)
             model
@@ -123,6 +144,7 @@ object ProblemsReportPage :
         )
 
         else -> {
+            console.error("Unhandled intent: $intent")
             model
         }
     }
@@ -144,8 +166,9 @@ object ProblemsReportPage :
         ),
         div(
             attributes { className("groups") },
-            displayTabButton(Tab.ByMessage, model.tab, model.messageTree.tree.children.size),
-            displayTabButton(Tab.ByCategory, model.tab, model.categoryTree.tree.children.size),
+            displayTabButton(Tab.ByMessage, model.tab, model.problemCount),
+            displayTabButton(Tab.ByCategory, model.tab, model.problemCount),
+            displayTabButton(Tab.ByFileLocation, model.tab, model.problemCount),
         )
     )
 
@@ -155,6 +178,7 @@ object ProblemsReportPage :
         when (model.tab) {
             Tab.ByMessage -> viewTree(model.messageTree, Intent::MessageTreeIntent)
             Tab.ByCategory -> viewTree(model.categoryTree, Intent::CategoryTreeIntent)
+            Tab.ByFileLocation -> viewTree(model.fileLocationTree, Intent::FileLocationTreeIntent)
         }
     )
 
@@ -225,51 +249,96 @@ object ProblemsReportPage :
     ): View<BaseIntent> = div(
         ol(
             viewSubTrees(subTrees) { focus ->
-                when (val labelNode = focus.tree.label) {
-                    is ProblemApiNode.Text -> viewPrettyText(PrettyText.ofText(labelNode.text))
-                    is ProblemApiNode.Category -> {
-                        div(
-                            treeButtonFor(focus, treeIntent),
-                            viewPrettyText(labelNode.prettyText)
-                        )
-                    }
-
-                    is ProblemNode.Exception -> viewException(treeIntent, focus, labelNode)
-                    is ProblemApiNode.Message -> {
-                        viewPrettyText(labelNode.prettyText)
-                    }
-
-                    is ProblemApiNode.Label -> {
-                        div(
-                            treeButtonFor(focus, treeIntent),
-                            viewPrettyText(labelNode.prettyText)
-                        )
-                    }
-
-                    else -> {
-                        div(
-                            treeButtonFor(focus, treeIntent),
-                            span("Unknown node type: $labelNode")
-                        )
-                    }
-                }
+                viewNode(focus.tree.label, focus, treeIntent)
             }
         )
     )
 
     private
-    fun viewPrettyText(text: PrettyText): View<BaseIntent> =
-        PrettyTextWithCopy.view(text)
+    fun viewIt(node: ProblemNode): View<BaseIntent> {
+        return when (node) {
+            is ProblemNode.Link -> viewDocLink(node)
+            is ProblemNode.Label -> viewPrettyText(PrettyText.ofText(node.text))
+            is ProblemNode.Message -> viewPrettyText(node.prettyText)
+            else -> {
+                val o = "Unknown node type viewIt: $node"
+                console.error(o)
+                span(o)
+            }
+        }
+    }
 
     private
-    val PrettyTextNoCopy =
-        PrettyTextComponent() { BaseIntent.Copy(it) }
+    fun viewNode(
+        label: ProblemNode,
+        focus: Tree.Focus<ProblemNode>,
+        treeIntent: (ProblemTreeIntent) -> TreeIntent
+    ): View<BaseIntent> = when (label) {
+        is ProblemApiNode.Text -> viewPrettyText(PrettyText.ofText(label.text))
+        is ProblemApiNode.Category -> {
+            div(
+                attributes {
+                    if (label.separator) {
+                        className("uncategorized")
+                    }
+                },
+                div(
+                    treeButtonFor(focus, treeIntent),
+                    viewPrettyText(label.prettyText)
+                )
+            )
+        }
 
-    private
-    val PrettyTextWithCopy =
-        PrettyTextComponent() { BaseIntent.Copy(it) }
+        is ProblemNode.Exception -> viewException(treeIntent, focus, label)
+        is ProblemNode.Message -> {
+            viewPrettyText(label.prettyText)
+        }
 
-    private
-    val CopyButton =
-        CopyButtonComponent { BaseIntent.Copy(it) }
+        is ProblemNode.ListElement -> {
+            div(
+                enumIcon,
+                viewPrettyText(label.prettyText)
+            )
+        }
+
+        is ProblemNode.TreeNode -> {
+            div(
+                treeButtonFor(focus, treeIntent),
+                viewPrettyText(label.prettyText)
+            )
+        }
+
+        is ProblemNode.Error -> {
+            treeLabel(
+                treeIntent,
+                ::viewIt,
+                focus,
+                label.label,
+                label.docLink,
+                errorIcon
+            )
+        }
+
+        is ProblemNode.Warning -> {
+            treeLabel(
+                treeIntent,
+                ::viewIt,
+                focus,
+                label.label,
+                label.docLink,
+                warningIcon
+            )
+        }
+
+        is ProblemNode.Label -> {
+            div(
+                treeButtonFor(focus, treeIntent),
+                viewPrettyText(PrettyText.ofText(label.text))
+            )
+        }
+
+        else -> {
+            span("Unknown node type viewNode: $label")
+        }
+    }
 }

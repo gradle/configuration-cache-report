@@ -43,19 +43,19 @@ fun reportPageModelFromJsModel(jsModel: JsModel): ConfigurationCacheReportPage.M
         summary = summaryPrettyText(jsModel, diagnostics),
         learnMore = LearnMore("Gradle Configuration Cache", jsModel.documentationLink),
         messageTree = treeModelFor(
-            ProblemCCNode.Label(ConfigurationCacheReportPage.Tab.ByMessage.text),
+            ProblemNode.Label(ConfigurationCacheReportPage.Tab.ByMessage.text),
             problemNodesByMessage(diagnostics.problems)
         ),
         locationTree = treeModelFor(
-            ProblemCCNode.Label(ConfigurationCacheReportPage.Tab.ByLocation.text),
+            ProblemNode.Label(ConfigurationCacheReportPage.Tab.ByLocation.text),
             problemNodesByLocation(diagnostics.problems)
         ),
         inputTree = treeModelFor(
-            ProblemCCNode.Label(ConfigurationCacheReportPage.Tab.Inputs.text),
+            ProblemNode.Label(ConfigurationCacheReportPage.Tab.Inputs.text),
             inputNodes(diagnostics.inputs)
         ),
         incompatibleTaskTree = treeModelFor(
-            ProblemCCNode.Label(ConfigurationCacheReportPage.Tab.IncompatibleTasks.text),
+            ProblemNode.Label(ConfigurationCacheReportPage.Tab.IncompatibleTasks.text),
             incompatibleTaskNodes(diagnostics.incompatibleTasks)
         ),
         tab = if (totalProblems == 0) ConfigurationCacheReportPage.Tab.Inputs else ConfigurationCacheReportPage.Tab.ByMessage
@@ -72,13 +72,13 @@ fun headingPrettyText(model: JsModel): PrettyText {
     val buildName = model.buildName
     val requestedTasks = model.requestedTasks
     val manyTasks = requestedTasks?.contains(" ") ?: true
-    return PrettyText(listOfNotNull(
-        PrettyText.Fragment.Text("${model.cacheAction.capitalize()} the configuration cache for "),
-        buildName?.let { PrettyText.Fragment.Reference(it) },
-        buildName?.let { PrettyText.Fragment.Text(" build and ") },
-        requestedTasks?.let { PrettyText.Fragment.Reference(it) } ?: PrettyText.Fragment.Text("default"),
-        PrettyText.Fragment.Text(if (manyTasks) " tasks" else " task")
-    ))
+    return PrettyText.build {
+        text("${model.cacheAction.capitalize()} the configuration cache for ")
+        buildName?.let { ref(it) }
+        buildName?.let { text(" build and ") }
+        requestedTasks?.let { ref(it) } ?: text("default")
+        text(if (manyTasks) " tasks" else " task")
+    }
 }
 
 
@@ -160,11 +160,11 @@ fun inputNodes(inputs: List<ImportedProblem>): Sequence<List<ProblemNode>> =
             val inputDescription = message.copy(fragments = message.fragments.drop(1))
             add(
                 ProblemCCNode.Info(
-                    ProblemCCNode.Label(inputType),
+                    ProblemNode.Label(inputType),
                     docLinkFor(input.problem)
                 )
             )
-            add(ProblemCCNode.Message(inputDescription))
+            add(ProblemNode.Message(inputDescription))
             addAll(input.trace)
         }
     }
@@ -177,8 +177,8 @@ fun incompatibleTaskNodes(incompatibleTasks: List<ImportedProblem>): Sequence<Li
             val message = incompatibleTask.message
             val incompatibleTaskDescription = message.copy(fragments = message.fragments)
             add(
-                ProblemCCNode.Warning(
-                    ProblemCCNode.Message(incompatibleTaskDescription),
+                ProblemNode.Warning(
+                    ProblemNode.Message(incompatibleTaskDescription),
                     docLinkFor(incompatibleTask.problem)
                 )
             )
@@ -270,20 +270,20 @@ fun toProblemNode(trace: JsTrace): ProblemNode = when (trace.kind) {
         ProblemCCNode.BuildLogicClass(type)
     }
 
-    else -> ProblemCCNode.Label("Gradle runtime")
+    else -> ProblemNode.Label("Gradle runtime")
 }
 
 
 private
 fun errorOrWarningNodeFor(problem: JsDiagnostic, label: ProblemNode, docLink: ProblemNode?): ProblemNode =
     problem.error?.let {
-        ProblemCCNode.Error(label, docLink)
-    } ?: ProblemCCNode.Warning(label, docLink)
+        ProblemNode.Error(label, docLink)
+    } ?: ProblemNode.Warning(label, docLink)
 
 
 private
 fun messageNodeFor(importedProblem: ImportedProblem) =
-    ProblemCCNode.Message(importedProblem.message)
+    ProblemNode.Message(importedProblem.message)
 
 
 private
@@ -297,7 +297,7 @@ fun problemNodeForError(error: JsError): ProblemNode? {
     val parts = error.parts
     if (parts == null) {
         val summary = error.summary ?: return null
-        return ProblemCCNode.Message(toPrettyText(summary))
+        return ProblemNode.Message(toPrettyText(summary))
     }
 
     return ProblemNode.Exception(
@@ -331,8 +331,8 @@ fun defaultViewStateFor(isInternal: Boolean, linesCount: Int): Tree.ViewState? {
 
 
 private
-fun docLinkFor(it: JsDiagnostic): ProblemNode? =
-    it.documentationLink?.let { ProblemCCNode.Link(it, "") }
+fun docLinkFor(jsDiagnostic: JsDiagnostic): ProblemNode? =
+    jsDiagnostic.documentationLink?.let { ProblemNode.Link(it, "") }
 
 
 private

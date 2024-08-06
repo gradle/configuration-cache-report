@@ -24,7 +24,6 @@ import elmish.empty
 import elmish.span
 
 
-internal
 class PrettyTextComponent<Intent>(
     private val getCopyIntent: ((String) -> Intent)? = null
 ) : Component<PrettyText, Intent> {
@@ -38,19 +37,19 @@ class PrettyTextComponent<Intent>(
         model.fragments.map {
             when (it) {
                 is PrettyText.Fragment.Text -> span(it.text)
-                is PrettyText.Fragment.Reference -> reference(it.name)
+                is PrettyText.Fragment.Reference -> reference(it.name, it.clipboardString)
             }
         }
     )
 
     private
-    fun reference(name: String): View<Intent> = span(
+    fun reference(name: String, clipboardString: String): View<Intent> = span(
         invisibleBacktick,
         code(name),
         invisibleBacktick,
         getCopyIntent?.let { copy ->
             CopyButtonComponent(copy).view(
-                text = name,
+                text = clipboardString,
                 tooltip = "Copy reference to the clipboard"
             )
         } ?: empty

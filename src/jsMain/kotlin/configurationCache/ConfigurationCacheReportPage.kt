@@ -16,44 +16,41 @@
 
 package configurationCache
 
-import components.CopyButtonComponent
-import components.PrettyTextComponent
 import components.ProblemNode
 import components.invisibleCloseParen
 import components.invisibleOpenParen
 import components.invisibleSpace
-import configurationCache.BaseIntent.TreeIntent
-import configurationCache.ConfigurationCacheReportPage.Intent
 import data.LearnMore
 import data.PrettyText
 import data.mapAt
-import data.sIfPlural
 import elmish.Component
 import elmish.View
 import elmish.a
 import elmish.attributes
 import elmish.br
-import elmish.code
 import elmish.div
-import elmish.empty
 import elmish.h1
-import elmish.li
 import elmish.ol
 import elmish.small
 import elmish.span
 import elmish.tree.Tree
 import elmish.tree.TreeView
 import elmish.tree.viewSubTrees
-import elmish.ul
 import kotlinx.browser.window
+import reporting.BaseIntent
+import reporting.BaseIntent.TreeIntent
+import reporting.PrettyTextNoCopy
+import reporting.ProblemTreeIntent
+import reporting.ProblemTreeModel
+import reporting.errorIcon
+import reporting.treeLabel
+import reporting.updateNodeTreeAt
+import reporting.viewException
+import reporting.viewPrettyText
+import reporting.warningIcon
 
 
 sealed class ProblemCCNode : ProblemNode() {
-
-    data class Error(val label: ProblemNode, val docLink: ProblemNode?) : ProblemNode()
-
-    data class Warning(val label: ProblemNode, val docLink: ProblemNode?) : ProblemNode()
-
     data class Info(val label: ProblemNode, val docLink: ProblemNode?) : ProblemNode()
 
     data class Project(val path: String) : ProblemNode()
@@ -71,159 +68,7 @@ sealed class ProblemCCNode : ProblemNode() {
     data class BuildLogic(val location: String) : ProblemNode()
 
     data class BuildLogicClass(val type: String) : ProblemNode()
-
-    data class Label(val text: String) : ProblemNode()
-
-    data class Link(val href: String, val label: String) : ProblemNode()
-
-    data class Message(val prettyText: PrettyText) : ProblemNode()
 }
-
-
-fun <I> viewTreeButton(child: Tree.Focus<ProblemNode>, treeIntent: (ProblemTreeIntent) -> I): View<I> = span(
-    attributes {
-        classNames("invisible-text", "tree-btn")
-        if (child.tree.state === Tree.ViewState.Collapsed) {
-            className("collapsed")
-        }
-        if (child.tree.state === Tree.ViewState.Expanded) {
-            className("expanded")
-        }
-        title("Click to ${toggleVerb(child.tree.state)}")
-        onClick { treeIntent(TreeView.Intent.Toggle(child)) }
-    },
-    copyTextPrefixForTreeNode(child)
-)
-
-
-fun copyTextPrefixForTreeNode(child: Tree.Focus<ProblemNode>) =
-    "    ".repeat(child.depth - 1) + "- "
-
-
-fun toggleVerb(state: Tree.ViewState): String = when (state) {
-    Tree.ViewState.Collapsed -> "expand"
-    Tree.ViewState.Expanded -> "collapse"
-}
-
-
-private
-fun viewPrettyText(text: PrettyText): View<BaseIntent> =
-    PrettyTextWithCopy.view(text)
-
-
-private
-fun viewPrettyText(textBuilder: PrettyText.Builder.() -> Unit): View<BaseIntent> =
-    PrettyTextWithCopy.view(PrettyText.build(textBuilder))
-
-
-private
-val PrettyTextNoCopy =
-    PrettyTextComponent<Intent>()
-
-
-private
-val PrettyTextWithCopy =
-    PrettyTextComponent<BaseIntent> { BaseIntent.Copy(it) }
-
-
-fun <I> treeButtonFor(child: Tree.Focus<ProblemNode>, treeIntent: (ProblemTreeIntent) -> I): View<I> =
-    when {
-        child.tree.isNotEmpty() -> viewTreeButton(child, treeIntent)
-        else -> viewLeafIcon(child)
-    }
-
-
-fun <I> viewLeafIcon(child: Tree.Focus<ProblemNode>): View<I> = span(
-    attributes { classNames("invisible-text", "leaf-icon") },
-    copyTextPrefixForTreeNode(child)
-)
-
-
-fun viewException(
-    treeIntent: (ProblemTreeIntent) -> TreeIntent,
-    child: Tree.Focus<ProblemNode>,
-    node: ProblemNode.Exception
-): View<BaseIntent> = div(
-    viewTreeButton(child, treeIntent),
-    span("Exception"),
-    span(CopyButton.view(text = node.fullText, tooltip = "Copy exception to the clipboard")),
-    node.summary?.let { span(" ") } ?: empty,
-    node.summary?.let { viewPrettyText(it) } ?: empty,
-    when (child.tree.state) {
-        Tree.ViewState.Collapsed -> empty
-        Tree.ViewState.Expanded -> exception(node) { treeIntent(TreeView.Intent.Toggle(child)) }
-    }
-)
-
-
-private
-fun visibilityToggleVerb(state: Tree.ViewState): String = when (state) {
-    Tree.ViewState.Collapsed -> "show"
-    Tree.ViewState.Expanded -> "hide"
-}
-
-
-private
-fun visibility(state: Tree.ViewState): String = when (state) {
-    Tree.ViewState.Collapsed -> "hidden"
-    Tree.ViewState.Expanded -> "shown"
-}
-
-
-private
-val CopyButton =
-    CopyButtonComponent { BaseIntent.Copy(it) }
-
-
-private
-fun internalLinesToggle(
-    hiddenLinesCount: Int,
-    partIndex: Int,
-    state: Tree.ViewState,
-    location: () -> TreeIntent
-): View<BaseIntent> = span(
-    attributes {
-        className("java-exception-part-toggle")
-        onClick {
-            BaseIntent.ToggleStackTracePart(partIndex, location())
-        }
-        title("Click to ${visibilityToggleVerb(state)}")
-    },
-    "($hiddenLinesCount internal ${"line".sIfPlural(hiddenLinesCount)} ${visibility(state)})"
-)
-
-
-private
-fun exceptionPart(lines: List<String>, firstLineTail: View<BaseIntent> = empty): View<BaseIntent> = ul(
-    lines.mapIndexed { i, line -> exceptionLine(line, if (i == 0) firstLineTail else empty) }
-)
-
-
-private
-fun exceptionLine(line: String, lineTail: View<BaseIntent> = empty): View<BaseIntent> =
-    li(code(line), lineTail)
-
-
-fun exception(node: ProblemNode.Exception, owner: () -> TreeIntent): View<BaseIntent> = div(
-    attributes { className("java-exception") },
-    node.parts.mapIndexed { index, part ->
-        if (part.state != null) {
-            val collapsableLineCount = part.lines.size
-            val internalLinesToggle = internalLinesToggle(collapsableLineCount, index, part.state, owner)
-            when (part.state) {
-                Tree.ViewState.Collapsed -> {
-                    exceptionPart(part.lines.takeLast(1), internalLinesToggle)
-                }
-
-                Tree.ViewState.Expanded -> {
-                    exceptionPart(part.lines, internalLinesToggle)
-                }
-            }
-        } else {
-            exceptionPart(part.lines)
-        }
-    }
-)
 
 
 internal
@@ -384,7 +229,7 @@ object ConfigurationCacheReportPage :
     fun viewSummaryParagraph(content: PrettyText): View<BaseIntent> = small(viewPrettyText(content))
 
     private
-    fun displayHeading(model: Model): View<Intent> = h1(PrettyTextNoCopy.view(model.heading))
+    fun displayHeading(model: Model): View<BaseIntent> = h1(PrettyTextNoCopy.view(model.heading))
 
     private
     fun displayTabButton(tab: Tab, activeTab: Tab, problemsCount: Int): View<Intent> = div(
@@ -434,9 +279,10 @@ object ConfigurationCacheReportPage :
         ol(
             viewSubTrees(subTrees) { focus ->
                 when (val labelNode = focus.tree.label) {
-                    is ProblemCCNode.Error -> {
+                    is ProblemNode.Error -> {
                         treeLabel(
                             treeIntent,
+                            ::viewNode,
                             focus,
                             labelNode.label,
                             labelNode.docLink,
@@ -444,9 +290,10 @@ object ConfigurationCacheReportPage :
                         )
                     }
 
-                    is ProblemCCNode.Warning -> {
+                    is ProblemNode.Warning -> {
                         treeLabel(
                             treeIntent,
+                            ::viewNode,
                             focus,
                             labelNode.label,
                             labelNode.docLink,
@@ -457,6 +304,7 @@ object ConfigurationCacheReportPage :
                     is ProblemCCNode.Info -> {
                         treeLabel(
                             treeIntent,
+                            ::viewNode,
                             focus,
                             labelNode.label,
                             labelNode.docLink,
@@ -469,7 +317,10 @@ object ConfigurationCacheReportPage :
                     }
 
                     else -> {
-                        treeLabel(treeIntent, focus, labelNode)
+                        treeLabel(
+                            treeIntent, ::viewNode,
+                            focus, labelNode
+                        )
                     }
                 }
             }
@@ -516,50 +367,25 @@ object ConfigurationCacheReportPage :
             ref(node.type)
         }
 
-        is ProblemCCNode.Label -> viewPrettyText {
+        is ProblemNode.Label -> viewPrettyText {
             text(node.text)
         }
 
-        is ProblemCCNode.Message -> viewPrettyText(node.prettyText)
+        is ProblemNode.Message -> viewPrettyText(node.prettyText)
 
-        is ProblemCCNode.Link -> a(
-            attributes {
-                className("documentation-button")
-                href(node.href)
-            },
-            node.label
-        )
+        is ProblemNode.Link -> viewDocLink(node)
 
         else -> span(
             node.toString()
         )
     }
-
-    private
-    fun treeLabel(
-        treeIntent: (ProblemTreeIntent) -> BaseIntent,
-        focus: Tree.Focus<ProblemNode>,
-        label: ProblemNode,
-        docLink: ProblemNode? = null,
-        prefix: View<BaseIntent> = empty,
-        suffix: View<BaseIntent> = empty
-    ): View<BaseIntent> = div(
-        treeButtonFor(focus, treeIntent),
-        prefix,
-        viewNode(label),
-        docLink?.let(ConfigurationCacheReportPage::viewNode) ?: empty,
-        suffix
-    )
-
-    private
-    val errorIcon = span<Intent>(
-        attributes { classNames("invisible-text", "error-icon") },
-        "[error] "
-    )
-
-    private
-    val warningIcon = span<Intent>(
-        attributes { classNames("invisible-text", "warning-icon") },
-        "[warn]  " // two spaces to align with [error] prefix
-    )
 }
+
+
+fun viewDocLink(node: ProblemNode.Link): View<BaseIntent> = a(
+    attributes {
+        className("documentation-button")
+        href(node.href)
+    },
+    node.label
+)
