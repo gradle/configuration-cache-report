@@ -31,6 +31,7 @@ open class ProblemNode {
     data class Warning(val label: ProblemNode, val docLink: ProblemNode?) : ProblemNode()
 
     data class Message(val prettyText: PrettyText) : ProblemNode()
+
     data class ListElement(val prettyText: PrettyText) : ProblemNode()
 
     data class TreeNode(val prettyText: PrettyText) : ProblemNode()

@@ -84,6 +84,7 @@ object ProblemsReportPage :
         data class MessageTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
         data class CategoryTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
+
         data class FileLocationTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
         data class SetTab(val tab: Tab) : Intent()
