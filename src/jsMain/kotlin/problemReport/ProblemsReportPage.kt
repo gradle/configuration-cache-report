@@ -20,6 +20,7 @@ import components.ProblemNode
 import components.invisibleCloseParen
 import components.invisibleOpenParen
 import components.invisibleSpace
+import configurationCache.childCount
 import configurationCache.viewDocLink
 import data.LearnMore
 import data.PrettyText
@@ -43,6 +44,7 @@ import reporting.BaseIntent.TreeIntent
 import reporting.PrettyTextNoCopy
 import reporting.ProblemTreeIntent
 import reporting.ProblemTreeModel
+import reporting.adviceIcon
 import reporting.enumIcon
 import reporting.errorIcon
 import reporting.treeButtonFor
@@ -56,7 +58,10 @@ import reporting.BaseIntent.TreeIntent as BaseIntentTreeIntent
 
 sealed class ProblemApiNode : ProblemNode() {
     data class Text(val text: String) : ProblemApiNode()
+
     data class Category(val prettyText: PrettyText, val separator: Boolean = false) : ProblemApiNode()
+
+    data class Advice(val label: ProblemNode, val docLink: ProblemNode?) : ProblemNode()
 }
 
 
@@ -70,15 +75,9 @@ object ProblemsReportPage :
         val messageTree: ProblemTreeModel,
         val categoryTree: ProblemTreeModel,
         val fileLocationTree: ProblemTreeModel,
-        val tab: Tab,
-        val problemCount: Int
+        val problemCount: Int,
+        val tab: Tab
     )
-
-    enum class Tab(val text: String) {
-        ByMessage("Problems grouped by message"),
-        ByCategory("Problems grouped by category"),
-        ByFileLocation("Problems grouped by file location"),
-    }
 
     sealed class Intent : BaseIntent() {
         data class MessageTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
@@ -156,21 +155,32 @@ object ProblemsReportPage :
     )
 
     private
-    fun viewHeader(model: Model): View<BaseIntent> = div(
-        attributes { className("header") },
-        div(attributes { className("gradle-logo") }),
-        learnMore(model.learnMore),
-        div(
-            attributes { className("title") },
-            displaySummary(model),
-        ),
-        div(
-            attributes { className("groups") },
-            displayTabButton(Tab.ByMessage, model.tab, model.problemCount),
-            displayTabButton(Tab.ByCategory, model.tab, model.problemCount),
-            displayTabButton(Tab.ByFileLocation, model.tab, model.problemCount),
+    fun viewHeader(model: Model): View<BaseIntent> {
+        val tabs = mutableListOf<View<BaseIntent>>()
+        if (model.messageTree.childCount > 0) {
+            tabs.add(displayTabButton(Tab.ByMessage, model.tab, model.problemCount))
+        }
+        if (model.categoryTree.childCount > 0) {
+            tabs.add(displayTabButton(Tab.ByCategory, model.tab, model.problemCount))
+        }
+        if (model.fileLocationTree.childCount > 0) {
+            tabs.add(displayTabButton(Tab.ByFileLocation, model.tab, model.problemCount))
+        }
+
+        return div(
+            attributes { className("header") },
+            div(attributes { className("gradle-logo") }),
+            learnMore(model.learnMore),
+            div(
+                attributes { className("title") },
+                displaySummary(model),
+            ),
+            div(
+                attributes { className("groups") },
+                tabs
+            )
         )
-    )
+    }
 
     private
     fun viewProblems(model: Model) = div(
@@ -316,6 +326,17 @@ object ProblemsReportPage :
                 label.label,
                 label.docLink,
                 errorIcon
+            )
+        }
+
+        is ProblemApiNode.Advice -> {
+            treeLabel(
+                treeIntent,
+                ::viewIt,
+                focus,
+                label.label,
+                label.docLink,
+                adviceIcon
             )
         }
 

@@ -17,6 +17,39 @@ function configurationCacheProblems() {
             "totalProblemCount": 4,
             "diagnostics": [
                 {
+                    "fileLocations": [
+                        {
+                            "path": "/Users/reinholddegenfellner/IdeaProjects/gradle/build-logic/documentation/src/main/groovy/gradlebuild/docs/GradleKotlinDslReferencePlugin.java"
+                        }
+                    ],
+                    "problem": [
+                        {
+                            "text": "Java compilation note"
+                        }
+                    ],
+                    "severity": "ADVICE",
+                    "problemDetails": [
+                        {
+                            "text": "Some input files use or override a deprecated API."
+                        }
+                    ],
+                    "category": [
+                        {
+                            "name": "java-compilation-note",
+                            "displayName": "Java compilation note"
+                        },
+                        {
+                            "name": "compilation",
+                            "displayName": "Compilation"
+                        },
+                        {
+                            "name": "java",
+                            "displayName": "Java compilation"
+                        }
+                    ],
+                    "solutions": []
+                },
+                {
                     "problemDetails": [{"text": "details "}, {"name": "Task.project"}, {"text": " text."}],
                     "solutions": [
                         [{"text": "details 1 "}, {"name": "Task.project"}, {"text": " text. 1"}],

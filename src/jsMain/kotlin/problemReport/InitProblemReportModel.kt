@@ -17,6 +17,7 @@
 package problemReport
 
 import components.ProblemNode
+import configurationCache.childCount
 import reporting.ProblemTreeModel
 import configurationCache.problemNodeForError
 import configurationCache.toPrettyText
@@ -28,10 +29,20 @@ import elmish.tree.TreeView
 import problemReport.ProblemApiNode.Category
 
 
+enum class Tab(val text: String) {
+    ByMessage("Problems grouped by message"),
+    ByCategory("Problems grouped by category"),
+    ByFileLocation("Problems grouped by file location"),
+}
+
+
 fun reportProblemsReportPageModelFromJsModel(
     problemReportJsModel: ProblemReportJsModel,
     problems: Array<JsProblem>
 ): ProblemsReportPage.Model {
+    val messageTree = createMessageTree(problems)
+    val categoryTree = createCategoryTree(problems)
+    val fileLocationTree = createFileLocationsTree(problems)
     return ProblemsReportPage.Model(
         heading = PrettyText.ofText("Problems Report"),
         summary = description(problemReportJsModel, problems),
@@ -39,13 +50,26 @@ fun reportProblemsReportPageModelFromJsModel(
             text = "reporting problems",
             documentationLink = problemReportJsModel.documentationLink
         ),
-        createMessageTree(problems),
-        createCategoryTree(problems),
-        createFileLocationsTree(problems), // file locations
-        ProblemsReportPage.Tab.ByFileLocation,
-        problems.size
+        messageTree,
+        categoryTree,
+        fileLocationTree,
+        problems.size,
+        calcDefaultTab(messageTree, categoryTree, fileLocationTree)
     )
 }
+
+
+fun calcDefaultTab(
+    messageTree: ProblemTreeModel,
+    categoryTree: ProblemTreeModel,
+    fileLocationTree: ProblemTreeModel,
+) =
+    when {
+        fileLocationTree.childCount > 0 -> Tab.ByFileLocation
+        messageTree.childCount > 0 -> Tab.ByMessage
+        categoryTree.childCount > 0 -> Tab.ByCategory
+        else -> Tab.ByMessage
+    }
 
 
 fun createFileLocationsTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> {
@@ -54,8 +78,7 @@ fun createFileLocationsTree(problems: Array<JsProblem>): TreeView.Model<ProblemN
     problems.forEach { problem ->
         problem.fileLocations
             ?.forEach {
-                val location =
-                    "${it.path}"
+                val location = it.path
                 val locationNodePair = locationMap.getOrPut(location) {
                     val categoryChildren = mutableListOf<Tree<ProblemNode>>()
                     val tree = Tree(
@@ -194,6 +217,10 @@ fun createMessageTreeElement(jsProblem: JsProblem, fileLocation: JsFileLocation?
             ProblemNode.Error(label, jsProblem.documentationLink?.let { ProblemNode.Link(it, "") })
         }
 
+        "ADVICE" -> {
+            ProblemApiNode.Advice(label, jsProblem.documentationLink?.let { ProblemNode.Link(it, "") })
+        }
+
         else -> {
             console.error("no severity ${jsProblem.severity}")
             label
@@ -253,7 +280,7 @@ fun getMessageChildren(jsProblem: JsProblem, addLocationNodes: Boolean): List<Tr
 
     createCategoryNode(jsProblem)?.let { children.add(it) }
 
-    if (addLocationNodes) {
+    if (addLocationNodes && !jsProblem.fileLocations.isNullOrEmpty()) {
         children.add(getLocationsNode(jsProblem))
     }
     return children
