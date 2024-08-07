@@ -217,6 +217,10 @@ fun createMessageTreeElement(jsProblem: JsProblem, fileLocation: JsFileLocation?
             ProblemNode.Error(label, jsProblem.documentationLink?.let { ProblemNode.Link(it, "") })
         }
 
+        "ADVICE" -> {
+            ProblemApiNode.Advice(label, jsProblem.documentationLink?.let { ProblemNode.Link(it, "") })
+        }
+
         else -> {
             console.error("no severity ${jsProblem.severity}")
             label

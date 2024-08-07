@@ -26,6 +26,12 @@ val errorIcon = span<BaseIntent>(
 )
 
 
+val adviceIcon = span<BaseIntent>(
+    attributes { classNames("invisible-text", "advice-icon") },
+    "[advice] "
+)
+
+
 val warningIcon = span<BaseIntent>(
     attributes { classNames("invisible-text", "warning-icon") },
     "[warn]  " // two spaces to align with [error] prefix

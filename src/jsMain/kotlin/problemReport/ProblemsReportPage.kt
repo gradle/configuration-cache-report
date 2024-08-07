@@ -44,6 +44,7 @@ import reporting.BaseIntent.TreeIntent
 import reporting.PrettyTextNoCopy
 import reporting.ProblemTreeIntent
 import reporting.ProblemTreeModel
+import reporting.adviceIcon
 import reporting.enumIcon
 import reporting.errorIcon
 import reporting.treeButtonFor
@@ -57,7 +58,10 @@ import reporting.BaseIntent.TreeIntent as BaseIntentTreeIntent
 
 sealed class ProblemApiNode : ProblemNode() {
     data class Text(val text: String) : ProblemApiNode()
+
     data class Category(val prettyText: PrettyText, val separator: Boolean = false) : ProblemApiNode()
+
+    data class Advice(val label: ProblemNode, val docLink: ProblemNode?) : ProblemNode()
 }
 
 
@@ -322,6 +326,17 @@ object ProblemsReportPage :
                 label.label,
                 label.docLink,
                 errorIcon
+            )
+        }
+
+        is ProblemApiNode.Advice -> {
+            treeLabel(
+                treeIntent,
+                ::viewIt,
+                focus,
+                label.label,
+                label.docLink,
+                adviceIcon
             )
         }
 

@@ -27,7 +27,7 @@ Start a build on one shell:
 
     $ ./gradlew stageDevReport
 
-Start `browser-sync` on another:
+Start `browser-sync` (https://browsersync.io/) on another:
 
     $ browser-sync start -s build/stageDevReport --startPath configuration-cache-report.html -w
 
