@@ -35,11 +35,12 @@ external interface JsFileLocation {
 
 
 external interface JsProblem {
-    val category: Array<JsCategoryElement>
+    val group: Array<JsCategoryElement>
     val documentationLink: String?
     val severity: String
     val error: JsError?
     val problemDetails: Array<JsMessageFragment>?
+    val contextualLabel: String?
     val solutions: Array<Array<JsMessageFragment>>?
     val fileLocations: Array<JsFileLocation>?
     val additionalData: Map<String, String>?
