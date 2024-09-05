@@ -59,7 +59,7 @@ import reporting.BaseIntent.TreeIntent as BaseIntentTreeIntent
 sealed class ProblemApiNode : ProblemNode() {
     data class Text(val text: String) : ProblemApiNode()
 
-    data class Category(val prettyText: PrettyText, val separator: Boolean = false) : ProblemApiNode()
+    data class ProblemId(val prettyText: PrettyText, val separator: Boolean = false) : ProblemApiNode()
 
     data class Advice(val label: ProblemNode, val docLink: ProblemNode?) : ProblemNode()
 }
@@ -73,7 +73,7 @@ object ProblemsReportPage :
         val summary: List<PrettyText>,
         val learnMore: LearnMore,
         val messageTree: ProblemTreeModel,
-        val categoryTree: ProblemTreeModel,
+        val problemIdTree: ProblemTreeModel,
         val fileLocationTree: ProblemTreeModel,
         val problemCount: Int,
         val tab: Tab
@@ -82,7 +82,7 @@ object ProblemsReportPage :
     sealed class Intent : BaseIntent() {
         data class MessageTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
-        data class CategoryTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
+        data class ProblemIdTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
         data class FileLocationTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
@@ -99,8 +99,8 @@ object ProblemsReportPage :
             messageTree = messageTree.updateNodeTreeAt(tree, update)
         )
 
-        is Intent.CategoryTreeIntent -> copy(
-            categoryTree = categoryTree.updateNodeTreeAt(tree, update)
+        is Intent.ProblemIdTreeIntent -> copy(
+            problemIdTree = problemIdTree.updateNodeTreeAt(tree, update)
         )
 
         is Intent.FileLocationTreeIntent -> copy(
@@ -118,8 +118,8 @@ object ProblemsReportPage :
             fileLocationTree = TreeView.step(intent.delegate, model.fileLocationTree)
         )
 
-        is Intent.CategoryTreeIntent -> model.copy(
-            categoryTree = TreeView.step(intent.delegate, model.categoryTree)
+        is Intent.ProblemIdTreeIntent -> model.copy(
+            problemIdTree = TreeView.step(intent.delegate, model.problemIdTree)
         )
 
         is Intent.MessageTreeIntent -> model.copy(
@@ -160,8 +160,8 @@ object ProblemsReportPage :
         if (model.messageTree.childCount > 0) {
             tabs.add(displayTabButton(Tab.ByMessage, model.tab, model.problemCount))
         }
-        if (model.categoryTree.childCount > 0) {
-            tabs.add(displayTabButton(Tab.ByCategory, model.tab, model.problemCount))
+        if (model.problemIdTree.childCount > 0) {
+            tabs.add(displayTabButton(Tab.ByGroup, model.tab, model.problemCount))
         }
         if (model.fileLocationTree.childCount > 0) {
             tabs.add(displayTabButton(Tab.ByFileLocation, model.tab, model.problemCount))
@@ -187,7 +187,7 @@ object ProblemsReportPage :
         attributes { className("content") },
         when (model.tab) {
             Tab.ByMessage -> viewTree(model.messageTree, Intent::MessageTreeIntent)
-            Tab.ByCategory -> viewTree(model.categoryTree, Intent::CategoryTreeIntent)
+            Tab.ByGroup -> viewTree(model.problemIdTree, Intent::ProblemIdTreeIntent)
             Tab.ByFileLocation -> viewTree(model.fileLocationTree, Intent::FileLocationTreeIntent)
         }
     )
@@ -285,7 +285,7 @@ object ProblemsReportPage :
         treeIntent: (ProblemTreeIntent) -> TreeIntent
     ): View<BaseIntent> = when (label) {
         is ProblemApiNode.Text -> viewPrettyText(PrettyText.ofText(label.text))
-        is ProblemApiNode.Category -> {
+        is ProblemApiNode.ProblemId -> {
             div(
                 attributes {
                     if (label.separator) {
