@@ -232,7 +232,7 @@ fun createMessageTreeElement(
     useContextualAsPrimary: Boolean = false
 ): Tree<ProblemNode> {
     val messageNode = createPrimaryLabelMessageNode(jsProblem, fileLocation, useContextualAsPrimary)
-    val children = getMessageChildren(jsProblem, fileLocation == null)
+    val children = getMessageChildren(jsProblem, fileLocation == null, useContextualAsPrimary)
 
     return Tree(messageNode, children)
 }
