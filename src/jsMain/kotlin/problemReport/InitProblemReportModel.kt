@@ -123,7 +123,7 @@ fun createIdTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> {
     val groupToTreeMap = mutableMapOf<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>()
     val rootNodes = problems.map { problem ->
         var firstIdNode: MutableList<Tree<ProblemNode>>? = null
-        val groups = problem.group.copyOf().drop(1).reversed()
+        val groups = problem.problemId.copyOf().drop(1).reversed()
         val leafGroupNodePair =
             groups.foldRight(null as Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>?) { cat, previousGroupNodePair ->
                 val groupText = "${cat.displayName} (${cat.name})"
@@ -207,7 +207,7 @@ fun createMessageTree(problems: Array<JsProblem>): ProblemTreeModel {
             val problemsWithMessage = it.value.map { prob -> createMessageTreeElement(prob, null, true) }
             val jsProblem = it.value.first()
             val problemLabel =
-                createProblemPrettyText(jsProblem.group.first().displayName).text(" (${it.value.size})")
+                createProblemPrettyText(jsProblem.problemId.first().displayName).text(" (${it.value.size})")
                     .build()
             val label = ProblemNode.Message(problemLabel)
             val primaryLabelMessageNode = createPrimaryMessageNode(jsProblem, label)
@@ -221,7 +221,7 @@ fun createMessageTree(problems: Array<JsProblem>): ProblemTreeModel {
 
 private
 fun getGroupingString(it: JsProblem): String {
-    return it.group.map { it.name }.joinToString(":")
+    return it.problemId.map { it.name }.joinToString(":")
 }
 
 
@@ -258,7 +258,7 @@ fun getPrimaryLabelText(useContextualAsPrimary: Boolean, jsProblem: JsProblem) =
     if (useContextualAsPrimary && jsProblem.contextualLabel != null)
         jsProblem.contextualLabel!!
     else
-        jsProblem.group.first().displayName
+        jsProblem.problemId.first().displayName
 
 
 private
@@ -342,7 +342,7 @@ fun getMessageChildren(
 
     children.add(Tree(ProblemNode.Message(PrettyText.build {
         text("ID: ")
-        ref(jsProblem.group.first().name)
+        ref(jsProblem.problemId.first().name)
     })))
 
     createGroupNode(jsProblem)?.let { children.add(it) }
@@ -383,7 +383,7 @@ fun getSolutionsNode(
 
 private
 fun createGroupNode(jsProblem: JsProblem) =
-    jsProblem.group.copyOf().drop(1).let { group ->
+    jsProblem.problemId.copyOf().drop(1).let { group ->
         group.fold(null as Tree<ProblemNode>?) { previousGroupNode, cat ->
             Tree(
                 ProblemId(
