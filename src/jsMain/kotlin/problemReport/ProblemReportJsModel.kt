@@ -20,7 +20,7 @@ import configurationCache.JsError
 import configurationCache.JsMessageFragment
 
 
-external interface JsCategoryElement {
+external interface JsProblemIdElement {
     val name: String
     val displayName: String
 }
@@ -35,7 +35,7 @@ external interface JsFileLocation {
 
 
 external interface JsProblem {
-    val group: Array<JsCategoryElement>
+    val problemId: Array<JsProblemIdElement>
     val documentationLink: String?
     val severity: String
     val error: JsError?
