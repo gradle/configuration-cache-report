@@ -125,20 +125,8 @@ fun createIdTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> {
         var firstIdNode: MutableList<Tree<ProblemNode>>? = null
         val groups = problem.problemId.copyOf().drop(1).reversed()
         val leafGroupNodePair =
-            groups.foldRight(null as Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>?) { cat, previousGroupNodePair ->
-                val groupText = "${cat.displayName} (${cat.name})"
-                val groupNodePair = groupToTreeMap.getOrPut(groupText) {
-                    val children: MutableList<Tree<ProblemNode>> = mutableListOf()
-                    Pair(
-                        Tree(
-                            ProblemId(PrettyText.build {
-                                text(cat.displayName)
-                                ref(cat.name)
-                            }), children,
-                            Expanded
-                        ), children
-                    )
-                }
+            groups.foldRight(null as Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>?) { group, previousGroupNodePair ->
+                val groupNodePair = getGroupNodePair(group, groupToTreeMap)
 
                 val currentNodeChildren = groupNodePair.second
                 previousGroupNodePair?.first?.let {
@@ -160,9 +148,30 @@ fun createIdTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> {
             firstIdNode!!.add(messageTreeElement)
             leafGroupNodePair!!.first
         }
-    }.distinct()
+    }
 
     return ProblemTreeModel(Tree(ProblemApiNode.Text("text"), rootNodes))
+}
+
+
+private
+fun getGroupNodePair(
+    group: JsProblemIdElement,
+    groupToTreeMap: MutableMap<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>
+): Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>> {
+    val groupText = "${group.displayName} (${group.name})"
+    return groupToTreeMap.getOrPut(groupText) {
+        val children: MutableList<Tree<ProblemNode>> = mutableListOf()
+        Pair(
+            Tree(
+                ProblemId(PrettyText.build {
+                    text(group.displayName)
+                    ref(group.name)
+                }), children,
+                Expanded
+            ), children
+        )
+    }
 }
 
 
