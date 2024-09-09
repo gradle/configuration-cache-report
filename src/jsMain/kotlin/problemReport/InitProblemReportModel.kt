@@ -121,34 +121,38 @@ fun createIdTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> {
     val (ungroupedProblems, ungroupedNode) = createGroupedArtifacts()
 
     val groupToTreeMap = mutableMapOf<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>()
-    val rootNodes = problems.map { problem ->
+//    val rootNodesMap = mutableMapOf<String, String>()
+    val rootNodes = mutableListOf<Tree<ProblemNode>>()
+
+    problems.forEach { problem ->
         var firstIdNode: MutableList<Tree<ProblemNode>>? = null
         val groups = problem.problemId.copyOf().drop(1).reversed()
-        val leafGroupNodePair =
-            groups.foldRight(null as Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>?) { group, previousGroupNodePair ->
-                val groupNodePair = getGroupNodePair(group, groupToTreeMap)
 
-                val currentNodeChildren = groupNodePair.second
-                previousGroupNodePair?.first?.let {
-                    if (currentNodeChildren.contains(it).not()) {
-                        currentNodeChildren.add(it)
-                    }
-                }
-                if (firstIdNode == null) {
-                    firstIdNode = currentNodeChildren
-                }
+        groups.foldRight(null as Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>?) { group, previousGroupNodePair ->
+            val groupNodePair = getGroupNodePair(group, groupToTreeMap)
 
-                groupNodePair
+            val currentNodeChildren = groupNodePair.second
+            previousGroupNodePair?.first?.let {
+                if (currentNodeChildren.contains(it).not()) {
+                    currentNodeChildren.add(it)
+                }
             }
+            if (firstIdNode == null) {
+                firstIdNode = currentNodeChildren
+            }
+
+            groupNodePair
+        }
         val messageTreeElement = createMessageTreeElement(problem)
         if (firstIdNode == null) {
             ungroupedProblems.add(messageTreeElement)
-            ungroupedNode
         } else {
             firstIdNode!!.add(messageTreeElement)
-            leafGroupNodePair!!.first
         }
     }
+
+    groupToTreeMap.values.forEach { rootNodes.add(it.first) }
+    rootNodes.add(ungroupedNode)
 
     return ProblemTreeModel(Tree(ProblemApiNode.Text("text"), rootNodes))
 }
