@@ -76,31 +76,53 @@ fun createFileLocationsTree(problems: Array<JsProblem>): TreeView.Model<ProblemN
     val unlocatedProblems = mutableListOf<Tree<ProblemNode>>()
     val locationMap = mutableMapOf<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>()
     problems.forEach { problem ->
-        problem.fileLocations
-            ?.forEach {
-                val location = it.path
-                val locationNodePair = locationMap.getOrPut(location) {
-                    val groupChildren = mutableListOf<Tree<ProblemNode>>()
-                    val tree = Tree(
-                        ProblemId(PrettyText.build {
-                            ref(it.path)
-                        }),
-                        groupChildren,
-                        Expanded
-                    )
-                    tree to groupChildren
-                }
-                locationNodePair.second.add(createMessageTreeElement(problem, it))
-            }
-
-        if (problem.fileLocations.isNullOrEmpty()) {
+        if (problem.locations.isNullOrEmpty()) {
             unlocatedProblems.add(createMessageTreeElement(problem))
+        } else {
+            problem.locations?.filter { it.path != null }
+                ?.forEach {
+                    val location = it.path!!
+                    createLocationNode(locationMap, location, problem, it)
+                }
+
+            problem.locations?.filter { it.pluginId != null }
+                ?.forEach {
+                    val location = it.pluginId!!
+                    createLocationNode(locationMap, location, problem, it)
+                }
+            problem.locations?.filter { it.taskPath != null }
+                ?.forEach {
+                    val location = it.taskPath!!
+                    createLocationNode(locationMap, location, problem, it)
+                }
         }
     }
 
     val rootNodes = getRootNodes(locationMap, unlocatedProblems)
 
     return ProblemTreeModel(Tree(ProblemApiNode.Text("text"), rootNodes))
+}
+
+
+private
+fun createLocationNode(
+    locationMap: MutableMap<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>,
+    location: String,
+    problem: JsProblem,
+    jsLocation: JsLocation
+) {
+    val locationNodePair = locationMap.getOrPut(location) {
+        val groupChildren = mutableListOf<Tree<ProblemNode>>()
+        val tree = Tree(
+            ProblemId(PrettyText.build {
+                ref(location)
+            }),
+            groupChildren,
+            Expanded
+        )
+        tree to groupChildren
+    }
+    locationNodePair.second.add(createMessageTreeElement(problem, jsLocation))
 }
 
 
@@ -121,7 +143,6 @@ fun createIdTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> {
     val (ungroupedProblems, ungroupedNode) = createGroupedArtifacts()
 
     val groupToTreeMap = mutableMapOf<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>()
-//    val rootNodesMap = mutableMapOf<String, String>()
     val rootNodes = mutableListOf<Tree<ProblemNode>>()
 
     problems.forEach { problem ->
@@ -241,7 +262,7 @@ fun getGroupingString(it: JsProblem): String {
 private
 fun createMessageTreeElement(
     jsProblem: JsProblem,
-    fileLocation: JsFileLocation? = null,
+    fileLocation: JsLocation? = null,
     useContextualAsPrimary: Boolean = false
 ): Tree<ProblemNode> {
     val messageNode = createPrimaryLabelMessageNode(jsProblem, fileLocation, useContextualAsPrimary)
@@ -254,7 +275,7 @@ fun createMessageTreeElement(
 private
 fun createPrimaryLabelMessageNode(
     jsProblem: JsProblem,
-    fileLocation: JsFileLocation? = null,
+    fileLocation: JsLocation? = null,
     useContextualAsPrimary: Boolean = false
 ): ProblemNode {
     val problemLabel = createProblemPrettyText(
@@ -302,7 +323,7 @@ fun createPrimaryMessageNode(
 
 
 private
-fun createProblemPrettyText(text: String, fileLocation: JsFileLocation? = null): PrettyText.Builder {
+fun createProblemPrettyText(text: String, fileLocation: JsLocation? = null): PrettyText.Builder {
     val builder = PrettyText.Builder()
     builder.run {
         text(text)
@@ -311,6 +332,12 @@ fun createProblemPrettyText(text: String, fileLocation: JsFileLocation? = null):
                 val reference = getLineReferencePart(it)
                 ref("$reference${getLengthPart(it)}", "${it.path}$reference")
             }
+            it.taskPath?.let {
+                ref(it)
+            }
+            it.pluginId?.let {
+                ref(it)
+            }
         }
     }
     return builder
@@ -318,7 +345,7 @@ fun createProblemPrettyText(text: String, fileLocation: JsFileLocation? = null):
 
 
 private
-fun getLengthPart(jsFileLocation: JsFileLocation) =
+fun getLengthPart(jsFileLocation: JsLocation) =
     if (jsFileLocation.line == null || jsFileLocation.length == null) {
         ""
     } else
@@ -326,7 +353,7 @@ fun getLengthPart(jsFileLocation: JsFileLocation) =
 
 
 private
-fun getLineReferencePart(location: JsFileLocation) =
+fun getLineReferencePart(location: JsLocation) =
     location.line?.let { _ ->
         ":${location.line}" + (location.column?.let { ":$it" } ?: "")
     } ?: ""
@@ -360,7 +387,7 @@ fun getMessageChildren(
 
     createGroupNode(jsProblem)?.let { children.add(it) }
 
-    if (addLocationNodes && !jsProblem.fileLocations.isNullOrEmpty()) {
+    if (addLocationNodes && !jsProblem.locations.isNullOrEmpty()) {
         children.add(getLocationsNode(jsProblem))
     }
     return children
@@ -369,7 +396,7 @@ fun getMessageChildren(
 
 private
 fun getLocationsNode(jsProblem: JsProblem): Tree<ProblemNode> {
-    val locationNodes = jsProblem.fileLocations
+    val locationNodes = jsProblem.locations
         ?.map { location ->
             Tree<ProblemNode>(ProblemNode.Message(PrettyText.build {
                 text("- ")

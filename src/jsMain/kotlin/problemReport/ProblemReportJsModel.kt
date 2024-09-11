@@ -26,11 +26,13 @@ external interface JsProblemIdElement {
 }
 
 
-external interface JsFileLocation {
-    val path: String
+external interface JsLocation {
+    val path: String?
     val line: Int?
     val column: Int?
     val length: Int?
+    val pluginId: String?
+    val taskPath: String?
 }
 
 
@@ -42,7 +44,7 @@ external interface JsProblem {
     val problemDetails: Array<JsMessageFragment>?
     val contextualLabel: String?
     val solutions: Array<Array<JsMessageFragment>>?
-    val fileLocations: Array<JsFileLocation>?
+    val locations: Array<JsLocation>?
     val additionalData: Map<String, String>?
 }
 
