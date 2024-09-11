@@ -38,6 +38,7 @@ import elmish.span
 import elmish.tree.Tree
 import elmish.tree.TreeView
 import elmish.tree.viewSubTrees
+import kotlinx.browser.document
 import kotlinx.browser.window
 import reporting.BaseIntent
 import reporting.BaseIntent.TreeIntent
@@ -67,6 +68,10 @@ sealed class ProblemApiNode : ProblemNode() {
 
 object ProblemsReportPage :
     Component<ProblemsReportPage.Model, BaseIntent> {
+
+    init {
+        document.title = "Gradle Problem Report"
+    }
 
     data class Model(
         val heading: PrettyText,
