@@ -15,7 +15,26 @@ function configurationCacheProblems() {
             "requestedTasks": "clean build",
             "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html",
             "totalProblemCount": 4,
-            "diagnostics": [
+            "diagnostics": [{
+                "locations": [{
+                    "path": "/Users/reinholddegenfellner/IdeaProjects/gradle/testing/internal-testing/src/main/groovy/org/gradle/util/internal/RedirectStdOutAndErr.java"
+                }],
+                "problem": [{
+                    "text": "Java compilation note"
+                }],
+                "severity": "ADVICE",
+                "contextualLabel": "/Users/reinholddegenfellner/IdeaProjects/gradle/testing/internal-testing/src/main/groovy/org/gradle/util/internal/RedirectStdOutAndErr.java uses or overrides a deprecated API.",
+                "problemId": [{
+                    "name": "java-compilation-note",
+                    "displayName": "Java compilation note"
+                }, {
+                    "name": "compilation",
+                    "displayName": "Compilation"
+                }, {
+                    "name": "java",
+                    "displayName": "Java compilation"
+                }]
+            },
                 {
                     "problem": [{
                         "text": "No variants exist that would match the request"
@@ -147,7 +166,7 @@ function configurationCacheProblems() {
                 }, {
                     "problemDetails": [{"text": "details "}, {"name": "Task.project"}, {"text": " text."}],
                     "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html#config_cache:requirements:disallowed_types",
-                    fileLocations:[
+                    fileLocations: [
                         {"path": "project3/build.gradle", "line": 5, "column": 4},
                     ],
                     "problemId":
@@ -163,7 +182,7 @@ function configurationCacheProblems() {
                         }],
                     severity: "WARNING",
                 }, {
-                    fileLocations:[
+                    fileLocations: [
                         {"path": "project1/build.gradle", "line": 5, "column": 0, "length": 4},
                         {"path": "project2/build.gradle"},
                         {"path": "project3/build.gradle", "line": 5, "column": 0},
@@ -193,7 +212,7 @@ function configurationCacheProblems() {
                     },
                     severity: "ERROR"
                 }, {
-                    fileLocations:[
+                    fileLocations: [
                         {"path": "project1/build.gradle", "line": 5, "column": 0, "length": 4},
                         {"path": "project2/build.gradle"},
                         {"path": "project3/build.gradle", "line": 5, "column": 0},
