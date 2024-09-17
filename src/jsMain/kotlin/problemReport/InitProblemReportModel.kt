@@ -139,74 +139,108 @@ fun getRootNodes(
 }
 
 
-fun createIdTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> {
-    val (ungroupedProblems, ungroupedNode) = createGroupedArtifacts()
+var globalCnt: Int = 0
 
-    val groupToTreeMap = mutableMapOf<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>()
-    val rootNodes = mutableListOf<Tree<ProblemNode>>()
+
+data class ProblemNodeGroup(
+    val tree: Tree<ProblemNode>,
+    val children: MutableList<Tree<ProblemNode>> = mutableListOf(),
+    val childGroups: MutableMap<String, ProblemNodeGroup> = mutableMapOf(),
+    val id: Int = globalCnt++
+)
+
+
+fun createIdTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> {
+    val ungroupedProblems = createGroupedArtifacts()
+
+    val groupToTreeMap = mutableMapOf<String, ProblemNodeGroup>()
 
     problems.forEach { problem ->
-        var firstIdNode: MutableList<Tree<ProblemNode>>? = null
-        val groups = problem.problemId.copyOf().drop(1).reversed()
+        val groups = problem.problemId.copyOf().drop(1)
 
-        groups.foldRight(null as Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>?) { group, previousGroupNodePair ->
-            val groupNodePair = getGroupNodePair(group, groupToTreeMap)
-
-            val currentNodeChildren = groupNodePair.second
-            previousGroupNodePair?.first?.let {
-                if (currentNodeChildren.contains(it).not()) {
-                    currentNodeChildren.add(it)
-                }
-            }
-            if (firstIdNode == null) {
-                firstIdNode = currentNodeChildren
-            }
-
-            groupNodePair
-        }
+        val leaf = getLeafNodeToAdd(groupToTreeMap, groups)
         val messageTreeElement = createMessageTreeElement(problem)
-        if (firstIdNode == null) {
-            ungroupedProblems.add(messageTreeElement)
+        if (leaf == null) {
+            ungroupedProblems.children.add(messageTreeElement)
         } else {
-            firstIdNode!!.add(messageTreeElement)
+            leaf.children.add(messageTreeElement)
         }
     }
 
-    groupToTreeMap.values.forEach { rootNodes.add(it.first) }
-    rootNodes.add(ungroupedNode)
+    val rootNodes = groupToTreeMap.values.map { it.tree }.toMutableList()
+    rootNodes.add(ungroupedProblems.tree)
 
     return ProblemTreeModel(Tree(ProblemApiNode.Text("text"), rootNodes))
 }
 
 
+fun getLeafNodeToAdd(
+    groupTree: MutableMap<String, ProblemNodeGroup>,
+    groups: List<JsProblemIdElement>
+): ProblemNodeGroup? {
+    if (groups.isEmpty()) {
+        return null
+    }
+    var currentLeafMap = groupTree
+    var currentLeaf: ProblemNodeGroup? = null
+    var prevLeaf: ProblemNodeGroup?
+    groups.forEach {
+        prevLeaf = currentLeaf
+        currentLeaf = currentLeafMap.getOrPut("${it.displayName} (${it.name})") {
+            val children = mutableListOf<Tree<ProblemNode>>()
+            ProblemNodeGroup(
+                Tree(
+                    ProblemId(PrettyText.build {
+                        text(it.displayName)
+                        ref(it.name)
+                    }),
+                    children,
+                    Expanded
+                ),
+                children
+            )
+        }
+
+        if (prevLeaf != null && prevLeaf!!.children.contains(currentLeaf!!.tree).not()) {
+            prevLeaf!!.children.add(currentLeaf!!.tree)
+        }
+
+        currentLeafMap = currentLeaf!!.childGroups
+    }
+    return currentLeaf
+}
+
+
 private
 fun getGroupNodePair(
-    group: JsProblemIdElement,
-    groupToTreeMap: MutableMap<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>
-): Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>> {
-    val groupText = "${group.displayName} (${group.name})"
+    groupToTreeMap: MutableMap<String, ProblemNodeGroup>,
+    groupText: String,
+    group: JsProblemIdElement
+): ProblemNodeGroup {
     return groupToTreeMap.getOrPut(groupText) {
         val children: MutableList<Tree<ProblemNode>> = mutableListOf()
-        Pair(
+        ProblemNodeGroup(
             Tree(
                 ProblemId(PrettyText.build {
                     text(group.displayName)
                     ref(group.name)
                 }), children,
                 Expanded
-            ), children
+            ),
+            children,
+            mutableMapOf()
         )
     }
 }
 
 
 private
-fun createGroupedArtifacts(): Pair<MutableList<Tree<ProblemNode>>, Tree<ProblemNode>> {
+fun createGroupedArtifacts(): ProblemNodeGroup {
     val ungroupedProblems = mutableListOf<Tree<ProblemNode>>()
     val ungroupedNode = Tree(
         ProblemId(PrettyText.ofText("Ungrouped"), true), ungroupedProblems
     )
-    return ungroupedProblems to ungroupedNode
+    return ProblemNodeGroup(ungroupedNode, ungroupedProblems, mutableMapOf())
 }
 
 
