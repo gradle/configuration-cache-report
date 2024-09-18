@@ -41,7 +41,7 @@ fun reportProblemsReportPageModelFromJsModel(
     problems: Array<JsProblem>
 ): ProblemsReportPage.Model {
     val messageTree = createMessageTree(problems)
-    val groupTree = createIdTree(problems)
+    val groupTree = createGroupTree(problems)
     val fileLocationTree = createFileLocationsTree(problems)
     return ProblemsReportPage.Model(
         heading = PrettyText.ofText("Problems Report"),
@@ -150,13 +150,13 @@ data class ProblemNodeGroup(
 )
 
 
-fun createIdTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> {
+fun createGroupTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> {
     val ungroupedProblems = createGroupedArtifacts()
 
     val groupToTreeMap = mutableMapOf<String, ProblemNodeGroup>()
 
     problems.forEach { problem ->
-        val groups = problem.problemId.copyOf().drop(1)
+        val groups = problem.problemId.copyOf().dropLast(1).reversed()
 
         val leaf = getLeafNodeToAdd(groupToTreeMap, groups)
         val messageTreeElement = createMessageTreeElement(problem)
@@ -275,7 +275,8 @@ fun createMessageTree(problems: Array<JsProblem>): ProblemTreeModel {
             val problemsWithMessage = it.value.map { prob -> createMessageTreeElement(prob, null, true) }
             val jsProblem = it.value.first()
             val problemLabel =
-                createProblemPrettyText(jsProblem.problemId.first().displayName).text(" (${it.value.size})")
+                createProblemPrettyText(getDisplayName(jsProblem))
+                    .text(" (${it.value.size})")
                     .build()
             val label = ProblemNode.Message(problemLabel)
             val primaryLabelMessageNode = createPrimaryMessageNode(jsProblem, label)
@@ -326,7 +327,11 @@ fun getPrimaryLabelText(useContextualAsPrimary: Boolean, jsProblem: JsProblem) =
     if (useContextualAsPrimary && jsProblem.contextualLabel != null)
         jsProblem.contextualLabel!!
     else
-        jsProblem.problemId.first().displayName
+        getDisplayName(jsProblem)
+
+
+private
+fun getDisplayName(jsProblem: JsProblem) = jsProblem.problemId.last().displayName
 
 
 private
@@ -416,7 +421,7 @@ fun getMessageChildren(
 
     children.add(Tree(ProblemNode.Message(PrettyText.build {
         text("ID: ")
-        ref(jsProblem.problemId.first().name)
+        ref(getDisplayName(jsProblem))
     })))
 
     createGroupNode(jsProblem)?.let { children.add(it) }
