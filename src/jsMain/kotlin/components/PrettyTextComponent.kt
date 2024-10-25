@@ -47,11 +47,15 @@ class PrettyTextComponent<Intent>(
         invisibleBacktick,
         code(name),
         invisibleBacktick,
-        getCopyIntent?.let { copy ->
-            CopyButtonComponent(copy).view(
-                text = clipboardString,
-                tooltip = "Copy reference to the clipboard"
-            )
-        } ?: empty
+        if (clipboardString.isEmpty()) {
+            empty
+        } else {
+            getCopyIntent?.let { copy ->
+                CopyButtonComponent(copy).view(
+                    text = clipboardString,
+                    tooltip = "Copy reference to the clipboard"
+                )
+            } ?: empty
+        }
     )
 }
