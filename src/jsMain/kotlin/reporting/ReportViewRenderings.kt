@@ -171,7 +171,6 @@ fun treeLabel(
     prefix: View<BaseIntent> = empty,
     suffix: View<BaseIntent> = empty
 ): View<BaseIntent> {
-//    console.error("treeLabel: $label")
     return div(
         treeButtonFor(focus, treeIntent),
         prefix,

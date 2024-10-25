@@ -404,8 +404,18 @@ fun getMessageChildren(
     addLocationNodes: Boolean,
     skipContextual: Boolean = false
 ): List<Tree<ProblemNode>> {
-    val children = jsProblem.problemDetails?.let {
-        mutableListOf(Tree<ProblemNode>(ProblemNode.Message(toPrettyText(it))))
+    val children: MutableList<Tree<ProblemNode>> = jsProblem.problemDetails?.let { detail ->
+        // TODO this is assumes that the problemDetails only consist of one element, which is true currently, but may change.
+        detail[0].text?.split("\n")?.map {
+            if (isJavaCompilation(jsProblem)) {
+                // use non breaking figure space instead of nbsp, because nbsp is narrower than a letter even in monospace font
+                PrettyText.build { ref(it.replace(" ", "\u2007"), "") }
+            } else {
+                PrettyText.ofText(it)
+            }
+        }?.map<PrettyText, Tree<ProblemNode>> {
+            Tree(ProblemNode.Message(it))
+        }?.toMutableList() ?: mutableListOf()
     } ?: mutableListOf()
 
     // to avoid duplication on the UI, if the contextual label is used in a parent tree item, we skip it here
@@ -419,17 +429,19 @@ fun getMessageChildren(
         ?.let(::problemNodeForError)
         ?.let { errorNode -> children.add(Tree(errorNode)) }
 
-    children.add(Tree(ProblemNode.Message(PrettyText.build {
-        text("ID: ")
-        ref(getDisplayName(jsProblem))
-    })))
-
     createGroupNode(jsProblem)?.let { children.add(it) }
 
     if (addLocationNodes && !jsProblem.locations.isNullOrEmpty()) {
         children.add(getLocationsNode(jsProblem))
     }
     return children
+}
+
+
+private
+fun isJavaCompilation(jsProblem: JsProblem): Boolean {
+    return jsProblem.problemId.find { it.name == "compilation" } != null
+        && jsProblem.problemId.find { it.name == "java" } != null
 }
 
 
