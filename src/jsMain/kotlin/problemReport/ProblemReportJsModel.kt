@@ -49,9 +49,16 @@ external interface JsProblem {
 }
 
 
+external interface JsProblemSummary {
+    val problemId: Array<JsProblemIdElement>
+    val count: Int
+}
+
+
 external interface ProblemReportJsModel {
     val buildName: String?
     val requestedTasks: String?
     val description: Array<JsMessageFragment>?
     val documentationLink: String
+    val summaries: Array<JsProblemSummary>
 }

@@ -60,9 +60,9 @@ import reporting.BaseIntent.TreeIntent as BaseIntentTreeIntent
 sealed class ProblemApiNode : ProblemNode() {
     data class Text(val text: String) : ProblemApiNode()
 
-    data class ProblemId(val prettyText: PrettyText, val separator: Boolean = false) : ProblemApiNode()
+    data class ProblemIdNode(val prettyText: PrettyText, val separator: Boolean = false) : ProblemApiNode()
 
-    data class Advice(val label: ProblemNode, val docLink: ProblemNode?) : ProblemNode()
+    data class Advice(val label: ProblemNode, val docLink: ProblemNode? = null) : ProblemNode()
 }
 
 
@@ -290,7 +290,7 @@ object ProblemsReportPage :
         treeIntent: (ProblemTreeIntent) -> TreeIntent
     ): View<BaseIntent> = when (label) {
         is ProblemApiNode.Text -> viewPrettyText(PrettyText.ofText(label.text))
-        is ProblemApiNode.ProblemId -> {
+        is ProblemApiNode.ProblemIdNode -> {
             div(
                 attributes {
                     if (label.separator) {
