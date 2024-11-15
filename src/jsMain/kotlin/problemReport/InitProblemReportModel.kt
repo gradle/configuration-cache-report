@@ -26,7 +26,7 @@ import data.PrettyText
 import elmish.tree.Tree
 import elmish.tree.Tree.ViewState.Expanded
 import elmish.tree.TreeView
-import problemReport.ProblemApiNode.ProblemId
+import problemReport.ProblemApiNode.ProblemIdNode
 
 
 enum class Tab(val text: String) {
@@ -36,13 +36,37 @@ enum class Tab(val text: String) {
 }
 
 
+// A data class for the purpose of being able to construct new instances with the information contained
+// in JsProblemIdElement (external interfaces can not be constructed)
+data class ProblemIdElement(
+    val name: String,
+    val displayName: String
+)
+
+
+// A data class for the purpose of being able to construct new instances with the information contained
+// in JsProblemSummary (external interfaces can not be constructed)
+data class ProblemSummary(
+    val problemId: List<ProblemIdElement>,
+    val count: Int
+)
+
+
 fun reportProblemsReportPageModelFromJsModel(
     problemReportJsModel: ProblemReportJsModel,
     problems: Array<JsProblem>
 ): ProblemsReportPage.Model {
-    val messageTree = createMessageTree(problems)
-    val groupTree = createGroupTree(problems)
-    val fileLocationTree = createFileLocationsTree(problems)
+    val summaries = problemReportJsModel.summaries.map { summary ->
+        ProblemSummary(summary.problemId.map {
+            ProblemIdElement(
+                it.name,
+                it.displayName
+            )
+        }, summary.count)
+    }
+    val messageTree = createMessageTree(problems, summaries)
+    val groupTree = createGroupTree(problems, summaries)
+    val fileLocationTree = createFileLocationsTree(problems, summaries.sumOf { it.count })
     return ProblemsReportPage.Model(
         heading = PrettyText.ofText("Problems Report"),
         summary = description(problemReportJsModel, problems),
@@ -72,7 +96,7 @@ fun calcDefaultTab(
     }
 
 
-fun createFileLocationsTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> {
+fun createFileLocationsTree(problems: Array<JsProblem>, totalSkippedProblems: Int): TreeView.Model<ProblemNode> {
     val unlocatedProblems = mutableListOf<Tree<ProblemNode>>()
     val locationMap = mutableMapOf<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>()
     problems.forEach { problem ->
@@ -98,10 +122,14 @@ fun createFileLocationsTree(problems: Array<JsProblem>): TreeView.Model<ProblemN
         }
     }
 
-    val rootNodes = getRootNodes(locationMap, unlocatedProblems)
-
+    val rootNodes = getRootNodes(locationMap, unlocatedProblems, totalSkippedProblems)
     return ProblemTreeModel(Tree(ProblemApiNode.Text("text"), rootNodes))
 }
+
+
+private
+fun getSkippedProblemsNode(skippedProblems: Int): Tree<ProblemNode> =
+    Tree(ProblemNode.Message(PrettyText.ofText("$skippedProblems more problem${if (skippedProblems > 1) "s have" else " has"} been skipped")))
 
 
 private
@@ -114,7 +142,7 @@ fun createLocationNode(
     val locationNodePair = locationMap.getOrPut(location) {
         val groupChildren = mutableListOf<Tree<ProblemNode>>()
         val tree = Tree(
-            ProblemId(PrettyText.build {
+            ProblemIdNode(PrettyText.build {
                 ref(location)
             }),
             groupChildren,
@@ -129,13 +157,17 @@ fun createLocationNode(
 private
 fun getRootNodes(
     locationMap: Map<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>,
-    unlocatedProblems: List<Tree<ProblemNode>>
+    unlocatedProblems: List<Tree<ProblemNode>>,
+    totalSkippedProblems: Int
 ): List<Tree<ProblemNode>> {
-    val locationNodes = locationMap.values.map { it.first }
-    return if (unlocatedProblems.isEmpty())
-        locationNodes
-    else
-        locationNodes + Tree(ProblemId(PrettyText.ofText("no location"), true), unlocatedProblems)
+    val locationNodes = locationMap.values.map { it.first }.toMutableList()
+    if (unlocatedProblems.isNotEmpty()) {
+        locationNodes.add(Tree(ProblemIdNode(PrettyText.ofText("no location"), true), unlocatedProblems))
+    }
+    if (totalSkippedProblems > 0) {
+        locationNodes.add(getSkippedProblemsNode(totalSkippedProblems))
+    }
+    return locationNodes
 }
 
 
@@ -150,13 +182,14 @@ data class ProblemNodeGroup(
 )
 
 
-fun createGroupTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> {
+fun createGroupTree(problems: Array<JsProblem>, summaries: List<ProblemSummary>): TreeView.Model<ProblemNode> {
     val ungroupedProblems = createGroupedArtifacts()
 
     val groupToTreeMap = mutableMapOf<String, ProblemNodeGroup>()
 
     problems.forEach { problem ->
-        val groups = problem.problemId.copyOf().dropLast(1).reversed()
+        // drop the last entry (which is the problem specific id) to get the group part
+        val groups = problem.problemId.dropLast(1).reversed().map { ProblemIdElement(it.name, it.displayName) }
 
         val leaf = getLeafNodeToAdd(groupToTreeMap, groups)
         val messageTreeElement = createMessageTreeElement(problem)
@@ -167,30 +200,42 @@ fun createGroupTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> {
         }
     }
 
-    val rootNodes = groupToTreeMap.values.map { it.tree }.toMutableList()
-    rootNodes.add(ungroupedProblems.tree)
+    summaries
+        // drop the last entry (which is the problem specific id) to get the group part
+        .map { ProblemSummary(it.problemId.dropLast(1).reversed(), it.count) }
+        .groupBy { it.problemId }
+        .entries.map { entry ->
+            ProblemSummary(entry.key, entry.value.sumOf { it.count })
+        }
+        .forEach {
+            getLeafNodeToAdd(groupToTreeMap, it.problemId)
+                ?.children
+                ?.add(getSkippedProblemsNode(it.count))
+        }
 
-    return ProblemTreeModel(Tree(ProblemApiNode.Text("text"), rootNodes))
+    val rootNodes = groupToTreeMap.values.map { it.tree } + ungroupedProblems.tree
+
+    return ProblemTreeModel(Tree(ProblemApiNode.Text("group tree root"), rootNodes))
 }
 
 
 fun getLeafNodeToAdd(
     groupTree: MutableMap<String, ProblemNodeGroup>,
-    groups: List<JsProblemIdElement>
+    group: List<ProblemIdElement>
 ): ProblemNodeGroup? {
-    if (groups.isEmpty()) {
+    if (group.isEmpty()) {
         return null
     }
     var currentLeafMap = groupTree
     var currentLeaf: ProblemNodeGroup? = null
     var prevLeaf: ProblemNodeGroup?
-    groups.forEach {
+    group.forEach {
         prevLeaf = currentLeaf
         currentLeaf = currentLeafMap.getOrPut("${it.displayName} (${it.name})") {
             val children = mutableListOf<Tree<ProblemNode>>()
             ProblemNodeGroup(
                 Tree(
-                    ProblemId(PrettyText.build {
+                    ProblemIdNode(PrettyText.build {
                         text(it.displayName)
                         ref(it.name)
                     }),
@@ -212,33 +257,10 @@ fun getLeafNodeToAdd(
 
 
 private
-fun getGroupNodePair(
-    groupToTreeMap: MutableMap<String, ProblemNodeGroup>,
-    groupText: String,
-    group: JsProblemIdElement
-): ProblemNodeGroup {
-    return groupToTreeMap.getOrPut(groupText) {
-        val children: MutableList<Tree<ProblemNode>> = mutableListOf()
-        ProblemNodeGroup(
-            Tree(
-                ProblemId(PrettyText.build {
-                    text(group.displayName)
-                    ref(group.name)
-                }), children,
-                Expanded
-            ),
-            children,
-            mutableMapOf()
-        )
-    }
-}
-
-
-private
 fun createGroupedArtifacts(): ProblemNodeGroup {
     val ungroupedProblems = mutableListOf<Tree<ProblemNode>>()
     val ungroupedNode = Tree(
-        ProblemId(PrettyText.ofText("Ungrouped"), true), ungroupedProblems
+        ProblemIdNode(PrettyText.ofText("Ungrouped"), true), ungroupedProblems
     )
     return ProblemNodeGroup(ungroupedNode, ungroupedProblems, mutableMapOf())
 }
@@ -262,35 +284,59 @@ fun description(problemReportJsModel: ProblemReportJsModel, problems: Array<JsPr
         })
 
 
-fun createMessageTree(problems: Array<JsProblem>): ProblemTreeModel {
+fun createMessageTree(problems: Array<JsProblem>, summaries: List<ProblemSummary>): ProblemTreeModel {
     val groupMap = mutableMapOf<String, MutableList<JsProblem>>()
-    problems.forEach {
-        groupMap.getOrPut(getGroupingString(it)) {
+    problems.forEach { problem ->
+        groupMap.getOrPut(getGroupingString(problem.problemId)) {
             mutableListOf()
-        }.add(it)
+        }.add(problem)
     }
 
     val problemList = groupMap.entries
-        .map {
-            val problemsWithMessage = it.value.map { prob -> createMessageTreeElement(prob, null, true) }
-            val jsProblem = it.value.first()
+        .map { messageGroupEntry ->
+            val problemsWithMessage =
+                messageGroupEntry.value.map { prob -> createMessageTreeElement(prob, null, true) }.toMutableList()
+            val jsProblem = messageGroupEntry.value.first()
             val problemLabel =
                 createProblemPrettyText(getDisplayName(jsProblem))
-                    .text(" (${it.value.size})")
+                    .text(" (${messageGroupEntry.value.size})")
                     .build()
             val label = ProblemNode.Message(problemLabel)
             val primaryLabelMessageNode = createPrimaryMessageNode(jsProblem, label)
+
+            summaries
+                .find { isEqual(it.problemId, jsProblem.problemId) }
+                ?.let {
+                    // TODO add doc link once there is doc on summarization
+                    problemsWithMessage.add(getSkippedProblemsNode(it.count))
+                }
+
             Tree(primaryLabelMessageNode, problemsWithMessage)
         }
+
     return ProblemTreeModel(
-        Tree(ProblemApiNode.Text("text"), problemList)
+        Tree(ProblemApiNode.Text("message tree root"), problemList)
     )
 }
 
 
 private
-fun getGroupingString(it: JsProblem): String {
-    return it.problemId.map { it.name }.joinToString(":")
+fun isEqual(left: List<ProblemIdElement>, right: Array<JsProblemIdElement>): Boolean {
+    if (left.size == right.size) {
+        return left
+            .zip(right)
+            .all {
+                it.first.name == it.second.name &&
+                    it.first.displayName == it.second.displayName
+            }
+    }
+    return false
+}
+
+
+private
+fun getGroupingString(problemId: Array<JsProblemIdElement>): String {
+    return problemId.joinToString(":") { it.name }
 }
 
 
@@ -366,15 +412,15 @@ fun createProblemPrettyText(text: String, fileLocation: JsLocation? = null): Pre
     val builder = PrettyText.Builder()
     builder.run {
         text(text)
-        fileLocation?.let {
-            if (it.line != null) {
-                val reference = getLineReferencePart(it)
-                ref("$reference${getLengthPart(it)}", "${it.path}$reference")
+        fileLocation?.let { location ->
+            if (location.line != null) {
+                val reference = getLineReferencePart(location)
+                ref("$reference${getLengthPart(location)}", "${location.path}$reference")
             }
-            it.taskPath?.let {
+            location.taskPath?.let {
                 ref(it)
             }
-            it.pluginId?.let {
+            location.pluginId?.let {
                 ref(it)
             }
         }
@@ -407,8 +453,9 @@ fun getMessageChildren(
     val children: MutableList<Tree<ProblemNode>> = jsProblem.problemDetails?.let { detail ->
         // TODO this is assumes that the problemDetails only consist of one element, which is true currently, but may change.
         detail[0].text?.split("\n")?.map {
+            // TODO get rid of this special case
             if (isJavaCompilation(jsProblem)) {
-                // use non breaking figure space instead of nbsp, because nbsp is narrower than a letter even in monospace font
+                // use non-breaking figure space instead of nbsp, because nbsp is narrower than a letter even in monospace font
                 PrettyText.build { ref(it.replace(" ", "\u2007"), "") }
             } else {
                 PrettyText.ofText(it)
@@ -428,8 +475,6 @@ fun getMessageChildren(
     jsProblem.error
         ?.let(::problemNodeForError)
         ?.let { errorNode -> children.add(Tree(errorNode)) }
-
-    createGroupNode(jsProblem)?.let { children.add(it) }
 
     if (addLocationNodes && !jsProblem.locations.isNullOrEmpty()) {
         children.add(getLocationsNode(jsProblem))
@@ -470,20 +515,3 @@ fun getSolutionsNode(
             Tree(ProblemNode.ListElement(toPrettyText(solution)))
         })
 }
-
-
-private
-fun createGroupNode(jsProblem: JsProblem) =
-    jsProblem.problemId.copyOf().drop(1).let { group ->
-        group.fold(null as Tree<ProblemNode>?) { previousGroupNode, cat ->
-            Tree(
-                ProblemId(
-                    PrettyText.build {
-                        text(cat.displayName)
-                        ref(cat.name)
-                    }
-                ),
-                previousGroupNode?.let { listOf(it) } ?: listOf()
-            )
-        }
-    }
