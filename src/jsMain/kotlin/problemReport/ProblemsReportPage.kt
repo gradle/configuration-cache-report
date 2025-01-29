@@ -70,7 +70,7 @@ object ProblemsReportPage :
     Component<ProblemsReportPage.Model, BaseIntent> {
 
     init {
-        document.title = "Gradle Problem Report"
+        document.title = "Gradle - Problems Report"
     }
 
     data class Model(
