@@ -32,7 +32,9 @@ import problemReport.ProblemApiNode.ProblemIdNode
 enum class Tab(val text: String) {
     ByMessage("Messages"),
     ByGroup("Group"),
-    ByFileLocation("Locations"),
+    ByFileLocation("File Locations"),
+    ByPluginLocation("Plugin Locations"),
+    ByTaskLocation("Task Locations"),
 }
 
 
@@ -66,7 +68,9 @@ fun reportProblemsReportPageModelFromJsModel(
     }
     val messageTree = createMessageTree(problems, summaries)
     val groupTree = createGroupTree(problems, summaries)
-    val fileLocationTree = createFileLocationsTree(problems, summaries.sumOf { it.count })
+    val fileLocationTree = createLocationsTree(problems, summaries.sumOf { it.count }, locationPathFilter)
+    val pluginLocationTree = createLocationsTree(problems, summaries.sumOf { it.count }, locationPluginFilter)
+    val taskLocationTree = createLocationsTree(problems, summaries.sumOf { it.count }, locationTaskFilter)
     return ProblemsReportPage.Model(
         heading = PrettyText.ofText("Problems Report"),
         summary = description(problemReportJsModel, problems),
@@ -77,8 +81,10 @@ fun reportProblemsReportPageModelFromJsModel(
         messageTree,
         groupTree,
         fileLocationTree,
+        pluginLocationTree,
+        taskLocationTree,
         problems.size,
-        calcDefaultTab(messageTree, groupTree, fileLocationTree)
+        calcDefaultTab(messageTree, groupTree, fileLocationTree, pluginLocationTree, taskLocationTree)
     )
 }
 
@@ -87,44 +93,72 @@ fun calcDefaultTab(
     messageTree: ProblemTreeModel,
     groupTree: ProblemTreeModel,
     fileLocationTree: ProblemTreeModel,
+    pluginLocationTree: ProblemTreeModel,
+    taskLocationTree: ProblemTreeModel,
 ) =
     when {
         fileLocationTree.childCount > 0 -> Tab.ByFileLocation
         messageTree.childCount > 0 -> Tab.ByMessage
         groupTree.childCount > 0 -> Tab.ByGroup
+        pluginLocationTree.childCount > 0 -> Tab.ByPluginLocation
+        taskLocationTree.childCount > 0 -> Tab.ByTaskLocation
         else -> Tab.ByMessage
     }
 
 
-fun createFileLocationsTree(problems: Array<JsProblem>, totalSkippedProblems: Int): TreeView.Model<ProblemNode> {
+fun createLocationsTree(
+    problems: Array<JsProblem>,
+    totalSkippedProblems: Int,
+    locationFilter: (JsProblem, MutableMap<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>) -> Boolean
+): TreeView.Model<ProblemNode> {
     val unlocatedProblems = mutableListOf<Tree<ProblemNode>>()
     val locationMap = mutableMapOf<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>()
     problems.forEach { problem ->
         if (problem.locations.isNullOrEmpty()) {
             unlocatedProblems.add(createMessageTreeElement(problem))
         } else {
-            problem.locations?.filter { it.path != null }
-                ?.forEach {
-                    val location = it.path!!
-                    createLocationNode(locationMap, location, problem, it)
-                }
-
-            problem.locations?.filter { it.pluginId != null }
-                ?.forEach {
-                    val location = it.pluginId!!
-                    createLocationNode(locationMap, location, problem, it)
-                }
-            problem.locations?.filter { it.taskPath != null }
-                ?.forEach {
-                    val location = it.taskPath!!
-                    createLocationNode(locationMap, location, problem, it)
-                }
+            val handled = locationFilter(problem, locationMap)
+            if (!handled) {
+                unlocatedProblems.add(createMessageTreeElement(problem))
+            }
         }
     }
 
     val rootNodes = getRootNodes(locationMap, unlocatedProblems, totalSkippedProblems)
     return ProblemTreeModel(Tree(ProblemApiNode.Text("text"), rootNodes))
 }
+
+
+private
+fun createLocationFilter(
+    propertySelector: (JsLocation) -> String?
+): (JsProblem, MutableMap<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>) -> Boolean {
+    return { problem, locationMap ->
+        val filteredLocations = problem.locations?.filter { propertySelector(it) != null }
+        if (filteredLocations.isNullOrEmpty()) {
+            false
+        } else {
+            filteredLocations.forEach {
+                val location = propertySelector(it)!!
+                createLocationNode(locationMap, location, problem, it)
+            }
+            true
+        }
+    }
+}
+
+
+// Then define the specific filters using the factory function
+private
+val locationPathFilter = createLocationFilter { it.path }
+
+
+private
+val locationPluginFilter = createLocationFilter { it.pluginId }
+
+
+private
+val locationTaskFilter = createLocationFilter { it.taskPath }
 
 
 private
@@ -408,24 +442,25 @@ fun createPrimaryMessageNode(
 
 
 private
-fun createProblemPrettyText(text: String, fileLocation: JsLocation? = null): PrettyText.Builder {
-    val builder = PrettyText.Builder()
-    builder.run {
+fun createProblemPrettyText(text: String, jsLocation: JsLocation? = null): PrettyText.Builder {
+    return PrettyText.Builder().apply {
         text(text)
-        fileLocation?.let { location ->
-            if (location.line != null) {
-                val reference = getLineReferencePart(location)
-                ref("$reference${getLengthPart(location)}", "${location.path}$reference")
-            }
-            location.taskPath?.let {
-                ref(it)
-            }
-            location.pluginId?.let {
-                ref(it)
+
+        jsLocation?.let { location ->
+            when {
+                location.line != null -> {
+                    val reference = getLineReferencePart(location)
+                    ref("$reference${getLengthPart(location)}", "${location.path}$reference")
+                }
+                location.taskPath != null -> {
+                    ref(location.taskPath!!)
+                }
+                location.pluginId != null -> {
+                    ref(location.pluginId!!)
+                }
             }
         }
     }
-    return builder
 }
 
 
@@ -496,10 +531,18 @@ fun getLocationsNode(jsProblem: JsProblem): Tree<ProblemNode> {
         ?.map { location ->
             Tree<ProblemNode>(ProblemNode.Message(PrettyText.build {
                 text("- ")
-                ref("${location.path}${getLineReferencePart(location)}")
+                ref(getLocationReferenceString(location))
             }))
         }
     return Tree(ProblemNode.Label("Locations"), locationNodes ?: listOf())
+}
+
+
+private
+fun getLocationReferenceString(location: JsLocation): String = when {
+    location.path != null -> "${location.path}${getLineReferencePart(location)}"
+    location.taskPath != null -> location.taskPath!!
+    else -> "<undefined>"
 }
 
 

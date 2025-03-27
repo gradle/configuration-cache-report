@@ -31,7 +31,7 @@ kotlin {
         browser {
             webpackTask(Action {
                 sourceMaps = true
-                // uncomment the following line for better debugging experience
+                // uncomment the following line for better debugging experience, also uncomment the import above
                 // mode = Mode.DEVELOPMENT
             })
         }
