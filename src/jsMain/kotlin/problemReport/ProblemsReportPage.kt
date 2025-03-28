@@ -80,6 +80,8 @@ object ProblemsReportPage :
         val messageTree: ProblemTreeModel,
         val problemIdTree: ProblemTreeModel,
         val fileLocationTree: ProblemTreeModel,
+        val pluginLocationTree: ProblemTreeModel,
+        val taskLocationTree: ProblemTreeModel,
         val problemCount: Int,
         val tab: Tab
     )
@@ -90,6 +92,8 @@ object ProblemsReportPage :
         data class ProblemIdTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
         data class FileLocationTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
+        data class PluginLocationTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
+        data class TaskLocationTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
         data class SetTab(val tab: Tab) : Intent()
     }
@@ -111,6 +115,12 @@ object ProblemsReportPage :
         is Intent.FileLocationTreeIntent -> copy(
             fileLocationTree = fileLocationTree.updateNodeTreeAt(tree, update)
         )
+        is Intent.PluginLocationTreeIntent -> copy(
+            pluginLocationTree = pluginLocationTree.updateNodeTreeAt(tree, update)
+        )
+        is Intent.TaskLocationTreeIntent -> copy(
+            taskLocationTree = taskLocationTree.updateNodeTreeAt(tree, update)
+        )
 
         else -> {
             console.error("Unhandled tree intent: $tree")
@@ -122,7 +132,12 @@ object ProblemsReportPage :
         is Intent.FileLocationTreeIntent -> model.copy(
             fileLocationTree = TreeView.step(intent.delegate, model.fileLocationTree)
         )
-
+        is Intent.PluginLocationTreeIntent -> model.copy(
+            pluginLocationTree = TreeView.step(intent.delegate, model.pluginLocationTree)
+        )
+        is Intent.TaskLocationTreeIntent -> model.copy(
+            taskLocationTree = TreeView.step(intent.delegate, model.taskLocationTree)
+        )
         is Intent.ProblemIdTreeIntent -> model.copy(
             problemIdTree = TreeView.step(intent.delegate, model.problemIdTree)
         )
@@ -172,6 +187,14 @@ object ProblemsReportPage :
             tabs.add(displayTabButton(Tab.ByFileLocation, model.tab, model.problemCount))
         }
 
+        if (model.pluginLocationTree.childCount > 0) {
+            tabs.add(displayTabButton(Tab.ByPluginLocation, model.tab, model.problemCount))
+        }
+
+        if (model.taskLocationTree.childCount > 0) {
+            tabs.add(displayTabButton(Tab.ByTaskLocation, model.tab, model.problemCount))
+        }
+
         return div(
             attributes { className("header") },
             div(attributes { className("gradle-logo") }),
@@ -194,6 +217,8 @@ object ProblemsReportPage :
             Tab.ByMessage -> viewTree(model.messageTree, Intent::MessageTreeIntent)
             Tab.ByGroup -> viewTree(model.problemIdTree, Intent::ProblemIdTreeIntent)
             Tab.ByFileLocation -> viewTree(model.fileLocationTree, Intent::FileLocationTreeIntent)
+            Tab.ByPluginLocation -> viewTree(model.pluginLocationTree, Intent::PluginLocationTreeIntent)
+            Tab.ByTaskLocation -> viewTree(model.taskLocationTree, Intent::TaskLocationTreeIntent)
         }
     )
 

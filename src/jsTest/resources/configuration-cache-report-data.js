@@ -38,6 +38,8 @@ function configurationCacheProblems() {
             "diagnostics": [{
                 "locations": [{
                     "path": "/Users/reinholddegenfellner/IdeaProjects/gradle/testing/internal-testing/src/main/groovy/org/gradle/util/internal/RedirectStdOutAndErr.java"
+                },{
+                    "taskPath": "tassskskskspahththt"
                 }],
                 "problem": [{
                     "text": "Java compilation note"
