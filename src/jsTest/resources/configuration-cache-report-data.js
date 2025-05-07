@@ -36,6 +36,30 @@ function configurationCacheProblems() {
             "documentationLink": "https://docs.gradle.org/current/userguide/configuration_cache.html",
             "totalProblemCount": 4,
             "diagnostics": [{
+                "locations": [{}, {
+                    "pluginId": "org.jetbrains.kotlin.multiplatform"
+                }],
+                "problem": [{
+                    "text": "The StartParameter.isConfigurationCacheRequested property has been deprecated."
+                }],
+                "severity": "WARNING",
+                "problemDetails": [{
+                    "text": "This is scheduled to be removed in Gradle 10.0."
+                }],
+                "contextualLabel": "The StartParameter.isConfigurationCacheRequested property has been deprecated.",
+                "documentationLink": "https://docs.gradle.org/8.14/userguide/upgrading_version_8.html#deprecated_startparameter_is_configuration_cache_requested",
+                "problemId": [{
+                    "name": "deprecation",
+                    "displayName": "Deprecation"
+                }, {
+                    "name": "the-startparameter-isconfigurationcacherequested-property-has-been-deprecated",
+                    "displayName": "The StartParameter.isConfigurationCacheRequested property has been deprecated."
+                }],
+                "solutions": [[{
+                    "text": "Please use 'configurationCache.requested' property on 'BuildFeatures' service instead."
+                }]]
+            },
+                {
                 "locations": [{
                     "pluginId": "org.jetbrains.kotlin.multiplatform"
                 },{
