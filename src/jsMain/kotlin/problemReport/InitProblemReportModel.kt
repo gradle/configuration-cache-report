@@ -542,6 +542,7 @@ private
 fun getLocationReferenceString(location: JsLocation): String = when {
     location.path != null -> "${location.path}${getLineReferencePart(location)}"
     location.taskPath != null -> location.taskPath!!
+    location.pluginId != null -> location.pluginId!!
     else -> "<undefined>"
 }
 

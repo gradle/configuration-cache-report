@@ -37,6 +37,8 @@ function configurationCacheProblems() {
             "totalProblemCount": 4,
             "diagnostics": [{
                 "locations": [{
+                    "pluginId": "org.jetbrains.kotlin.multiplatform"
+                },{
                     "path": "/Users/reinholddegenfellner/IdeaProjects/gradle/testing/internal-testing/src/main/groovy/org/gradle/util/internal/RedirectStdOutAndErr.java"
                 },{
                     "taskPath": "tassskskskspahththt"
