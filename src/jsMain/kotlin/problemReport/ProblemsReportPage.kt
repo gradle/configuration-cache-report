@@ -31,6 +31,7 @@ import elmish.a
 import elmish.attributes
 import elmish.br
 import elmish.div
+import elmish.empty
 import elmish.h1
 import elmish.ol
 import elmish.small
@@ -62,7 +63,7 @@ sealed class ProblemApiNode : ProblemNode() {
 
     data class ProblemIdNode(val prettyText: PrettyText, val separator: Boolean = false) : ProblemApiNode()
 
-    data class Advice(val label: ProblemNode, val docLink: ProblemNode? = null) : ProblemNode()
+    data class Advice(val label: ProblemNode, val docLink: ProblemNode? = null, val count: Int?) : ProblemNode()
 }
 
 
@@ -115,9 +116,11 @@ object ProblemsReportPage :
         is Intent.FileLocationTreeIntent -> copy(
             fileLocationTree = fileLocationTree.updateNodeTreeAt(tree, update)
         )
+
         is Intent.PluginLocationTreeIntent -> copy(
             pluginLocationTree = pluginLocationTree.updateNodeTreeAt(tree, update)
         )
+
         is Intent.TaskLocationTreeIntent -> copy(
             taskLocationTree = taskLocationTree.updateNodeTreeAt(tree, update)
         )
@@ -132,12 +135,15 @@ object ProblemsReportPage :
         is Intent.FileLocationTreeIntent -> model.copy(
             fileLocationTree = TreeView.step(intent.delegate, model.fileLocationTree)
         )
+
         is Intent.PluginLocationTreeIntent -> model.copy(
             pluginLocationTree = TreeView.step(intent.delegate, model.pluginLocationTree)
         )
+
         is Intent.TaskLocationTreeIntent -> model.copy(
             taskLocationTree = TreeView.step(intent.delegate, model.taskLocationTree)
         )
+
         is Intent.ProblemIdTreeIntent -> model.copy(
             problemIdTree = TreeView.step(intent.delegate, model.problemIdTree)
         )
@@ -324,7 +330,8 @@ object ProblemsReportPage :
                 },
                 div(
                     treeButtonFor(focus, treeIntent),
-                    viewPrettyText(label.prettyText)
+                    viewPrettyText(label.prettyText),
+                    span()
                 )
             )
         }
@@ -355,7 +362,8 @@ object ProblemsReportPage :
                 focus,
                 label.label,
                 label.docLink,
-                errorIcon
+                errorIcon,
+                countBalloonIfNecessary(label.count)
             )
         }
 
@@ -366,7 +374,8 @@ object ProblemsReportPage :
                 focus,
                 label.label,
                 label.docLink,
-                adviceIcon
+                adviceIcon,
+                countBalloonIfNecessary(label.count)
             )
         }
 
@@ -377,7 +386,8 @@ object ProblemsReportPage :
                 focus,
                 label.label,
                 label.docLink,
-                warningIcon
+                warningIcon,
+                countBalloonIfNecessary(label.count)
             )
         }
 
@@ -391,5 +401,18 @@ object ProblemsReportPage :
         else -> {
             span("Unknown node type viewNode: $label")
         }
+    }
+
+    private
+    fun countBalloonIfNecessary(count: Int?): View<Nothing> {
+        return if (count == null) empty
+        else
+            span(
+                attributes { className("group-selector__count") },
+                invisibleSpace,
+                invisibleOpenParen,
+                span("$count"),
+                invisibleCloseParen
+            )
     }
 }
