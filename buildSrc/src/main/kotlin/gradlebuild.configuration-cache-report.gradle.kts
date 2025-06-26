@@ -29,11 +29,11 @@ plugins {
 kotlin {
     js {
         browser {
-            webpackTask(Action {
+            commonWebpackConfig {
                 sourceMaps = true
                 // uncomment the following line for better debugging experience, also uncomment the import above
-                // mode = Mode.DEVELOPMENT
-            })
+//                 mode = Mode.DEVELOPMENT
+            }
         }
 
         // Creating a distribution of the JS code as a single executable file
@@ -68,18 +68,17 @@ rootProject.run {
 
 tasks {
     withType<KotlinJsCompile>().configureEach {
-        kotlinOptions {
-            allWarningsAsErrors = true
-            metaInfo = false
-            moduleKind = "plain"
+        compilerOptions {
+            allWarningsAsErrors.set(true)
+            moduleKind.set(org.jetbrains.kotlin.gradle.dsl.JsModuleKind.MODULE_PLAIN)
         }
     }
 }
 
 val assembleReport by tasks.registering(MergeReportAssets::class) {
-    htmlFile.set(webpackFile("configuration-cache-report.html"))
-    logoFile.set(webpackFile("configuration-cache-report-logo.png"))
-    cssFile.set(webpackFile("configuration-cache-report.css"))
+    htmlFile.set(layout.buildDirectory.file("processedResources/js/main/configuration-cache-report.html"))
+    logoFile.set(layout.buildDirectory.file("processedResources/js/main/configuration-cache-report-logo.png"))
+    cssFile.set(layout.buildDirectory.file("processedResources/js/main/configuration-cache-report.css"))
     jsFile.set(webpackFile("configuration-cache-report.js"))
     outputFile.set(layout.buildDirectory.file("$name/configuration-cache-report.html"))
 
@@ -87,6 +86,7 @@ val assembleReport by tasks.registering(MergeReportAssets::class) {
     // The KMP plugin declares its outputs both on Webpack and lifecycle task, which trips over missing dependency
     // detector.
     dependsOn("jsBrowserDistribution")
+    dependsOn("jsProcessResources")
 }
 
 fun webpackFile(fileName: String) =
