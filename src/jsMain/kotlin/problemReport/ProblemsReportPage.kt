@@ -330,8 +330,7 @@ object ProblemsReportPage :
                 },
                 div(
                     treeButtonFor(focus, treeIntent),
-                    viewPrettyText(label.prettyText),
-                    span()
+                    viewPrettyText(label.prettyText)
                 )
             )
         }
