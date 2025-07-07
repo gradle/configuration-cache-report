@@ -419,7 +419,7 @@ fun createPrimaryMessageNode(
     label: ProblemNode.Message,
     count: Int? = null
 ): ProblemNode {
-    val docLink = jsProblem.documentationLink?.let { ProblemNode.Link(it, "") }
+    val docLink = jsProblem.documentationLink?.let { ProblemNode.Link(it) }
     val messageNode = when (jsProblem.severity) {
         "WARNING" -> {
             ProblemNode.Warning(label, docLink, count)

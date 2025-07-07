@@ -36,7 +36,7 @@ open class ProblemNode {
 
     data class TreeNode(val prettyText: PrettyText) : ProblemNode()
 
-    data class Link(val href: String, val label: String = "") : ProblemNode()
+    data class Link(val href: String) : ProblemNode()
 
     data class Label(val text: String) : ProblemNode()
 }
