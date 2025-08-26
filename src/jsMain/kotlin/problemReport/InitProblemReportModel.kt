@@ -333,10 +333,9 @@ fun createMessageTree(problems: Array<JsProblem>, summaries: List<ProblemSummary
             val jsProblem = messageGroupEntry.value.first()
             val problemLabel =
                 createProblemPrettyText(getDisplayName(jsProblem))
-                    .text(" (${messageGroupEntry.value.size})")
                     .build()
             val label = ProblemNode.Message(problemLabel)
-            val primaryLabelMessageNode = createPrimaryMessageNode(jsProblem, label)
+            val primaryLabelMessageNode = createPrimaryMessageNode(jsProblem, label, messageGroupEntry.value.size)
 
             summaries
                 .find { isEqual(it.problemId, jsProblem.problemId) }
@@ -417,19 +416,21 @@ fun getDisplayName(jsProblem: JsProblem) = jsProblem.problemId.last().displayNam
 private
 fun createPrimaryMessageNode(
     jsProblem: JsProblem,
-    label: ProblemNode.Message
+    label: ProblemNode.Message,
+    count: Int? = null
 ): ProblemNode {
+    val docLink = jsProblem.documentationLink?.let { ProblemNode.Link(it) }
     val messageNode = when (jsProblem.severity) {
         "WARNING" -> {
-            ProblemNode.Warning(label, jsProblem.documentationLink?.let { ProblemNode.Link(it, "") })
+            ProblemNode.Warning(label, docLink, count)
         }
 
         "ERROR" -> {
-            ProblemNode.Error(label, jsProblem.documentationLink?.let { ProblemNode.Link(it, "") })
+            ProblemNode.Error(label, docLink, count)
         }
 
         "ADVICE" -> {
-            ProblemApiNode.Advice(label, jsProblem.documentationLink?.let { ProblemNode.Link(it, "") })
+            ProblemApiNode.Advice(label, docLink, count)
         }
 
         else -> {
@@ -452,9 +453,11 @@ fun createProblemPrettyText(text: String, jsLocation: JsLocation? = null): Prett
                     val reference = getLineReferencePart(location)
                     ref("$reference${getLengthPart(location)}", "${location.path}$reference")
                 }
+
                 location.taskPath != null -> {
                     ref(location.taskPath!!)
                 }
+
                 location.pluginId != null -> {
                     ref(location.pluginId!!)
                 }

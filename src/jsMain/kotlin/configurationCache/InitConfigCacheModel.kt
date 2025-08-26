@@ -332,7 +332,7 @@ fun defaultViewStateFor(isInternal: Boolean, linesCount: Int): Tree.ViewState? {
 
 private
 fun docLinkFor(jsDiagnostic: JsDiagnostic): ProblemNode? =
-    jsDiagnostic.documentationLink?.let { ProblemNode.Link(it, "") }
+    jsDiagnostic.documentationLink?.let { ProblemNode.Link(it) }
 
 
 private

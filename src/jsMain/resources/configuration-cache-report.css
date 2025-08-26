@@ -216,13 +216,11 @@ template {
 .header {
     display: flex;
     flex-wrap: wrap;
-    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
-    padding: 24px 24px 0 24px;
+    padding-top: 24px;
     background-color: white;
-    z-index: 1;
 }
 
 .learn-more {
@@ -241,8 +239,6 @@ template {
 
 .content {
     font-size: 0.875rem;
-    padding: 240px 0 48px;
-    overflow-x: auto;
     white-space: nowrap;
 }
 

@@ -386,6 +386,5 @@ fun viewDocLink(node: ProblemNode.Link): View<BaseIntent> = a(
     attributes {
         className("documentation-button")
         href(node.href)
-    },
-    node.label
+    }
 )
