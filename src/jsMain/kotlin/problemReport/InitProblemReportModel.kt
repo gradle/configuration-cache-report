@@ -84,26 +84,9 @@ fun reportProblemsReportPageModelFromJsModel(
         pluginLocationTree,
         taskLocationTree,
         problems.size,
-        calcDefaultTab(messageTree, groupTree, fileLocationTree, pluginLocationTree, taskLocationTree)
+        Tab.ByMessage
     )
 }
-
-
-fun calcDefaultTab(
-    messageTree: ProblemTreeModel,
-    groupTree: ProblemTreeModel,
-    fileLocationTree: ProblemTreeModel,
-    pluginLocationTree: ProblemTreeModel,
-    taskLocationTree: ProblemTreeModel,
-) =
-    when {
-        fileLocationTree.childCount > 0 -> Tab.ByFileLocation
-        messageTree.childCount > 0 -> Tab.ByMessage
-        groupTree.childCount > 0 -> Tab.ByGroup
-        pluginLocationTree.childCount > 0 -> Tab.ByPluginLocation
-        taskLocationTree.childCount > 0 -> Tab.ByTaskLocation
-        else -> Tab.ByMessage
-    }
 
 
 fun createLocationsTree(
