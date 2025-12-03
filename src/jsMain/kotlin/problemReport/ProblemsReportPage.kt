@@ -79,7 +79,7 @@ object ProblemsReportPage :
         val summary: List<PrettyText>,
         val learnMore: LearnMore,
         val messageTree: ProblemTreeModel,
-        val problemIdTree: ProblemTreeModel,
+        val groupTree: ProblemTreeModel,
         val fileLocationTree: ProblemTreeModel,
         val pluginLocationTree: ProblemTreeModel,
         val taskLocationTree: ProblemTreeModel,
@@ -110,7 +110,7 @@ object ProblemsReportPage :
         )
 
         is Intent.ProblemIdTreeIntent -> copy(
-            problemIdTree = problemIdTree.updateNodeTreeAt(tree, update)
+            groupTree = groupTree.updateNodeTreeAt(tree, update)
         )
 
         is Intent.FileLocationTreeIntent -> copy(
@@ -145,7 +145,7 @@ object ProblemsReportPage :
         )
 
         is Intent.ProblemIdTreeIntent -> model.copy(
-            problemIdTree = TreeView.step(intent.delegate, model.problemIdTree)
+            groupTree = TreeView.step(intent.delegate, model.groupTree)
         )
 
         is Intent.MessageTreeIntent -> model.copy(
@@ -186,7 +186,7 @@ object ProblemsReportPage :
         if (model.messageTree.childCount > 0) {
             tabs.add(displayTabButton(Tab.ByMessage, model.tab, model.problemCount))
         }
-        if (model.problemIdTree.childCount > 0) {
+        if (model.groupTree.childCount > 0) {
             tabs.add(displayTabButton(Tab.ByGroup, model.tab, model.problemCount))
         }
         if (model.fileLocationTree.childCount > 0) {
@@ -221,7 +221,7 @@ object ProblemsReportPage :
         attributes { className("content") },
         when (model.tab) {
             Tab.ByMessage -> viewTree(model.messageTree, Intent::MessageTreeIntent)
-            Tab.ByGroup -> viewTree(model.problemIdTree, Intent::ProblemIdTreeIntent)
+            Tab.ByGroup -> viewTree(model.groupTree, Intent::ProblemIdTreeIntent)
             Tab.ByFileLocation -> viewTree(model.fileLocationTree, Intent::FileLocationTreeIntent)
             Tab.ByPluginLocation -> viewTree(model.pluginLocationTree, Intent::PluginLocationTreeIntent)
             Tab.ByTaskLocation -> viewTree(model.taskLocationTree, Intent::TaskLocationTreeIntent)
