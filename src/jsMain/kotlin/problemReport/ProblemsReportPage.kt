@@ -193,11 +193,11 @@ object ProblemsReportPage :
             div(
                 attributes { className("groups") },
                 buildList {
-                    add(displayTabButton(Tab.ByMessage, model.tab, model.problemCount))
-                    add(displayTabButton(Tab.ByGroup, model.tab, model.problemCount))
-                    add(displayTabButton(Tab.ByFileLocation, model.tab, model.problemCount))
-                    add(displayTabButton(Tab.ByPluginLocation, model.tab, model.problemCount))
-                    add(displayTabButton(Tab.ByTaskLocation, model.tab, model.problemCount))
+                    add(displayTabButton(Tab.ByMessage, model.tab, model.messageTree.childCount))
+                    add(displayTabButton(Tab.ByGroup, model.tab, model.groupTree.childCount))
+                    add(displayTabButton(Tab.ByFileLocation, model.tab, model.fileLocationTree.childCount))
+                    add(displayTabButton(Tab.ByPluginLocation, model.tab, model.pluginLocationTree.childCount))
+                    add(displayTabButton(Tab.ByTaskLocation, model.tab, model.taskLocationTree.childCount))
                 }
             )
         )
