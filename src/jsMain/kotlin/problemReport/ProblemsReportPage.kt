@@ -181,27 +181,8 @@ object ProblemsReportPage :
     )
 
     private
-    fun viewHeader(model: Model): View<BaseIntent> {
-        val tabs = mutableListOf<View<BaseIntent>>()
-        if (model.messageTree.childCount > 0) {
-            tabs.add(displayTabButton(Tab.ByMessage, model.tab, model.problemCount))
-        }
-        if (model.groupTree.childCount > 0) {
-            tabs.add(displayTabButton(Tab.ByGroup, model.tab, model.problemCount))
-        }
-        if (model.fileLocationTree.childCount > 0) {
-            tabs.add(displayTabButton(Tab.ByFileLocation, model.tab, model.problemCount))
-        }
-
-        if (model.pluginLocationTree.childCount > 0) {
-            tabs.add(displayTabButton(Tab.ByPluginLocation, model.tab, model.problemCount))
-        }
-
-        if (model.taskLocationTree.childCount > 0) {
-            tabs.add(displayTabButton(Tab.ByTaskLocation, model.tab, model.problemCount))
-        }
-
-        return div(
+    fun viewHeader(model: Model): View<BaseIntent> =
+        div(
             attributes { className("header") },
             div(attributes { className("gradle-logo") }),
             learnMore(model.learnMore),
@@ -211,10 +192,15 @@ object ProblemsReportPage :
             ),
             div(
                 attributes { className("groups") },
-                tabs
+                buildList {
+                    add(displayTabButton(Tab.ByMessage, model.tab, model.problemCount))
+                    add(displayTabButton(Tab.ByGroup, model.tab, model.problemCount))
+                    add(displayTabButton(Tab.ByFileLocation, model.tab, model.problemCount))
+                    add(displayTabButton(Tab.ByPluginLocation, model.tab, model.problemCount))
+                    add(displayTabButton(Tab.ByTaskLocation, model.tab, model.problemCount))
+                }
             )
         )
-    }
 
     private
     fun viewProblems(model: Model) = div(
