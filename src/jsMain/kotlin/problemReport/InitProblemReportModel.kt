@@ -223,11 +223,11 @@ fun getLeafNodeToAdd(
             )
         }
 
-        if (prevLeaf != null && prevLeaf!!.children.contains(currentLeaf!!.tree).not()) {
-            prevLeaf!!.children.add(currentLeaf!!.tree)
+        if (prevLeaf != null && prevLeaf.children.contains(currentLeaf.tree).not()) {
+            prevLeaf.children.add(currentLeaf.tree)
         }
 
-        currentLeafMap = currentLeaf!!.childGroups
+        currentLeafMap = currentLeaf.childGroups
     }
     return currentLeaf
 }
