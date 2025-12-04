@@ -193,7 +193,6 @@ fun getGroupLeafNodeToAdd(
                 Tree(
                     ProblemIdNode(PrettyText.build {
                         text(it.displayName)
-                        ref(it.name)
                     }),
                     children,
                 ),
