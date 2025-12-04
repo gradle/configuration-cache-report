@@ -45,7 +45,7 @@ data class ProblemIdElement(
 )
 
 
-fun reportProblemsReportPageModelFromJsModel(
+fun problemsReportPageModelFromJsModel(
     problemReportJsModel: ProblemReportJsModel,
     problems: Array<JsProblem>
 ): ProblemsReportPage.Model {
