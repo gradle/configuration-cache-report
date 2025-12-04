@@ -121,15 +121,10 @@ fun createLocationNode(
 
 
 private
-var globalCnt: Int = 0
-
-
-private
 data class ProblemNodeGroup(
     val tree: Tree<ProblemNode>,
     val children: MutableList<Tree<ProblemNode>>,
     val childGroups: MutableMap<String, ProblemNodeGroup> = mutableMapOf(),
-    val id: Int = globalCnt++
 )
 
 
