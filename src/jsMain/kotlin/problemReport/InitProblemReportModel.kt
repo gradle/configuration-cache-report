@@ -46,81 +46,62 @@ data class ProblemIdElement(
 
 
 internal
-fun problemsReportPageModelFromJsModel(
-    problemReportJsModel: ProblemReportJsModel,
-    problems: Array<JsProblem>
-): ProblemsReportPage.Model {
-    val messageTree = createMessageTree(problems)
-    val groupTree = createGroupTree(problems)
-    val fileLocationTree = createLocationsTree(problems, fileLocationAccumulator)
-    val pluginLocationTree = createLocationsTree(problems, pluginLocationAccumulator)
-    val taskLocationTree = createLocationsTree(problems, taskLocationAccumulator)
-    return ProblemsReportPage.Model(
+fun problemsReportPageModelFromJsModel(problemReportJsModel: ProblemReportJsModel, problems: Array<JsProblem>) =
+    ProblemsReportPage.Model(
         heading = PrettyText.ofText("Problems Report"),
         summary = description(problemReportJsModel, problems),
-        learnMore = LearnMore(
-            text = "reporting problems",
-            documentationLink = problemReportJsModel.documentationLink
-        ),
-        messageTree,
-        groupTree,
-        fileLocationTree,
-        pluginLocationTree,
-        taskLocationTree,
-        problems.size,
-        Tab.ByMessage
+        learnMore = LearnMore("reporting problems", problemReportJsModel.documentationLink),
+        messageTree = createMessageTree(problems),
+        groupTree = createGroupTree(problems),
+        fileLocationTree = createLocationsTree(problems, createLocationAccumulator { it.path }),
+        pluginLocationTree = createLocationsTree(problems, createLocationAccumulator { it.pluginId }),
+        taskLocationTree = createLocationsTree(problems, createLocationAccumulator { it.taskPath }),
+        problemCount = problems.size,
+        tab = Tab.ByMessage
     )
-}
+
+
+private
+typealias LocationMap = MutableMap<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>
+
+
+private
+typealias LocationAccumulator = (JsProblem, LocationMap) -> Unit
 
 
 private
 fun createLocationsTree(
     problems: Array<JsProblem>,
-    locationAccumulator: (JsProblem, MutableMap<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>) -> Unit
+    locationAccumulator: LocationAccumulator
 ): TreeView.Model<ProblemNode> {
     val locationMap = mutableMapOf<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>()
-    problems.forEach { problem ->
-        if (!problem.locations.isNullOrEmpty()) {
-            locationAccumulator(problem, locationMap)
-        }
+    problems.filter { it.locations?.isNotEmpty() == true }.forEach { problem ->
+        locationAccumulator(problem, locationMap)
     }
-
-    val rootNodes = locationMap.values.map { it.first }
-    return ProblemTreeModel(Tree(ProblemApiNode.Text("text"), rootNodes))
+    return ProblemTreeModel(
+        Tree(
+            label = ProblemApiNode.Text("text"),
+            children = locationMap.values.map { it.first }
+        )
+    )
 }
 
 
 private
-fun createLocationAccumulator(
-    propertySelector: (JsLocation) -> String?
-): (JsProblem, MutableMap<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>) -> Unit {
-    return { problem, locationMap ->
-        val filteredLocations = problem.locations?.filter { propertySelector(it) != null }
-        if (!filteredLocations.isNullOrEmpty()) {
-            filteredLocations.forEach {
-                val location = propertySelector(it)!!
-                createLocationNode(locationMap, location, problem, it)
+fun createLocationAccumulator(propertySelector: (JsLocation) -> String?): LocationAccumulator =
+    { problem, locationMap ->
+        problem.locations
+            ?.filter { location -> propertySelector(location) != null }
+            ?.takeIf { it.isNotEmpty() }
+            ?.forEach { location ->
+                createLocationNode(locationMap, propertySelector(location)!!, problem, location)
             }
-        }
     }
-}
-
-
-private
-val fileLocationAccumulator = createLocationAccumulator { it.path }
-
-
-private
-val pluginLocationAccumulator = createLocationAccumulator { it.pluginId }
-
-
-private
-val taskLocationAccumulator = createLocationAccumulator { it.taskPath }
 
 
 private
 fun createLocationNode(
-    locationMap: MutableMap<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>,
+    locationMap: LocationMap,
     location: String,
     problem: JsProblem,
     jsLocation: JsLocation
@@ -146,7 +127,7 @@ var globalCnt: Int = 0
 private
 data class ProblemNodeGroup(
     val tree: Tree<ProblemNode>,
-    val children: MutableList<Tree<ProblemNode>> = mutableListOf(),
+    val children: MutableList<Tree<ProblemNode>>,
     val childGroups: MutableMap<String, ProblemNodeGroup> = mutableMapOf(),
     val id: Int = globalCnt++
 )
@@ -164,11 +145,8 @@ fun createGroupTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> {
 
         val leaf = getGroupLeafNodeToAdd(groupToTreeMap, groups)
         val messageTreeElement = createMessageTreeElement(problem)
-        if (leaf == null) {
-            ungroupedProblems.children.add(messageTreeElement)
-        } else {
-            leaf.children.add(messageTreeElement)
-        }
+        if (leaf == null) ungroupedProblems.children.add(messageTreeElement)
+        else leaf.children.add(messageTreeElement)
     }
 
     val groupedRootNodes = groupToTreeMap.values.map { it.tree }
@@ -185,9 +163,7 @@ fun getGroupLeafNodeToAdd(
     groupTree: MutableMap<String, ProblemNodeGroup>,
     group: List<ProblemIdElement>
 ): ProblemNodeGroup? {
-    if (group.isEmpty()) {
-        return null
-    }
+    if (group.isEmpty()) return null
     var currentLeafMap = groupTree
     var currentLeaf: ProblemNodeGroup? = null
     var prevLeaf: ProblemNodeGroup?
@@ -196,13 +172,11 @@ fun getGroupLeafNodeToAdd(
         currentLeaf = currentLeafMap.getOrPut("${it.displayName} (${it.name})") {
             val children = mutableListOf<Tree<ProblemNode>>()
             ProblemNodeGroup(
-                Tree(
-                    ProblemIdNode(PrettyText.build {
-                        text(it.displayName)
-                    }),
-                    children,
+                tree = Tree(
+                    label = ProblemIdNode(PrettyText.ofText(it.displayName)),
+                    children = children,
                 ),
-                children
+                children = children
             )
         }
 
@@ -219,10 +193,13 @@ fun getGroupLeafNodeToAdd(
 private
 fun createUngroupedProblemNodeGroup(): ProblemNodeGroup {
     val ungroupedProblems = mutableListOf<Tree<ProblemNode>>()
-    val ungroupedNode = Tree(
-        ProblemIdNode(PrettyText.ofText("Ungrouped"), separator = true), ungroupedProblems
+    return ProblemNodeGroup(
+        tree = Tree(
+            label = ProblemIdNode(PrettyText.ofText("Ungrouped"), separator = true),
+            children = ungroupedProblems
+        ),
+        children = ungroupedProblems,
     )
-    return ProblemNodeGroup(ungroupedNode, ungroupedProblems, mutableMapOf())
 }
 
 
@@ -249,66 +226,54 @@ fun description(problemReportJsModel: ProblemReportJsModel, problems: Array<JsPr
         val skippedLocations = problems.count { it.locations == null }
         val skippedProblems = problemReportJsModel.summaries.sumOf { it.count }
         if (skippedLocations > 0 || skippedProblems > 0) {
-            add(
-                PrettyText.build {
-                    text(
-                        buildString {
-                            if (skippedLocations > 0) {
-                                append(skippedLocations)
-                                append(" of the displayed problems ")
-                                append(if (skippedLocations == 1) "has" else "have")
-                                append(" no location captured")
-                            }
-                            if (skippedProblems > 0) {
-                                if (skippedLocations > 0) {
-                                    append(", and ")
-                                }
-                                append(skippedProblems)
-                                append(" more problem")
-                                append(if (skippedProblems == 1) " has" else "s have")
-                                append(" been skipped")
-                            }
+            add(PrettyText.ofText(buildString {
+                if (skippedLocations > 0) {
+                    append(skippedLocations)
+                    append(" of the displayed problems ")
+                    append(if (skippedLocations == 1) "has" else "have")
+                    append(" no location captured")
+                }
+                if (skippedProblems > 0) {
+                    if (skippedLocations > 0) {
+                        append(", and ")
+                    }
+                    append(skippedProblems)
+                    append(" more problem")
+                    append(if (skippedProblems == 1) " has" else "s have")
+                    append(" been skipped")
+                }
+            }))
+        }
+    }
+
+
+private
+fun createMessageTree(problems: Array<JsProblem>): ProblemTreeModel =
+    ProblemTreeModel(
+        Tree(
+            label = ProblemApiNode.Text("message tree root"),
+            children = problems.groupBy { getGroupingString(it.problemId) }.values.map { jsProblems ->
+                jsProblems.first().let { jsProblem ->
+                    Tree(
+                        label = createPrimaryMessageNode(
+                            jsProblem = jsProblem,
+                            label = ProblemNode.Message(
+                                createProblemPrettyText(getDisplayName(jsProblem)).build()
+                            ),
+                            count = jsProblems.size
+                        ),
+                        children = jsProblems.map { prob ->
+                            createMessageTreeElement(prob, null, true)
                         }
                     )
                 }
-            )
-        }
-    }
-
-
-private
-fun createMessageTree(problems: Array<JsProblem>): ProblemTreeModel {
-    val groupMap = mutableMapOf<String, MutableList<JsProblem>>()
-    problems.forEach { problem ->
-        groupMap.getOrPut(getGroupingString(problem.problemId)) {
-            mutableListOf()
-        }.add(problem)
-    }
-
-    val problemList = groupMap.entries
-        .map { messageGroupEntry ->
-            val problemsWithMessage =
-                messageGroupEntry.value.map { prob -> createMessageTreeElement(prob, null, true) }.toMutableList()
-            val jsProblem = messageGroupEntry.value.first()
-            val problemLabel =
-                createProblemPrettyText(getDisplayName(jsProblem))
-                    .build()
-            val label = ProblemNode.Message(problemLabel)
-            val primaryLabelMessageNode = createPrimaryMessageNode(jsProblem, label, messageGroupEntry.value.size)
-
-            Tree(primaryLabelMessageNode, problemsWithMessage)
-        }
-
-    return ProblemTreeModel(
-        Tree(ProblemApiNode.Text("message tree root"), problemList)
+            })
     )
-}
 
 
 private
-fun getGroupingString(problemId: Array<JsProblemIdElement>): String {
-    return problemId.joinToString(":") { it.name }
-}
+fun getGroupingString(problemId: Array<JsProblemIdElement>): String =
+    problemId.joinToString(":") { it.name }
 
 
 private
@@ -316,12 +281,11 @@ fun createMessageTreeElement(
     jsProblem: JsProblem,
     fileLocation: JsLocation? = null,
     useContextualAsPrimary: Boolean = false
-): Tree<ProblemNode> {
-    val messageNode = createPrimaryLabelMessageNode(jsProblem, fileLocation, useContextualAsPrimary)
-    val children = getMessageChildren(jsProblem, fileLocation == null, useContextualAsPrimary)
-
-    return Tree(messageNode, children)
-}
+): Tree<ProblemNode> =
+    Tree(
+        label = createPrimaryLabelMessageNode(jsProblem, fileLocation, useContextualAsPrimary),
+        children = getMessageChildren(jsProblem, fileLocation == null, useContextualAsPrimary)
+    )
 
 
 private
@@ -329,95 +293,74 @@ fun createPrimaryLabelMessageNode(
     jsProblem: JsProblem,
     fileLocation: JsLocation? = null,
     useContextualAsPrimary: Boolean = false
-): ProblemNode {
-    val problemLabel = createProblemPrettyText(
-        getPrimaryLabelText(useContextualAsPrimary, jsProblem),
-        fileLocation
-    ).build()
-    val label = ProblemNode.Message(problemLabel)
-    return createPrimaryMessageNode(jsProblem, label)
-}
+): ProblemNode =
+    createPrimaryMessageNode(
+        jsProblem = jsProblem,
+        label = ProblemNode.Message(
+            createProblemPrettyText(
+                getPrimaryLabelText(useContextualAsPrimary, jsProblem),
+                fileLocation
+            ).build()
+        )
+    )
 
 
 private
 fun getPrimaryLabelText(useContextualAsPrimary: Boolean, jsProblem: JsProblem) =
-    if (useContextualAsPrimary && jsProblem.contextualLabel != null)
-        jsProblem.contextualLabel!!
-    else
-        getDisplayName(jsProblem)
+    if (useContextualAsPrimary && jsProblem.contextualLabel != null) jsProblem.contextualLabel!!
+    else getDisplayName(jsProblem)
 
 
 private
-fun getDisplayName(jsProblem: JsProblem) = jsProblem.problemId.last().displayName
+fun getDisplayName(jsProblem: JsProblem) =
+    jsProblem.problemId.last().displayName
 
 
 private
-fun createPrimaryMessageNode(
-    jsProblem: JsProblem,
-    label: ProblemNode.Message,
-    count: Int? = null
-): ProblemNode {
+fun createPrimaryMessageNode(jsProblem: JsProblem, label: ProblemNode.Message, count: Int? = null): ProblemNode {
     val docLink = jsProblem.documentationLink?.let { ProblemNode.Link(it) }
-    val messageNode = when (jsProblem.severity) {
-        "WARNING" -> {
-            ProblemNode.Warning(label, docLink, count)
-        }
-
-        "ERROR" -> {
-            ProblemNode.Error(label, docLink, count)
-        }
-
-        "ADVICE" -> {
-            ProblemApiNode.Advice(label, docLink, count)
-        }
-
-        else -> {
-            console.error("no severity ${jsProblem.severity}")
-            label
-        }
+    return when (jsProblem.severity) {
+        "WARNING" -> ProblemNode.Warning(label, docLink, count)
+        "ERROR" -> ProblemNode.Error(label, docLink, count)
+        "ADVICE" -> ProblemApiNode.Advice(label, docLink, count)
+        else -> label.also { console.error("no severity ${jsProblem.severity}") }
     }
-    return messageNode
 }
 
 
 private
-fun createProblemPrettyText(text: String, jsLocation: JsLocation? = null): PrettyText.Builder {
-    return PrettyText.Builder().apply {
+fun createProblemPrettyText(text: String, location: JsLocation? = null): PrettyText.Builder =
+    PrettyText.Builder().apply {
         text(text)
-
-        jsLocation?.let { location ->
+        if (location != null) {
             when {
-                location.line != null -> {
-                    val reference = getLineReferencePart(location)
-                    ref("$reference${getLengthPart(location)}", "${location.path}$reference")
-                }
+                location.line != null ->
+                    getLineReferencePart(location).let { reference ->
+                        ref("$reference${getLengthPart(location)}", "${location.path}$reference")
+                    }
 
-                location.taskPath != null -> {
+                location.taskPath != null ->
                     ref(location.taskPath!!)
-                }
 
-                location.pluginId != null -> {
+                location.pluginId != null ->
                     ref(location.pluginId!!)
-                }
             }
         }
     }
-}
 
 
 private
 fun getLengthPart(jsFileLocation: JsLocation) =
-    if (jsFileLocation.line == null || jsFileLocation.length == null) {
-        ""
-    } else
-        "-${jsFileLocation.length}"
+    if (jsFileLocation.line == null || jsFileLocation.length == null) ""
+    else "-${jsFileLocation.length}"
 
 
 private
 fun getLineReferencePart(location: JsLocation) =
-    location.line?.let { _ ->
-        ":${location.line}" + (location.column?.let { ":$it" } ?: "")
-    } ?: ""
+    buildString {
+        if (location.line != null) append(":${location.line}")
+        if (location.column != null) append(":${location.column}")
+    }
 
 
 private
@@ -425,78 +368,76 @@ fun getMessageChildren(
     jsProblem: JsProblem,
     addLocationNodes: Boolean,
     skipContextual: Boolean = false
-): List<Tree<ProblemNode>> {
-    val children: MutableList<Tree<ProblemNode>> = jsProblem.problemDetails?.let { detail ->
+): List<Tree<ProblemNode>> =
+    buildList {
         // TODO this is assumes that the problemDetails only consist of one element, which is true currently, but may change.
-        detail[0].text?.split("\n")?.map {
-            // TODO get rid of this special case
-            if (isJavaCompilation(jsProblem)) {
-                // use non-breaking figure space instead of nbsp, because nbsp is narrower than a letter even in monospace font
-                PrettyText.build { ref(it.replace(" ", "\u2007"), "") }
-            } else {
-                PrettyText.ofText(it)
+        jsProblem.problemDetails?.get(0)?.text?.split("\n")
+            ?.map {
+                // TODO get rid of this special case
+                if (isJavaCompilation(jsProblem)) {
+                    // use non-breaking figure space instead of nbsp, because nbsp is narrower than a letter even in monospace font
+                    PrettyText.build { ref(it.replace(" ", "\u2007"), "") }
+                } else {
+                    PrettyText.ofText(it)
+                }
             }
-        }?.map<PrettyText, Tree<ProblemNode>> {
-            Tree(ProblemNode.Message(it))
-        }?.toMutableList() ?: mutableListOf()
-    } ?: mutableListOf()
+            ?.map { Tree<ProblemNode>(ProblemNode.Message(it)) }
+            ?.forEach { add(it) }
 
-    // to avoid duplication on the UI, if the contextual label is used in a parent tree item, we skip it here
-    if (!skipContextual && jsProblem.contextualLabel != null) {
-        children.add(Tree(ProblemNode.Message(PrettyText.ofText(jsProblem.contextualLabel!!))))
-    }
-
-    getSolutionsNode(jsProblem)?.let { children.add(it) }
-
-    jsProblem.error
-        ?.let(::problemNodeForError)
-        ?.let { errorNode -> children.add(Tree(errorNode)) }
-
-    if (addLocationNodes && !jsProblem.locations.isNullOrEmpty()) {
-        children.add(getLocationsNode(jsProblem))
-    }
-    return children
-}
-
-
-private
-fun isJavaCompilation(jsProblem: JsProblem): Boolean {
-    return jsProblem.problemId.find { it.name == "compilation" } != null
-        && jsProblem.problemId.find { it.name == "java" } != null
-}
-
-
-private
-fun getLocationsNode(jsProblem: JsProblem): Tree<ProblemNode> {
-    val locationNodes = jsProblem.locations
-        ?.map { location ->
-            Tree<ProblemNode>(ProblemNode.Message(PrettyText.build {
-                text("- ")
-                ref(getLocationReferenceString(location))
-            }))
+        // to avoid duplication on the UI, if the contextual label is used in a parent tree item, we skip it here
+        if (!skipContextual && jsProblem.contextualLabel != null) {
+            add(Tree(ProblemNode.Message(PrettyText.ofText(jsProblem.contextualLabel!!))))
         }
-    return Tree(ProblemNode.Label("Locations"), locationNodes ?: listOf())
-}
 
+        getSolutionsNode(jsProblem)?.let { add(it) }
 
-private
-fun getLocationReferenceString(location: JsLocation): String = when {
-    location.path != null -> "${location.path}${getLineReferencePart(location)}"
-    location.taskPath != null -> location.taskPath!!
-    location.pluginId != null -> location.pluginId!!
-    else -> "<undefined>"
-}
+        jsProblem.error
+            ?.let(::problemNodeForError)
+            ?.let { errorNode -> add(Tree(errorNode)) }
 
-
-private
-fun getSolutionsNode(
-    jsProblem: JsProblem
-): Tree<ProblemNode>? {
-    if (jsProblem.solutions.isNullOrEmpty()) {
-        return null
+        if (addLocationNodes && !jsProblem.locations.isNullOrEmpty()) {
+            add(getLocationsNode(jsProblem))
+        }
     }
-    return Tree(
-        ProblemNode.TreeNode(PrettyText.ofText("Solutions")), jsProblem.solutions!!.map { solution ->
-            Tree(ProblemNode.ListElement(toPrettyText(solution)))
-        })
-}
+
+
+private
+fun isJavaCompilation(jsProblem: JsProblem): Boolean =
+    jsProblem.problemId.any { it.name == "compilation" } && jsProblem.problemId.any { it.name == "java" }
+
+
+private
+fun getLocationsNode(jsProblem: JsProblem): Tree<ProblemNode> =
+    Tree(
+        label = ProblemNode.Label("Locations"),
+        children = jsProblem.locations
+            ?.map { location ->
+                Tree(ProblemNode.Message(PrettyText.build {
+                    text("- ")
+                    ref(getLocationReferenceString(location))
+                }))
+            }
+            ?: emptyList()
+    )
+
+
+private
+fun getLocationReferenceString(location: JsLocation): String =
+    when {
+        location.path != null -> "${location.path}${getLineReferencePart(location)}"
+        location.taskPath != null -> location.taskPath!!
+        location.pluginId != null -> location.pluginId!!
+        else -> "<undefined>"
+    }
+
+
+private
+fun getSolutionsNode(jsProblem: JsProblem): Tree<ProblemNode>? =
+    jsProblem.solutions?.let { solutions ->
+        Tree(
+            label = ProblemNode.TreeNode(PrettyText.ofText("Solutions")),
+            children = solutions.map { solution ->
+                Tree(ProblemNode.ListElement(toPrettyText(solution)))
+            }
+        )
+    }
