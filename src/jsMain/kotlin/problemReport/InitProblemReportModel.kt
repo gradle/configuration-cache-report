@@ -38,12 +38,14 @@ enum class Tab(val text: String) {
 
 // A data class for the purpose of being able to construct new instances with the information contained
 // in JsProblemIdElement (external interfaces can not be constructed)
+private
 data class ProblemIdElement(
     val name: String,
     val displayName: String
 )
 
 
+internal
 fun problemsReportPageModelFromJsModel(
     problemReportJsModel: ProblemReportJsModel,
     problems: Array<JsProblem>
@@ -71,6 +73,7 @@ fun problemsReportPageModelFromJsModel(
 }
 
 
+private
 fun createLocationsTree(
     problems: Array<JsProblem>,
     locationAccumulator: (JsProblem, MutableMap<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>) -> Unit
@@ -136,9 +139,11 @@ fun createLocationNode(
 }
 
 
+private
 var globalCnt: Int = 0
 
 
+private
 data class ProblemNodeGroup(
     val tree: Tree<ProblemNode>,
     val children: MutableList<Tree<ProblemNode>> = mutableListOf(),
@@ -147,6 +152,7 @@ data class ProblemNodeGroup(
 )
 
 
+private
 fun createGroupTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> {
     val ungroupedProblems = createUngroupedProblemNodeGroup()
 
@@ -270,6 +276,7 @@ fun description(problemReportJsModel: ProblemReportJsModel, problems: Array<JsPr
     }
 
 
+private
 fun createMessageTree(problems: Array<JsProblem>): ProblemTreeModel {
     val groupMap = mutableMapOf<String, MutableList<JsProblem>>()
     problems.forEach { problem ->

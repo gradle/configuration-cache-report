@@ -58,6 +58,7 @@ import reporting.warningIcon
 import reporting.BaseIntent.TreeIntent as BaseIntentTreeIntent
 
 
+internal
 sealed class ProblemApiNode : ProblemNode() {
     data class Text(val text: String) : ProblemApiNode()
 
@@ -67,6 +68,7 @@ sealed class ProblemApiNode : ProblemNode() {
 }
 
 
+internal
 object ProblemsReportPage :
     Component<ProblemsReportPage.Model, BaseIntent> {
 
@@ -74,6 +76,7 @@ object ProblemsReportPage :
         document.title = "Gradle - Problems Report"
     }
 
+    internal
     data class Model(
         val heading: PrettyText,
         val summary: List<PrettyText>,
@@ -87,6 +90,7 @@ object ProblemsReportPage :
         val tab: Tab
     )
 
+    private
     sealed class Intent : BaseIntent() {
         data class MessageTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
 
