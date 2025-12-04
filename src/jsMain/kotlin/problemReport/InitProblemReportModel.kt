@@ -17,15 +17,14 @@
 package problemReport
 
 import components.ProblemNode
-import reporting.ProblemTreeModel
 import configurationCache.problemNodeForError
 import configurationCache.toPrettyText
 import data.LearnMore
 import data.PrettyText
 import elmish.tree.Tree
-import elmish.tree.Tree.ViewState.Expanded
 import elmish.tree.TreeView
 import problemReport.ProblemApiNode.ProblemIdNode
+import reporting.ProblemTreeModel
 
 
 enum class Tab(val text: String) {
@@ -130,7 +129,6 @@ fun createLocationNode(
                 ref(location)
             }),
             groupChildren,
-            Expanded
         )
         tree to groupChildren
     }
@@ -197,7 +195,6 @@ fun getLeafNodeToAdd(
                         ref(it.name)
                     }),
                     children,
-                    Expanded
                 ),
                 children
             )
