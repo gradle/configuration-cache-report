@@ -156,7 +156,7 @@ fun createGroupTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> {
         // drop the last entry (which is the problem specific id) to get the group part
         val groups = problem.problemId.dropLast(1).reversed().map { ProblemIdElement(it.name, it.displayName) }
 
-        val leaf = getLeafNodeToAdd(groupToTreeMap, groups)
+        val leaf = getGroupLeafNodeToAdd(groupToTreeMap, groups)
         val messageTreeElement = createMessageTreeElement(problem)
         if (leaf == null) {
             ungroupedProblems.children.add(messageTreeElement)
@@ -174,7 +174,8 @@ fun createGroupTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> {
 }
 
 
-fun getLeafNodeToAdd(
+private
+fun getGroupLeafNodeToAdd(
     groupTree: MutableMap<String, ProblemNodeGroup>,
     group: List<ProblemIdElement>
 ): ProblemNodeGroup? {
