@@ -79,7 +79,7 @@ object ProblemsReportPage :
         val summary: List<PrettyText>,
         val learnMore: LearnMore,
         val messageTree: ProblemTreeModel,
-        val problemIdTree: ProblemTreeModel,
+        val groupTree: ProblemTreeModel,
         val fileLocationTree: ProblemTreeModel,
         val pluginLocationTree: ProblemTreeModel,
         val taskLocationTree: ProblemTreeModel,
@@ -110,7 +110,7 @@ object ProblemsReportPage :
         )
 
         is Intent.ProblemIdTreeIntent -> copy(
-            problemIdTree = problemIdTree.updateNodeTreeAt(tree, update)
+            groupTree = groupTree.updateNodeTreeAt(tree, update)
         )
 
         is Intent.FileLocationTreeIntent -> copy(
@@ -145,7 +145,7 @@ object ProblemsReportPage :
         )
 
         is Intent.ProblemIdTreeIntent -> model.copy(
-            problemIdTree = TreeView.step(intent.delegate, model.problemIdTree)
+            groupTree = TreeView.step(intent.delegate, model.groupTree)
         )
 
         is Intent.MessageTreeIntent -> model.copy(
@@ -181,27 +181,8 @@ object ProblemsReportPage :
     )
 
     private
-    fun viewHeader(model: Model): View<BaseIntent> {
-        val tabs = mutableListOf<View<BaseIntent>>()
-        if (model.messageTree.childCount > 0) {
-            tabs.add(displayTabButton(Tab.ByMessage, model.tab, model.problemCount))
-        }
-        if (model.problemIdTree.childCount > 0) {
-            tabs.add(displayTabButton(Tab.ByGroup, model.tab, model.problemCount))
-        }
-        if (model.fileLocationTree.childCount > 0) {
-            tabs.add(displayTabButton(Tab.ByFileLocation, model.tab, model.problemCount))
-        }
-
-        if (model.pluginLocationTree.childCount > 0) {
-            tabs.add(displayTabButton(Tab.ByPluginLocation, model.tab, model.problemCount))
-        }
-
-        if (model.taskLocationTree.childCount > 0) {
-            tabs.add(displayTabButton(Tab.ByTaskLocation, model.tab, model.problemCount))
-        }
-
-        return div(
+    fun viewHeader(model: Model): View<BaseIntent> =
+        div(
             attributes { className("header") },
             div(attributes { className("gradle-logo") }),
             learnMore(model.learnMore),
@@ -211,17 +192,22 @@ object ProblemsReportPage :
             ),
             div(
                 attributes { className("groups") },
-                tabs
+                buildList {
+                    add(displayTabButton(Tab.ByMessage, model.tab, model.messageTree.childCount))
+                    add(displayTabButton(Tab.ByGroup, model.tab, model.groupTree.childCount))
+                    add(displayTabButton(Tab.ByFileLocation, model.tab, model.fileLocationTree.childCount))
+                    add(displayTabButton(Tab.ByPluginLocation, model.tab, model.pluginLocationTree.childCount))
+                    add(displayTabButton(Tab.ByTaskLocation, model.tab, model.taskLocationTree.childCount))
+                }
             )
         )
-    }
 
     private
     fun viewProblems(model: Model) = div(
         attributes { className("content") },
         when (model.tab) {
             Tab.ByMessage -> viewTree(model.messageTree, Intent::MessageTreeIntent)
-            Tab.ByGroup -> viewTree(model.problemIdTree, Intent::ProblemIdTreeIntent)
+            Tab.ByGroup -> viewTree(model.groupTree, Intent::ProblemIdTreeIntent)
             Tab.ByFileLocation -> viewTree(model.fileLocationTree, Intent::FileLocationTreeIntent)
             Tab.ByPluginLocation -> viewTree(model.pluginLocationTree, Intent::PluginLocationTreeIntent)
             Tab.ByTaskLocation -> viewTree(model.taskLocationTree, Intent::TaskLocationTreeIntent)
