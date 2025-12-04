@@ -51,9 +51,9 @@ fun reportProblemsReportPageModelFromJsModel(
 ): ProblemsReportPage.Model {
     val messageTree = createMessageTree(problems)
     val groupTree = createGroupTree(problems)
-    val fileLocationTree = createLocationsTree(problems, locationPathFilter)
-    val pluginLocationTree = createLocationsTree(problems, locationPluginFilter)
-    val taskLocationTree = createLocationsTree(problems, locationTaskFilter)
+    val fileLocationTree = createLocationsTree(problems, fileLocationAccumulator)
+    val pluginLocationTree = createLocationsTree(problems, pluginLocationAccumulator)
+    val taskLocationTree = createLocationsTree(problems, taskLocationAccumulator)
     return ProblemsReportPage.Model(
         heading = PrettyText.ofText("Problems Report"),
         summary = description(problemReportJsModel, problems),
@@ -74,56 +74,46 @@ fun reportProblemsReportPageModelFromJsModel(
 
 fun createLocationsTree(
     problems: Array<JsProblem>,
-    locationFilter: (JsProblem, MutableMap<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>) -> Boolean
+    locationAccumulator: (JsProblem, MutableMap<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>) -> Unit
 ): TreeView.Model<ProblemNode> {
-    val unlocatedProblems = mutableListOf<Tree<ProblemNode>>()
     val locationMap = mutableMapOf<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>()
     problems.forEach { problem ->
-        if (problem.locations.isNullOrEmpty()) {
-            unlocatedProblems.add(createMessageTreeElement(problem))
-        } else {
-            val handled = locationFilter(problem, locationMap)
-            if (!handled) {
-                unlocatedProblems.add(createMessageTreeElement(problem))
-            }
+        if (!problem.locations.isNullOrEmpty()) {
+            locationAccumulator(problem, locationMap)
         }
     }
 
-    val rootNodes = getRootNodes(locationMap, unlocatedProblems)
+    val rootNodes = locationMap.values.map { it.first }
     return ProblemTreeModel(Tree(ProblemApiNode.Text("text"), rootNodes))
 }
 
 
 private
-fun createLocationFilter(
+fun createLocationAccumulator(
     propertySelector: (JsLocation) -> String?
-): (JsProblem, MutableMap<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>) -> Boolean {
+): (JsProblem, MutableMap<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>) -> Unit {
     return { problem, locationMap ->
         val filteredLocations = problem.locations?.filter { propertySelector(it) != null }
-        if (filteredLocations.isNullOrEmpty()) {
-            false
-        } else {
+        if (!filteredLocations.isNullOrEmpty()) {
             filteredLocations.forEach {
                 val location = propertySelector(it)!!
                 createLocationNode(locationMap, location, problem, it)
             }
-            true
         }
     }
 }
 
 
-// Then define the specific filters using the factory function
 private
-val locationPathFilter = createLocationFilter { it.path }
-
-
-private
-val locationPluginFilter = createLocationFilter { it.pluginId }
+val fileLocationAccumulator = createLocationAccumulator { it.path }
 
 
 private
-val locationTaskFilter = createLocationFilter { it.taskPath }
+val pluginLocationAccumulator = createLocationAccumulator { it.pluginId }
+
+
+private
+val taskLocationAccumulator = createLocationAccumulator { it.taskPath }
 
 
 private
@@ -148,19 +138,6 @@ fun createLocationNode(
 }
 
 
-private
-fun getRootNodes(
-    locationMap: Map<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>,
-    unlocatedProblems: List<Tree<ProblemNode>>
-): List<Tree<ProblemNode>> {
-    val locationNodes = locationMap.values.map { it.first }.toMutableList()
-    if (unlocatedProblems.isNotEmpty()) {
-        locationNodes.add(Tree(ProblemIdNode(PrettyText.ofText("Unknown location"), true), unlocatedProblems))
-    }
-    return locationNodes
-}
-
-
 var globalCnt: Int = 0
 
 
@@ -173,7 +150,7 @@ data class ProblemNodeGroup(
 
 
 fun createGroupTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> {
-    val ungroupedProblems = createGroupedArtifacts()
+    val ungroupedProblems = createUngroupedProblemNodeGroup()
 
     val groupToTreeMap = mutableMapOf<String, ProblemNodeGroup>()
 
@@ -190,7 +167,10 @@ fun createGroupTree(problems: Array<JsProblem>): TreeView.Model<ProblemNode> {
         }
     }
 
-    val rootNodes = groupToTreeMap.values.map { it.tree } + ungroupedProblems.tree
+    val groupedRootNodes = groupToTreeMap.values.map { it.tree }
+    val rootNodes =
+        if (ungroupedProblems.children.isNotEmpty()) groupedRootNodes + ungroupedProblems.tree
+        else groupedRootNodes
 
     return ProblemTreeModel(Tree(ProblemApiNode.Text("group tree root"), rootNodes))
 }
@@ -234,10 +214,10 @@ fun getLeafNodeToAdd(
 
 
 private
-fun createGroupedArtifacts(): ProblemNodeGroup {
+fun createUngroupedProblemNodeGroup(): ProblemNodeGroup {
     val ungroupedProblems = mutableListOf<Tree<ProblemNode>>()
     val ungroupedNode = Tree(
-        ProblemIdNode(PrettyText.ofText("Ungrouped"), true), ungroupedProblems
+        ProblemIdNode(PrettyText.ofText("Ungrouped"), separator = true), ungroupedProblems
     )
     return ProblemNodeGroup(ungroupedNode, ungroupedProblems, mutableMapOf())
 }
@@ -263,12 +243,30 @@ fun description(problemReportJsModel: ProblemReportJsModel, problems: Array<JsPr
                 }
             )
         }
+        val skippedLocations = problems.count { it.locations == null }
         val skippedProblems = problemReportJsModel.summaries.sumOf { it.count }
-        if (skippedProblems > 0) {
-            // TODO add doc link once there is doc on summarization
+        if (skippedLocations > 0 || skippedProblems > 0) {
             add(
                 PrettyText.build {
-                    text("$skippedProblems more problem${if (skippedProblems == 1) " has" else "s have"} been skipped")
+                    text(
+                        buildString {
+                            if (skippedLocations > 0) {
+                                append(skippedLocations)
+                                append(" of the displayed problems ")
+                                append(if (skippedLocations == 1) "has" else "have")
+                                append(" no location captured")
+                            }
+                            if (skippedProblems > 0) {
+                                if (skippedLocations > 0) {
+                                    append(", and ")
+                                }
+                                append(skippedProblems)
+                                append(" more problem")
+                                append(if (skippedProblems == 1) " has" else "s have")
+                                append(" been skipped")
+                            }
+                        }
+                    )
                 }
             )
         }
