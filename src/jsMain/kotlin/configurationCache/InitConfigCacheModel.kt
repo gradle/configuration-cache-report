@@ -254,6 +254,10 @@ fun toProblemNode(trace: JsTrace): ProblemNode = when (trace.kind) {
         ProblemCCNode.Property("output property", name, task)
     }
 
+    "VirtualProperty" -> trace.unsafeCast<JsTraceVirtualProperty>().run {
+        ProblemCCNode.VirtualProperty(name, owner)
+    }
+
     "SystemProperty" -> trace.unsafeCast<JsTraceSystemProperty>().run {
         ProblemCCNode.SystemProperty(name)
     }
