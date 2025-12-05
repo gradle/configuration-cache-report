@@ -65,6 +65,8 @@ sealed class ProblemCCNode : ProblemNode() {
 
     data class Property(val kind: String, val name: String, val owner: String) : ProblemNode()
 
+    data class VirtualProperty(val name: String, val owner: String) : ProblemNode()
+
     data class BuildLogic(val location: String) : ProblemNode()
 
     data class BuildLogicClass(val type: String) : ProblemNode()
@@ -338,6 +340,11 @@ object ConfigurationCacheReportPage :
             text("${node.kind} ")
             ref(node.name)
             text(" of ")
+            ref(node.owner)
+        }
+
+        is ProblemCCNode.VirtualProperty -> viewPrettyText {
+            text("${node.name} of ")
             ref(node.owner)
         }
 

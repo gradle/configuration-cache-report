@@ -82,6 +82,12 @@ external interface JsTraceProperty : JsTrace {
 }
 
 
+external interface JsTraceVirtualProperty : JsTrace {
+    val name: String
+    val owner: String
+}
+
+
 external interface JsTracePropertyUsage : JsTrace {
     val name: String
     val from: String
