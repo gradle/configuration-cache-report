@@ -21,7 +21,6 @@ import configurationCache.problemNodeForError
 import data.LearnMore
 import data.PrettyText
 import elmish.tree.Tree
-import elmish.tree.TreeView
 import problemReport.ProblemApiNode.ProblemIdNode
 import reporting.ProblemTreeModel
 
@@ -34,9 +33,9 @@ fun problemsReportPageModelFromJsModel(problemReportJsModel: ProblemReportJsMode
         learnMore = LearnMore("reporting problems", problemReportJsModel.documentationLink),
         messageTree = createMessageTree(problems),
         groupTree = createGroupTree(problems),
-        fileLocationTree = createLocationTree(problems, createLocationAccumulator { it.path }),
-        pluginLocationTree = createLocationTree(problems, createLocationAccumulator { it.pluginId }),
-        taskLocationTree = createLocationTree(problems, createLocationAccumulator { it.taskPath }),
+        fileLocationTree = createLocationTree(problems, LocationTreeType.FILE),
+        pluginLocationTree = createLocationTree(problems, LocationTreeType.PLUGIN),
+        taskLocationTree = createLocationTree(problems, LocationTreeType.TASK),
         problemCount = problems.size,
         tab = Tab.ByMessage
     )
@@ -203,64 +202,54 @@ fun createGroupTreeProblemChildren(
 
 //region LOCATION_TREE
 
-
-private
-typealias LocationMap = MutableMap<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>
-
-
-private
-typealias LocationAccumulator = (JsProblem, LocationMap) -> Unit
-
+private enum class LocationTreeType(
+    val propertySelector: (JsLocation) -> String?
+) {
+    FILE(propertySelector = { it.path }),
+    PLUGIN(propertySelector = { it.pluginId }),
+    TASK(propertySelector = { it.taskPath });
+}
 
 private
 fun createLocationTree(
     problems: Array<JsProblem>,
-    locationAccumulator: LocationAccumulator
-): TreeView.Model<ProblemNode> {
-    val locationMap = mutableMapOf<String, Pair<Tree<ProblemNode>, MutableList<Tree<ProblemNode>>>>()
-    problems.filter { it.locations?.isNotEmpty() == true }.forEach { problem ->
-        locationAccumulator(problem, locationMap)
+    type: LocationTreeType
+): ProblemTreeModel {
+
+    val problemsByLocation: Map<String, MutableList<Pair<JsProblem, JsLocation>>> = buildMap {
+        problems.forEach { problem ->
+            problem.locations
+                ?.mapNotNull { location -> type.propertySelector(location)?.let { it to location } }
+                ?.forEach { (key, location) ->
+                    getOrPut(key) { mutableListOf() }.add(problem to location)
+                }
+        }
     }
+
     return ProblemTreeModel(
         Tree(
             label = ProblemApiNode.Text("locations tree root"),
-            children = locationMap.values.map { it.first }
+            children = problemsByLocation.keys.sorted().map { locationRef ->
+                Tree(
+                    label = ProblemIdNode(PrettyText.build { ref(locationRef) }),
+                    children = problemsByLocation[locationRef]
+                        ?.let { problems -> createLocationTreeProblemChildren(problems) }
+                        ?: emptyList()
+                )
+            }
         )
     )
 }
 
-
 private
-fun createLocationAccumulator(propertySelector: (JsLocation) -> String?): LocationAccumulator =
-    { problem, locationMap ->
-        problem.locations
-            ?.filter { location -> propertySelector(location) != null }
-            ?.takeIf { it.isNotEmpty() }
-            ?.forEach { location ->
-                createLocationNode(locationMap, propertySelector(location)!!, problem, location)
-            }
-    }
-
-
-private
-fun createLocationNode(
-    locationMap: LocationMap,
-    location: String,
-    problem: JsProblem,
-    jsLocation: JsLocation
-) {
-    val locationNodePair = locationMap.getOrPut(location) {
-        val groupChildren = mutableListOf<Tree<ProblemNode>>()
-        val tree = Tree(
-            ProblemIdNode(PrettyText.build {
-                ref(location)
-            }),
-            groupChildren,
-        )
-        tree to groupChildren
-    }
-    locationNodePair.second.add(createMessageTreeElement(problem, fileLocation = jsLocation))
-}
+fun createLocationTreeProblemChildren(
+    problems: List<Pair<JsProblem, JsLocation>>,
+): List<Tree<ProblemNode>> =
+    problems
+        .sortedBy { it.second.lineReferencePart + it.first.displayName }
+        .map { (problem, location) ->
+            createMessageTreeElement(problem, location = location, useContextualAsPrimary = true)
+        }
 
 
 //endregion
@@ -272,25 +261,25 @@ fun createLocationNode(
 private
 fun createMessageTreeElement(
     jsProblem: JsProblem,
-    fileLocation: JsLocation? = null,
+    location: JsLocation? = null,
     useContextualAsPrimary: Boolean = false
 ): Tree<ProblemNode> =
     Tree(
-        label = createPrimaryLabelMessageNode(jsProblem, fileLocation, useContextualAsPrimary),
-        children = createMessageTreeElementChildren(jsProblem, fileLocation == null, useContextualAsPrimary)
+        label = createPrimaryLabelMessageNode(jsProblem, location, useContextualAsPrimary),
+        children = createMessageTreeElementChildren(jsProblem, location == null, useContextualAsPrimary)
     )
 
 
 private
 fun createPrimaryLabelMessageNode(
     jsProblem: JsProblem,
-    fileLocation: JsLocation? = null,
+    location: JsLocation? = null,
     useContextualAsPrimary: Boolean = false
 ): ProblemNode =
     createPrimaryMessageNode(
         jsProblem = jsProblem,
         label = ProblemNode.Message(
-            buildProblemPrettyText(jsProblem.getPrimaryLabelText(useContextualAsPrimary), fileLocation)
+            buildProblemPrettyText(jsProblem.getPrimaryLabelText(useContextualAsPrimary), location)
         )
     )
 

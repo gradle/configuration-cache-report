@@ -23,7 +23,11 @@ function configurationCacheProblems() {
                 "summaries": []
             },
             "diagnostics": [{
-                "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 42, "column": 8}],
+                "locations": [
+                    {"path": "src/main/java/com/example/MyClass.java", "line": 42, "column": 8},
+                    {"pluginId": "java"},
+                    {"taskPath": ":some:compileJava"}
+                ],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x0' is never used",
                 "problemId": [
@@ -33,7 +37,11 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Remove the unused variable"]
             }, {
-                "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 43, "column": 8}],
+                "locations": [
+                    {"path": "src/main/java/com/example/MyClass.java", "line": 43, "column": 8},
+                    {"pluginId": "java"},
+                    {"taskPath": ":some:compileJava"}
+                ],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x1' is never used",
                 "problemId": [
@@ -43,7 +51,11 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Remove the unused variable"]
             }, {
-                "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 44, "column": 8}],
+                "locations": [
+                    {"path": "src/main/java/com/example/MyClass.java", "line": 44, "column": 8},
+                    {"pluginId": "java"},
+                    {"taskPath": ":some:compileJava"}
+                ],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x2' is never used",
                 "problemId": [
@@ -53,7 +65,11 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Remove the unused variable"]
             }, {
-                "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 45, "column": 8}],
+                "locations": [
+                    {"path": "src/main/java/com/example/MyClass.java", "line": 45, "column": 8},
+                    {"pluginId": "java"},
+                    {"taskPath": ":some:compileJava"}
+                ],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x3' is never used",
                 "problemId": [
@@ -63,7 +79,11 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Remove the unused variable"]
             }, {
-                "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 46, "column": 8}],
+                "locations": [
+                    {"path": "src/main/java/com/example/MyClass.java", "line": 46, "column": 8},
+                    {"pluginId": "java"},
+                    {"taskPath": ":some:compileJava"}
+                ],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x4' is never used",
                 "problemId": [
@@ -73,7 +93,11 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Remove the unused variable"]
             }, {
-                "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 47, "column": 8}],
+                "locations": [
+                    {"path": "src/main/java/com/example/MyClass.java", "line": 47, "column": 8},
+                    {"pluginId": "java"},
+                    {"taskPath": ":some:compileJava"}
+                ],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x5' is never used",
                 "problemId": [
@@ -83,7 +107,11 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Remove the unused variable"]
             }, {
-                "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 48, "column": 8}],
+                "locations": [
+                    {"path": "src/main/java/com/example/MyClass.java", "line": 48, "column": 8},
+                    {"pluginId": "java"},
+                    {"taskPath": ":some:compileJava"}
+                ],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x6' is never used",
                 "problemId": [
@@ -93,7 +121,11 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Remove the unused variable"]
             }, {
-                "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 49, "column": 8}],
+                "locations": [
+                    {"path": "src/main/java/com/example/MyClass.java", "line": 49, "column": 8},
+                    {"pluginId": "java"},
+                    {"taskPath": ":some:compileJava"}
+                ],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x7' is never used",
                 "problemId": [
@@ -103,7 +135,11 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Remove the unused variable"]
             }, {
-                "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 50, "column": 8}],
+                "locations": [
+                    {"path": "src/main/java/com/example/MyClass.java", "line": 50, "column": 8},
+                    {"pluginId": "java"},
+                    {"taskPath": ":some:compileJava"}
+                ],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x8' is never used",
                 "problemId": [
@@ -113,7 +149,11 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Remove the unused variable"]
             }, {
-                "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 51, "column": 8}],
+                "locations": [
+                    {"path": "src/main/java/com/example/MyClass.java", "line": 51, "column": 8},
+                    {"pluginId": "java"},
+                    {"taskPath": ":some:compileJava"}
+                ],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x9' is never used",
                 "problemId": [
@@ -123,7 +163,11 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Remove the unused variable"]
             }, {
-                "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 52, "column": 8}],
+                "locations": [
+                    {"path": "src/main/java/com/example/MyClass.java", "line": 52, "column": 8},
+                    {"pluginId": "java"},
+                    {"taskPath": ":some:compileJava"}
+                ],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x10' is never used",
                 "problemId": [
@@ -133,7 +177,11 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Remove the unused variable"]
             }, {
-                "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 53, "column": 8}],
+                "locations": [
+                    {"path": "src/main/java/com/example/MyClass.java", "line": 53, "column": 8},
+                    {"pluginId": "java"},
+                    {"taskPath": ":some:compileJava"}
+                ],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x11' is never used",
                 "problemId": [
