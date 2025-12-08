@@ -116,7 +116,7 @@ fun createMessageTree(problems: Array<JsProblem>): ProblemTreeModel =
                                 count = jsProblems.size
                             ),
                             children = jsProblems.sortedBy { it.contextualLabel ?: it.displayName }.map { prob ->
-                                createMessageTreeElement(prob, null, true)
+                                createMessageTreeElement(prob, useContextualAsPrimary = true)
                             }
                         )
                     }
@@ -195,7 +195,7 @@ fun createGroupTreeProblemChildren(
 ): List<Tree<ProblemNode>> =
     problemsByGroupId[groupId]
         ?.sortedBy { it.displayName }
-        ?.map { problem -> createMessageTreeElement(problem) }
+        ?.map { problem -> createMessageTreeElement(problem, useContextualAsPrimary = true) }
         ?: emptyList()
 
 //endregion
@@ -259,7 +259,7 @@ fun createLocationNode(
         )
         tree to groupChildren
     }
-    locationNodePair.second.add(createMessageTreeElement(problem, jsLocation))
+    locationNodePair.second.add(createMessageTreeElement(problem, fileLocation = jsLocation))
 }
 
 
@@ -373,8 +373,6 @@ fun createMessageTreeElementChildren(
             })))
         }
 
-        createMessageSolutionsNode(jsProblem)?.let { add(it) }
-
         jsProblem.error
             ?.let(::problemNodeForError)
             ?.let { errorNode -> add(Tree(errorNode)) }
@@ -382,6 +380,8 @@ fun createMessageTreeElementChildren(
         if (addLocationNodes) {
             createMessageLocationsNode(jsProblem)?.let { add(it) }
         }
+
+        createMessageSolutionsNode(jsProblem)?.let { add(it) }
     }
 
 
@@ -391,8 +391,7 @@ fun createMessageLocationsNode(jsProblem: JsProblem): Tree<ProblemNode>? =
         Tree(
             label = ProblemNode.Label("Locations"),
             children = locations.map { location ->
-                Tree(ProblemNode.Message(PrettyText.build {
-                    text("- ")
+                Tree(ProblemNode.ListElement(PrettyText.build {
                     ref(location.referenceString)
                 }))
             },
