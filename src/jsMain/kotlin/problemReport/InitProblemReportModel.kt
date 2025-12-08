@@ -362,16 +362,7 @@ fun createMessageTreeElementChildren(
     buildList {
         // TODO this is assumes that the problemDetails only consist of one element, which is true currently, but may change.
         jsProblem.problemDetails?.get(0)?.text?.split("\n")
-            ?.map {
-                // TODO get rid of this special case
-                if (isJavaCompilation(jsProblem)) {
-                    // use non-breaking figure space instead of nbsp, because nbsp is narrower than a letter even in monospace font
-                    PrettyText.build { ref(it.replace(" ", "\u2007"), "") }
-                } else {
-                    PrettyText.ofText(it)
-                }
-            }
-            ?.map { Tree<ProblemNode>(ProblemNode.Message(it)) }
+            ?.map { Tree<ProblemNode>(ProblemNode.Message(PrettyText.ofText(it))) }
             ?.forEach { add(it) }
 
         // to avoid duplication on the UI, if the contextual label is used in a parent tree item, we skip it here
@@ -389,11 +380,6 @@ fun createMessageTreeElementChildren(
             createMessageLocationsNode(jsProblem)?.let { add(it) }
         }
     }
-
-
-private
-fun isJavaCompilation(jsProblem: JsProblem): Boolean =
-    jsProblem.problemId.any { it.name == "compilation" } && jsProblem.problemId.any { it.name == "java" }
 
 
 private
