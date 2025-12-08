@@ -392,7 +392,8 @@ fun createMessageLocationsNode(jsProblem: JsProblem): Tree<ProblemNode>? =
                     text("- ")
                     ref(location.referenceString)
                 }))
-            }
+            },
+            state = Tree.ViewState.Expanded
         )
     }
 
@@ -414,7 +415,8 @@ fun createMessageSolutionsNode(jsProblem: JsProblem): Tree<ProblemNode>? =
             label = ProblemNode.TreeNode(PrettyText.ofText("Solutions")),
             children = solutions.map { solution ->
                 Tree(ProblemNode.ListElement(toPrettyText(solution)))
-            }
+            },
+            state = Tree.ViewState.Expanded
         )
     }
 
