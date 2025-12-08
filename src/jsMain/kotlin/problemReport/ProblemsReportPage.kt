@@ -61,7 +61,7 @@ import reporting.BaseIntent.TreeIntent as BaseIntentTreeIntent
 internal
 sealed class ProblemApiNode : ProblemNode() {
     data class Text(val text: String) : ProblemApiNode()
-    data class ProblemIdNode(val prettyText: PrettyText, val separator: Boolean = false) : ProblemApiNode()
+    data class ProblemIdNode(val prettyText: PrettyText) : ProblemApiNode()
     data class Advice(val label: ProblemNode, val docLink: ProblemNode? = null, val count: Int?) : ProblemNode()
 }
 
@@ -299,9 +299,6 @@ object ProblemsReportPage : Component<ProblemsReportPage.Model, BaseIntent> {
 
             is ProblemApiNode.ProblemIdNode ->
                 div(
-                    attributes {
-                        if (label.separator) className("uncategorized")
-                    },
                     div(
                         treeButtonFor(focus, treeIntent),
                         viewPrettyText(label.prettyText)
