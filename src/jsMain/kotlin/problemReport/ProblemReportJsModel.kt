@@ -17,7 +17,6 @@
 package problemReport
 
 import configurationCache.JsError
-import configurationCache.JsMessageFragment
 
 
 external interface JsProblemIdElement {
@@ -41,11 +40,10 @@ external interface JsProblem {
     val documentationLink: String?
     val severity: String
     val error: JsError?
-    val problemDetails: Array<JsMessageFragment>?
+    val problemDetails: String?
     val contextualLabel: String?
-    val solutions: Array<Array<JsMessageFragment>>?
+    val solutions: Array<String>?
     val locations: Array<JsLocation>?
-    val additionalData: Map<String, String>?
 }
 
 
@@ -58,7 +56,6 @@ external interface JsProblemSummary {
 external interface ProblemReportJsModel {
     val buildName: String?
     val requestedTasks: String?
-    val description: Array<JsMessageFragment>?
     val documentationLink: String
     val summaries: Array<JsProblemSummary>
 }

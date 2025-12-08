@@ -24,7 +24,6 @@ function configurationCacheProblems() {
             },
             "diagnostics": [{
                 "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 42, "column": 8}],
-                "problem": [{"text": "Unused variable"}],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x0' is never used",
                 "problemId": [
@@ -32,10 +31,9 @@ function configurationCacheProblems() {
                     {"name": "java", "displayName": "Java"},
                     {"name": "unused-variable", "displayName": "Unused variable"}
                 ],
-                "solutions": [[{"text": "Remove the unused variable"}]]
+                "solutions": ["Remove the unused variable"]
             }, {
                 "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 43, "column": 8}],
-                "problem": [{"text": "Unused variable"}],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x1' is never used",
                 "problemId": [
@@ -43,10 +41,9 @@ function configurationCacheProblems() {
                     {"name": "java", "displayName": "Java"},
                     {"name": "unused-variable", "displayName": "Unused variable"}
                 ],
-                "solutions": [[{"text": "Remove the unused variable"}]]
+                "solutions": ["Remove the unused variable"]
             }, {
                 "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 44, "column": 8}],
-                "problem": [{"text": "Unused variable"}],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x2' is never used",
                 "problemId": [
@@ -54,10 +51,9 @@ function configurationCacheProblems() {
                     {"name": "java", "displayName": "Java"},
                     {"name": "unused-variable", "displayName": "Unused variable"}
                 ],
-                "solutions": [[{"text": "Remove the unused variable"}]]
+                "solutions": ["Remove the unused variable"]
             }, {
                 "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 45, "column": 8}],
-                "problem": [{"text": "Unused variable"}],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x3' is never used",
                 "problemId": [
@@ -65,10 +61,9 @@ function configurationCacheProblems() {
                     {"name": "java", "displayName": "Java"},
                     {"name": "unused-variable", "displayName": "Unused variable"}
                 ],
-                "solutions": [[{"text": "Remove the unused variable"}]]
+                "solutions": ["Remove the unused variable"]
             }, {
                 "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 46, "column": 8}],
-                "problem": [{"text": "Unused variable"}],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x4' is never used",
                 "problemId": [
@@ -76,10 +71,9 @@ function configurationCacheProblems() {
                     {"name": "java", "displayName": "Java"},
                     {"name": "unused-variable", "displayName": "Unused variable"}
                 ],
-                "solutions": [[{"text": "Remove the unused variable"}]]
+                "solutions": ["Remove the unused variable"]
             }, {
                 "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 47, "column": 8}],
-                "problem": [{"text": "Unused variable"}],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x5' is never used",
                 "problemId": [
@@ -87,10 +81,9 @@ function configurationCacheProblems() {
                     {"name": "java", "displayName": "Java"},
                     {"name": "unused-variable", "displayName": "Unused variable"}
                 ],
-                "solutions": [[{"text": "Remove the unused variable"}]]
+                "solutions": ["Remove the unused variable"]
             }, {
                 "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 48, "column": 8}],
-                "problem": [{"text": "Unused variable"}],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x6' is never used",
                 "problemId": [
@@ -98,10 +91,9 @@ function configurationCacheProblems() {
                     {"name": "java", "displayName": "Java"},
                     {"name": "unused-variable", "displayName": "Unused variable"}
                 ],
-                "solutions": [[{"text": "Remove the unused variable"}]]
+                "solutions": ["Remove the unused variable"]
             }, {
                 "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 49, "column": 8}],
-                "problem": [{"text": "Unused variable"}],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x7' is never used",
                 "problemId": [
@@ -109,10 +101,9 @@ function configurationCacheProblems() {
                     {"name": "java", "displayName": "Java"},
                     {"name": "unused-variable", "displayName": "Unused variable"}
                 ],
-                "solutions": [[{"text": "Remove the unused variable"}]]
+                "solutions": ["Remove the unused variable"]
             }, {
                 "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 50, "column": 8}],
-                "problem": [{"text": "Unused variable"}],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x8' is never used",
                 "problemId": [
@@ -120,10 +111,9 @@ function configurationCacheProblems() {
                     {"name": "java", "displayName": "Java"},
                     {"name": "unused-variable", "displayName": "Unused variable"}
                 ],
-                "solutions": [[{"text": "Remove the unused variable"}]]
+                "solutions": ["Remove the unused variable"]
             }, {
                 "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 51, "column": 8}],
-                "problem": [{"text": "Unused variable"}],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x9' is never used",
                 "problemId": [
@@ -131,10 +121,9 @@ function configurationCacheProblems() {
                     {"name": "java", "displayName": "Java"},
                     {"name": "unused-variable", "displayName": "Unused variable"}
                 ],
-                "solutions": [[{"text": "Remove the unused variable"}]]
+                "solutions": ["Remove the unused variable"]
             }, {
                 "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 52, "column": 8}],
-                "problem": [{"text": "Unused variable"}],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x10' is never used",
                 "problemId": [
@@ -142,10 +131,9 @@ function configurationCacheProblems() {
                     {"name": "java", "displayName": "Java"},
                     {"name": "unused-variable", "displayName": "Unused variable"}
                 ],
-                "solutions": [[{"text": "Remove the unused variable"}]]
+                "solutions": ["Remove the unused variable"]
             }, {
                 "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 53, "column": 8}],
-                "problem": [{"text": "Unused variable"}],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'x11' is never used",
                 "problemId": [
@@ -153,10 +141,9 @@ function configurationCacheProblems() {
                     {"name": "java", "displayName": "Java"},
                     {"name": "unused-variable", "displayName": "Unused variable"}
                 ],
-                "solutions": [[{"text": "Remove the unused variable"}]]
+                "solutions": ["Remove the unused variable"]
             }, {
                 "locations": [{"path": "src/main/java/com/example/MyOtherClass.java", "line": 42, "column": 8}],
-                "problem": [{"text": "Unused variable"}],
                 "severity": "WARNING",
                 "contextualLabel": "Variable 'b' is never used",
                 "problemId": [
@@ -164,10 +151,9 @@ function configurationCacheProblems() {
                     {"name": "java", "displayName": "Java"},
                     {"name": "unused-variable", "displayName": "Unused variable"}
                 ],
-                "solutions": [[{"text": "Remove the unused variable"}]]
+                "solutions": ["Remove the unused variable"]
             }, {
                 "locations": [{"path": "src/main/java/com/example/Calculator.java", "line": 15, "column": 12}],
-                "problem": [{"text": "Incompatible types"}],
                 "severity": "WARNING",
                 "contextualLabel": "Incompatible types: String cannot be converted to int",
                 "problemId": [
@@ -175,10 +161,9 @@ function configurationCacheProblems() {
                     {"name": "java", "displayName": "Java"},
                     {"name": "incompatible-types", "displayName": "Incompatible types"}
                 ],
-                "solutions": [[{"text": "Change the type or convert the value appropriately"}]]
+                "solutions": ["Change the type or convert the value appropriately"]
             }, {
                 "locations": [{"path": "src/main/kotlin/com/example/App.kt", "line": 28, "column": 4}],
-                "problem": [{"text": "Unresolved reference"}],
                 "severity": "WARNING",
                 "contextualLabel": "Unresolved reference: myFunction",
                 "problemId": [
@@ -186,10 +171,9 @@ function configurationCacheProblems() {
                     {"name": "kotlin", "displayName": "Kotlin"},
                     {"name": "unresolved-reference", "displayName": "Unresolved reference"}
                 ],
-                "solutions": [[{"text": "Import the missing function or check the spelling"}]]
+                "solutions": ["Import the missing function or check the spelling"]
             }, {
                 "locations": [{"path": "src/main/cpp/main.cpp", "line": 1, "column": 0}],
-                "problem": [{"text": "Missing header file"}],
                 "severity": "WARNING",
                 "contextualLabel": "Fatal error: 'iostream' file not found",
                 "problemId": [
@@ -197,10 +181,9 @@ function configurationCacheProblems() {
                     {"name": "cpp", "displayName": "C++"},
                     {"name": "missing-header", "displayName": "Missing header file"}
                 ],
-                "solutions": [[{"text": "Ensure the C++ standard library is properly configured"}]]
+                "solutions": ["Ensure the C++ standard library is properly configured"]
             }, {
                 "locations": [{"path": "src/test/java/com/example/CalculatorTest.java", "line": 35, "column": 8}],
-                "problem": [{"text": "Test failure"}],
                 "severity": "WARNING",
                 "contextualLabel": "Test 'shouldCalculateCorrectly' failed: expected 42 but was 43",
                 "problemId": [
@@ -208,10 +191,9 @@ function configurationCacheProblems() {
                     {"name": "unit-test", "displayName": "Unit Tests"},
                     {"name": "test-failure", "displayName": "Test failure"}
                 ],
-                "solutions": [[{"text": "Fix the test implementation or the code under test"}]]
+                "solutions": ["Fix the test implementation or the code under test"]
             }, {
                 "locations": [{"path": "src/test/java/com/example/DatabaseTest.java", "line": 50, "column": 4}],
-                "problem": [{"text": "Integration test timeout"}],
                 "severity": "WARNING",
                 "contextualLabel": "Test 'shouldConnectToDatabase' timed out after 30 seconds",
                 "problemId": [
@@ -219,10 +201,9 @@ function configurationCacheProblems() {
                     {"name": "integration-test", "displayName": "Integration Tests"},
                     {"name": "integration-test-timeout", "displayName": "Integration test timeout"}
                 ],
-                "solutions": [[{"text": "Increase timeout or optimize the test"}]]
+                "solutions": ["Increase timeout or optimize the test"]
             }, {
                 "locations": [{"path": "src/main/java/com/example/Calculator.java", "line": 20, "column": 4}],
-                "problem": [{"text": "Missing Javadoc"}],
                 "severity": "WARNING",
                 "contextualLabel": "Missing Javadoc comment for public method 'calculate'",
                 "problemId": [
@@ -230,10 +211,9 @@ function configurationCacheProblems() {
                     {"name": "checkstyle", "displayName": "Checkstyle"},
                     {"name": "missing-javadoc", "displayName": "Missing Javadoc"}
                 ],
-                "solutions": [[{"text": "Add Javadoc comment to the method"}]]
+                "solutions": ["Add Javadoc comment to the method"]
             }, {
                 "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 67, "column": 12}],
-                "problem": [{"text": "Possible null pointer dereference"}],
                 "severity": "WARNING",
                 "contextualLabel": "Possible null pointer dereference in com.example.MyClass.process()",
                 "problemId": [
@@ -241,9 +221,8 @@ function configurationCacheProblems() {
                     {"name": "spotbugs", "displayName": "SpotBugs"},
                     {"name": "null-pointer-dereference", "displayName": "Possible null pointer dereference"}
                 ],
-                "solutions": [[{"text": "Add null check before accessing the variable"}]]
+                "solutions": ["Add null check before accessing the variable"]
             }, {
-                "problem": [{"text": "Coverage threshold not met"}],
                 "severity": "WARNING",
                 "contextualLabel": "Code coverage is 65% but minimum required is 80%",
                 "problemId": [
@@ -251,10 +230,9 @@ function configurationCacheProblems() {
                     {"name": "code-coverage", "displayName": "Code Coverage"},
                     {"name": "coverage-threshold-not-met", "displayName": "Coverage threshold not met"}
                 ],
-                "solutions": [[{"text": "Add more tests to increase coverage"}]]
+                "solutions": ["Add more tests to increase coverage"]
             }, {
                 "locations": [{"path": "src/main/java/com/example/MyClass.java", "line": 3, "column": 0}],
-                "problem": [{"text": "Unused import"}],
                 "severity": "WARNING",
                 "contextualLabel": "Unused import: java.util.ArrayList",
                 "problemId": [
@@ -262,9 +240,8 @@ function configurationCacheProblems() {
                     {"name": "linting", "displayName": "Linting"},
                     {"name": "unused-import", "displayName": "Unused import"}
                 ],
-                "solutions": [[{"text": "Remove the unused import"}]]
+                "solutions": ["Remove the unused import"]
             }, {
-                "problem": [{"text": "Security vulnerability detected"}],
                 "severity": "WARNING",
                 "contextualLabel": "High severity vulnerability in dependency org.example:vulnerable-lib:1.0.0 (CVE-2023-12345)",
                 "problemId": [
@@ -272,10 +249,9 @@ function configurationCacheProblems() {
                     {"name": "security-scan", "displayName": "Security Scan"},
                     {"name": "vulnerability-detected", "displayName": "Security vulnerability detected"}
                 ],
-                "solutions": [[{"text": "Update to version 1.0.1 or higher"}]]
+                "solutions": ["Update to version 1.0.1 or higher"]
             }, {
                 "locations": [{"path": "build.gradle.kts", "line": 45, "column": 4}],
-                "problem": [{"text": "Artifact not found"}],
                 "severity": "WARNING",
                 "contextualLabel": "Could not find com.example:missing-library:1.0.0",
                 "problemId": [
@@ -283,9 +259,8 @@ function configurationCacheProblems() {
                     {"name": "resolution", "displayName": "Dependency Resolution"},
                     {"name": "artifact-not-found", "displayName": "Artifact not found"}
                 ],
-                "solutions": [[{"text": "Check that the artifact exists and the repository is configured correctly"}]]
+                "solutions": ["Check that the artifact exists and the repository is configured correctly"]
             }, {
-                "problem": [{"text": "Checksum mismatch"}],
                 "severity": "WARNING",
                 "contextualLabel": "Checksum verification failed for com.example:library:1.0.0",
                 "problemId": [
@@ -293,10 +268,9 @@ function configurationCacheProblems() {
                     {"name": "verification", "displayName": "Dependency Verification"},
                     {"name": "checksum-mismatch", "displayName": "Checksum mismatch"}
                 ],
-                "solutions": [[{"text": "Verify the artifact integrity or update verification metadata"}]]
+                "solutions": ["Verify the artifact integrity or update verification metadata"]
             }, {
                 "locations": [{"path": "gradle/libs.versions.toml", "line": 23, "column": 0}],
-                "problem": [{"text": "Dependency alias builder not finished"}],
                 "severity": "WARNING",
                 "contextualLabel": "In version catalog libs, dependency alias builder 'myLib' was not finished",
                 "problemId": [
@@ -304,9 +278,8 @@ function configurationCacheProblems() {
                     {"name": "version-catalog", "displayName": "Version Catalog"},
                     {"name": "alias-not-finished", "displayName": "Dependency alias builder not finished"}
                 ],
-                "solutions": [[{"text": "Call `.version()` to give the alias a version"}]]
+                "solutions": ["Call `.version()` to give the alias a version"]
             }, {
-                "problem": [{"text": "No matching variant found"}],
                 "severity": "WARNING",
                 "contextualLabel": "No matching variant of org:test:1.0 was found.",
                 "problemId": [
@@ -314,10 +287,9 @@ function configurationCacheProblems() {
                     {"name": "variant-resolution", "displayName": "Variant Resolution"},
                     {"name": "no-matching-variant", "displayName": "No matching variant found"}
                 ],
-                "solutions": [[{"text": "Check that the dependency provides compatible variants"}]]
+                "solutions": ["Check that the dependency provides compatible variants"]
             }, {
                 "locations": [{"path": "build.gradle.kts", "line": 18, "column": 12}],
-                "problem": [{"text": "Script compilation error"}],
                 "severity": "WARNING",
                 "contextualLabel": "Unresolved reference foo",
                 "problemId": [
@@ -327,18 +299,19 @@ function configurationCacheProblems() {
                 ]
             }, {
                 "locations": [{"path": "src/main/java/com/example/MyTask.java", "line": 15, "column": 4}],
-                "problem": [{"text": "Property should be annotated with @Optional"}],
                 "severity": "WARNING",
                 "contextualLabel": "Property 'myProperty' of primitive type should be annotated with @Optional",
                 "problemId": [
                     {"name": "configuration", "displayName": "Configuration"},
                     {"name": "property-validation", "displayName": "Property Validation"},
-                    {"name": "cannot-use-optional-on-primitive-types", "displayName": "Property should be annotated with @Optional"}
+                    {
+                        "name": "cannot-use-optional-on-primitive-types",
+                        "displayName": "Property should be annotated with @Optional"
+                    }
                 ],
-                "solutions": [[{"text": "Add @Optional annotation to the property"}]]
+                "solutions": ["Add @Optional annotation to the property"]
             }, {
                 "locations": [{"path": "gradle/libs.versions.toml", "line": 23, "column": 0}],
-                "problem": [{"text": "Dependency alias builder was not finished"}],
                 "severity": "WARNING",
                 "contextualLabel": "Dependency alias 'myLib' was not finished with a version or reference",
                 "problemId": [
@@ -346,37 +319,36 @@ function configurationCacheProblems() {
                     {"name": "version-catalog", "displayName": "Version Catalog"},
                     {"name": "alias-not-finished", "displayName": "Dependency alias builder was not finished"}
                 ],
-                "solutions": [[{"text": "Call .version() or .versionRef() on the alias builder"}]]
+                "solutions": ["Call .version() or .versionRef() on the alias builder"]
             }, {
-                "problem": [{"text": "Ambiguous task matches"}],
                 "severity": "WARNING",
                 "contextualLabel": "Task name 'test' matches multiple tasks: ':test', ':integrationTest'",
                 "problemId": [
                     {"name": "invocation", "displayName": "Invocation"},
                     {"name": "ambiguous-matches", "displayName": "Ambiguous task matches"}
                 ],
-                "solutions": [[{"text": "Use the full task path to disambiguate"}]]
+                "solutions": ["Use the full task path to disambiguate"]
             }, {
-                "problem": [{"text": "Invalid task option value"}],
                 "severity": "WARNING",
                 "contextualLabel": "Task ':test' option 'tests' expects a test name glob",
                 "problemId": [
                     {"name": "invocation", "displayName": "Invocation"},
                     {"name": "invalid-task-option-value", "displayName": "Invalid task option value"}
                 ],
-                "solutions": [[{"text": "Use a valid test name glob as the 'tests' option for the ':test' task"}]]
+                "solutions": ["Use a valid test name glob as the 'tests' option for the ':test' task"]
             }, {
-                "problem": [{"text": "Could not execute build using connection to Gradle installation"}],
                 "severity": "WARNING",
                 "contextualLabel": "Could not execute build using connection to Gradle installation '/Users/reinholddegenfellner/IdeaProjects/gradle-resilient/packaging/distributions-full/build/bin distribution'.Gradle requires JVM 17 or later to run. Your build is currently configured to use JVM 8.",
                 "problemId": [
                     {"name": "environment", "displayName": "Environment"},
                     {"name": "jdk", "displayName": "JDK"},
-                    {"name": "jdk-not-found", "displayName": "Could not execute build using connection to Gradle installation"}
+                    {
+                        "name": "jdk-not-found",
+                        "displayName": "Could not execute build using connection to Gradle installation"
+                    }
                 ],
-                "solutions": [[{"text": "Install JDK 17 or configure the path to an existing installation"}]]
+                "solutions": ["Install JDK 17 or configure the path to an existing installation"]
             }, {
-                "problem": [{"text": "Connection timeout"}],
                 "severity": "WARNING",
                 "contextualLabel": "Connection timeout connecting to repo.maven.apache.org",
                 "problemId": [
@@ -384,9 +356,8 @@ function configurationCacheProblems() {
                     {"name": "network", "displayName": "Network"},
                     {"name": "connection-timeout", "displayName": "Connection timeout"}
                 ],
-                "solutions": [[{"text": "Check your network connection and firewall settings"}]]
+                "solutions": ["Check your network connection and firewall settings"]
             }, {
-                "problem": [{"text": "Permission denied"}],
                 "severity": "WARNING",
                 "contextualLabel": "Permission denied writing to /opt/app/output",
                 "problemId": [
@@ -394,24 +365,21 @@ function configurationCacheProblems() {
                     {"name": "filesystem", "displayName": "Filesystem"},
                     {"name": "permission-denied", "displayName": "Permission denied"}
                 ],
-                "solutions": [[{"text": "Ensure the user has write permissions to the directory"}]]
+                "solutions": ["Ensure the user has write permissions to the directory"]
             }, {
                 "locations": [{"path": "build.gradle.kts", "line": 78, "column": 12}],
-                "problem": [{"text": "Deprecated API usage"}],
                 "severity": "WARNING",
                 "contextualLabel": "Using deprecated API: Task.project property access at execution time",
                 "problemId": [
                     {"name": "deprecation", "displayName": "Deprecation"},
                     {"name": "deprecated-api-usage", "displayName": "Deprecated API usage"}
                 ],
-                "solutions": [[{"text": "Access project properties at configuration time instead"}]]
+                "solutions": ["Access project properties at configuration time instead"]
             }, {
-                "locations": [{"path": "build.gradle.kts", "line": 45, "column": 4}, {
-                    "path": "build.gradle.kts",
-                    "line": 23,
-                    "column": 12
-                }],
-                "problem": [{"text": "Unknown artifact selection failure"}],
+                "locations": [
+                    {"path": "build.gradle.kts", "line": 45, "column": 4},
+                    {"path": "build.gradle.kts", "line": 23, "column": 12}
+                ],
                 "severity": "WARNING",
                 "contextualLabel": "Failed to resolve artifact for dependency 'com.example:library:1.0'",
                 "problemId": [
@@ -419,43 +387,43 @@ function configurationCacheProblems() {
                     {"name": "resolution", "displayName": "Dependency Resolution"},
                     {"name": "unknown-artifact-selection-failure", "displayName": "Unknown artifact selection failure"}
                 ],
-                "solutions": [[{"text": "Check that the dependency exists and the repository is configured correctly"}]]
+                "solutions": ["Check that the dependency exists and the repository is configured correctly"]
             }, {
-                "problem": [{"text": "Executing Gradle on JVM versions and lower is deprecated"}],
                 "severity": "WARNING",
                 "contextualLabel": "Executing Gradle on JVM 8 is deprecated and will be removed in Gradle 10.0",
                 "problemId": [
                     {"name": "deprecation", "displayName": "Deprecation"},
-                    {"name": "executing-gradle-on-jvm-versions-and-lower", "displayName": "Executing Gradle on JVM versions and lower is deprecated"}
+                    {
+                        "name": "executing-gradle-on-jvm-versions-and-lower",
+                        "displayName": "Executing Gradle on JVM versions and lower is deprecated"
+                    }
                 ],
-                "solutions": [[{"text": "Update to JVM 11 or higher"}]]
+                "solutions": ["Update to JVM 11 or higher"]
             }, {
-                "problem": [{"text": "Unknown error"}],
                 "severity": "WARNING",
                 "contextualLabel": "An unexpected error occurred during build execution",
                 "problemId": [
                     {"name": "miscellaneous", "displayName": "Miscellaneous"},
                     {"name": "unknown-error", "displayName": "Unknown error"}
                 ],
-                "solutions": [[{"text": "Check the build logs for more details"}]]
+                "solutions": ["Check the build logs for more details"]
             }, {
-                "problem": [{"text": "Ambiguous matches"}],
                 "severity": "WARNING",
                 "contextualLabel": "Cannot locate tasks that match ':ba' as task 'ba' is ambiguous in root project 'root'. Candidates are: 'bar', 'baz'.",
                 "problemId": [
                     {"name": "miscellaneous", "displayName": "Miscellaneous"},
                     {"name": "task-selection-ambiguous", "displayName": "Ambiguous matches"}
                 ],
-                "solutions": [[{"text": "Use the full task path to disambiguate"}]]
+                "solutions": ["Use the full task path to disambiguate"]
             }, {
-                "problem": [{"text": "Custom failure"}],
                 "severity": "WARNING",
                 "contextualLabel": "Custom build validation failed: Project must have a README.md file",
                 "problemId": [
                     {"name": "miscellaneous", "displayName": "Miscellaneous"},
                     {"name": "custom-failure", "displayName": "Custom failure"}
                 ],
-                "solutions": [[{"text": "Add a README.md file to the project root"}]]
+                "solutions": ["Add a README.md file to the project root"],
+                "problemDetails": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis varius bibendum tellus ac pulvinar. Donec eget risus et enim placerat pellentesque vitae vitae est. Ut a nisl in ligula vehicula malesuada. Integer quam tellus, auctor sit amet semper vitae, tempor et orci. In tempus gravida dapibus. Sed vitae lectus ante. Etiam quis lectus sed mauris pretium auctor. Quisque laoreet sapien ornare, iaculis libero sed, condimentum magna. Donec at dignissim mi."
             }]
         };
     } else {

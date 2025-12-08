@@ -18,7 +18,6 @@ package problemReport
 
 import components.ProblemNode
 import configurationCache.problemNodeForError
-import configurationCache.toPrettyText
 import data.LearnMore
 import data.PrettyText
 import elmish.tree.Tree
@@ -59,23 +58,19 @@ enum class Tab(val text: String) {
 private
 fun createSummary(problemReportJsModel: ProblemReportJsModel, problems: Array<JsProblem>) =
     buildList {
-        if (problemReportJsModel.description?.isNotEmpty() == true) {
-            add(toPrettyText(problemReportJsModel.description!!))
-        } else {
-            add(
-                PrettyText.build {
-                    text("${problems.size} problem${if (problems.size == 1) " has" else "s have"} been reported during the execution")
-                    problemReportJsModel.buildName?.let { buildName ->
-                        text(" of build ")
-                        ref(buildName)
-                    }
-                    problemReportJsModel.requestedTasks?.let { requestedTasks ->
-                        text(" for the following tasks:")
-                        ref(requestedTasks)
-                    }
+        add(
+            PrettyText.build {
+                text("${problems.size} problem${if (problems.size == 1) " has" else "s have"} been reported during the execution")
+                problemReportJsModel.buildName?.let { buildName ->
+                    text(" of build ")
+                    ref(buildName)
                 }
-            )
-        }
+                problemReportJsModel.requestedTasks?.let { requestedTasks ->
+                    text(" for the following tasks:")
+                    ref(requestedTasks)
+                }
+            }
+        )
         val skippedLocations = problems.count { it.locations == null }
         val skippedProblems = problemReportJsModel.summaries.sumOf { it.count }
         if (skippedLocations > 0 || skippedProblems > 0) {
@@ -222,7 +217,7 @@ fun createLocationTree(
     }
     return ProblemTreeModel(
         Tree(
-            label = ProblemApiNode.Text("text"),
+            label = ProblemApiNode.Text("locations tree root"),
             children = locationMap.values.map { it.first }
         )
     )
@@ -360,14 +355,16 @@ fun createMessageTreeElementChildren(
     skipContextual: Boolean = false
 ): List<Tree<ProblemNode>> =
     buildList {
-        // TODO this is assumes that the problemDetails only consist of one element, which is true currently, but may change.
-        jsProblem.problemDetails?.get(0)?.text?.split("\n")
-            ?.map { Tree<ProblemNode>(ProblemNode.Message(PrettyText.ofText(it))) }
-            ?.forEach { add(it) }
-
         // to avoid duplication on the UI, if the contextual label is used in a parent tree item, we skip it here
         if (!skipContextual && jsProblem.contextualLabel != null) {
             add(Tree(ProblemNode.Message(PrettyText.ofText(jsProblem.contextualLabel!!))))
+        }
+
+        jsProblem.problemDetails?.let { problemDetails ->
+            add(Tree(label = ProblemNode.Message(PrettyText.build {
+                wrap()
+                text(problemDetails)
+            })))
         }
 
         createMessageSolutionsNode(jsProblem)?.let { add(it) }
@@ -414,7 +411,7 @@ fun createMessageSolutionsNode(jsProblem: JsProblem): Tree<ProblemNode>? =
         Tree(
             label = ProblemNode.TreeNode(PrettyText.ofText("Solutions")),
             children = solutions.map { solution ->
-                Tree(ProblemNode.ListElement(toPrettyText(solution)))
+                Tree(ProblemNode.ListElement(PrettyText.ofText(solution)))
             },
             state = Tree.ViewState.Expanded
         )

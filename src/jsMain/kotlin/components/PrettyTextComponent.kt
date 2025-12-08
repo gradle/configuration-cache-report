@@ -19,6 +19,7 @@ package components
 import data.PrettyText
 import elmish.Component
 import elmish.View
+import elmish.attributes
 import elmish.code
 import elmish.empty
 import elmish.span
@@ -34,6 +35,11 @@ class PrettyTextComponent<Intent>(
 
     private
     fun viewPrettyText(model: PrettyText): View<Intent> = span(
+        attributes {
+            if (model.wrap) {
+                className("wrapped")
+            }
+        },
         model.fragments.map {
             when (it) {
                 is PrettyText.Fragment.Text -> span(it.text)

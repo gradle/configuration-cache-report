@@ -534,6 +534,10 @@ a:hover {
     color: #35c1e4;
 }
 
+.wrapped {
+    text-wrap: wrap;
+}
+
 /* code */
 code, pre {
     font-family: Inconsolata, Monaco, "Courier New", monospace;
