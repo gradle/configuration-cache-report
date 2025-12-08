@@ -202,7 +202,7 @@ function configurationCacheProblems() {
                 "solutions": ["Remove the unused variable"]
             }, {
                 "locations": [{"path": "src/main/java/com/example/Calculator.java", "line": 15, "column": 12}],
-                "severity": "WARNING",
+                "severity": "ERROR",
                 "contextualLabel": "Incompatible types: String cannot be converted to int",
                 "problemId": [
                     {"name": "compilation", "displayName": "Compilation"},
@@ -211,8 +211,12 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Change the type or convert the value appropriately"]
             }, {
-                "locations": [{"path": "src/main/kotlin/com/example/App.kt", "line": 28, "column": 4}],
-                "severity": "WARNING",
+                "locations": [
+                    {"path": "src/main/kotlin/com/example/App.kt", "line": 28, "column": 4},
+                    {"pluginId": "kotlin"},
+                    {"taskPath": ":some:compileKotlin"}
+                ],
+                "severity": "ERROR",
                 "contextualLabel": "Unresolved reference: myFunction",
                 "problemId": [
                     {"name": "compilation", "displayName": "Compilation"},
@@ -222,7 +226,7 @@ function configurationCacheProblems() {
                 "solutions": ["Import the missing function or check the spelling"]
             }, {
                 "locations": [{"path": "src/main/cpp/main.cpp", "line": 1, "column": 0}],
-                "severity": "WARNING",
+                "severity": "ERROR",
                 "contextualLabel": "Fatal error: 'iostream' file not found",
                 "problemId": [
                     {"name": "compilation", "displayName": "Compilation"},
@@ -232,7 +236,7 @@ function configurationCacheProblems() {
                 "solutions": ["Ensure the C++ standard library is properly configured"]
             }, {
                 "locations": [{"path": "src/test/java/com/example/CalculatorTest.java", "line": 35, "column": 8}],
-                "severity": "WARNING",
+                "severity": "ERROR",
                 "contextualLabel": "Test 'shouldCalculateCorrectly' failed: expected 42 but was 43",
                 "problemId": [
                     {"name": "verification", "displayName": "Verification"},
@@ -242,7 +246,7 @@ function configurationCacheProblems() {
                 "solutions": ["Fix the test implementation or the code under test"]
             }, {
                 "locations": [{"path": "src/test/java/com/example/DatabaseTest.java", "line": 50, "column": 4}],
-                "severity": "WARNING",
+                "severity": "ERROR",
                 "contextualLabel": "Test 'shouldConnectToDatabase' timed out after 30 seconds",
                 "problemId": [
                     {"name": "verification", "displayName": "Verification"},
@@ -271,7 +275,7 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Add null check before accessing the variable"]
             }, {
-                "severity": "WARNING",
+                "severity": "ERROR",
                 "contextualLabel": "Code coverage is 65% but minimum required is 80%",
                 "problemId": [
                     {"name": "verification", "displayName": "Verification"},
@@ -290,7 +294,7 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Remove the unused import"]
             }, {
-                "severity": "WARNING",
+                "severity": "ERROR",
                 "contextualLabel": "High severity vulnerability in dependency org.example:vulnerable-lib:1.0.0 (CVE-2023-12345)",
                 "problemId": [
                     {"name": "verification", "displayName": "Verification"},
@@ -300,7 +304,7 @@ function configurationCacheProblems() {
                 "solutions": ["Update to version 1.0.1 or higher"]
             }, {
                 "locations": [{"path": "build.gradle.kts", "line": 45, "column": 4}],
-                "severity": "WARNING",
+                "severity": "ERROR",
                 "contextualLabel": "Could not find com.example:missing-library:1.0.0",
                 "problemId": [
                     {"name": "dependencies", "displayName": "Dependencies"},
@@ -309,7 +313,7 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Check that the artifact exists and the repository is configured correctly"]
             }, {
-                "severity": "WARNING",
+                "severity": "ERROR",
                 "contextualLabel": "Checksum verification failed for com.example:library:1.0.0",
                 "problemId": [
                     {"name": "dependencies", "displayName": "Dependencies"},
@@ -319,7 +323,7 @@ function configurationCacheProblems() {
                 "solutions": ["Verify the artifact integrity or update verification metadata"]
             }, {
                 "locations": [{"path": "gradle/libs.versions.toml", "line": 23, "column": 0}],
-                "severity": "WARNING",
+                "severity": "ERROR",
                 "contextualLabel": "In version catalog libs, dependency alias builder 'myLib' was not finished",
                 "problemId": [
                     {"name": "dependencies", "displayName": "Dependencies"},
@@ -328,7 +332,7 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Call `.version()` to give the alias a version"]
             }, {
-                "severity": "WARNING",
+                "severity": "ERROR",
                 "contextualLabel": "No matching variant of org:test:1.0 was found.",
                 "problemId": [
                     {"name": "dependencies", "displayName": "Dependencies"},
@@ -338,7 +342,7 @@ function configurationCacheProblems() {
                 "solutions": ["Check that the dependency provides compatible variants"]
             }, {
                 "locations": [{"path": "build.gradle.kts", "line": 18, "column": 12}],
-                "severity": "WARNING",
+                "severity": "ERROR",
                 "contextualLabel": "Unresolved reference foo",
                 "problemId": [
                     {"name": "configuration", "displayName": "Configuration"},
@@ -360,7 +364,7 @@ function configurationCacheProblems() {
                 "solutions": ["Add @Optional annotation to the property"]
             }, {
                 "locations": [{"path": "gradle/libs.versions.toml", "line": 23, "column": 0}],
-                "severity": "WARNING",
+                "severity": "ERROR",
                 "contextualLabel": "Dependency alias 'myLib' was not finished with a version or reference",
                 "problemId": [
                     {"name": "dependencies", "displayName": "Dependencies"},
@@ -369,7 +373,7 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Call .version() or .versionRef() on the alias builder"]
             }, {
-                "severity": "WARNING",
+                "severity": "ERROR",
                 "contextualLabel": "Task name 'test' matches multiple tasks: ':test', ':integrationTest'",
                 "problemId": [
                     {"name": "invocation", "displayName": "Invocation"},
@@ -377,7 +381,7 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Use the full task path to disambiguate"]
             }, {
-                "severity": "WARNING",
+                "severity": "ERROR",
                 "contextualLabel": "Task ':test' option 'tests' expects a test name glob",
                 "problemId": [
                     {"name": "invocation", "displayName": "Invocation"},
@@ -385,7 +389,7 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Use a valid test name glob as the 'tests' option for the ':test' task"]
             }, {
-                "severity": "WARNING",
+                "severity": "ERROR",
                 "contextualLabel": "Could not execute build using connection to Gradle installation '/Users/reinholddegenfellner/IdeaProjects/gradle-resilient/packaging/distributions-full/build/bin distribution'.Gradle requires JVM 17 or later to run. Your build is currently configured to use JVM 8.",
                 "problemId": [
                     {"name": "environment", "displayName": "Environment"},
@@ -397,7 +401,7 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Install JDK 17 or configure the path to an existing installation"]
             }, {
-                "severity": "WARNING",
+                "severity": "ERROR",
                 "contextualLabel": "Connection timeout connecting to repo.maven.apache.org",
                 "problemId": [
                     {"name": "environment", "displayName": "Environment"},
@@ -406,7 +410,7 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Check your network connection and firewall settings"]
             }, {
-                "severity": "WARNING",
+                "severity": "ERROR",
                 "contextualLabel": "Permission denied writing to /opt/app/output",
                 "problemId": [
                     {"name": "environment", "displayName": "Environment"},
@@ -428,7 +432,7 @@ function configurationCacheProblems() {
                     {"path": "build.gradle.kts", "line": 45, "column": 4},
                     {"path": "build.gradle.kts", "line": 23, "column": 12}
                 ],
-                "severity": "WARNING",
+                "severity": "ERROR",
                 "contextualLabel": "Failed to resolve artifact for dependency 'com.example:library:1.0'",
                 "problemId": [
                     {"name": "dependencies", "displayName": "Dependencies"},
@@ -448,7 +452,7 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Update to JVM 11 or higher"]
             }, {
-                "severity": "WARNING",
+                "severity": "ERROR",
                 "contextualLabel": "An unexpected error occurred during build execution",
                 "problemId": [
                     {"name": "miscellaneous", "displayName": "Miscellaneous"},
@@ -456,7 +460,7 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Check the build logs for more details"]
             }, {
-                "severity": "WARNING",
+                "severity": "ERROR",
                 "contextualLabel": "Cannot locate tasks that match ':ba' as task 'ba' is ambiguous in root project 'root'. Candidates are: 'bar', 'baz'.",
                 "problemId": [
                     {"name": "miscellaneous", "displayName": "Miscellaneous"},
@@ -464,7 +468,7 @@ function configurationCacheProblems() {
                 ],
                 "solutions": ["Use the full task path to disambiguate"]
             }, {
-                "severity": "WARNING",
+                "severity": "ERROR",
                 "contextualLabel": "Custom build validation failed: Project must have a README.md file",
                 "problemId": [
                     {"name": "miscellaneous", "displayName": "Miscellaneous"},

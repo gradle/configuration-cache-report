@@ -33,9 +33,9 @@ fun problemsReportPageModelFromJsModel(problemReportJsModel: ProblemReportJsMode
         learnMore = LearnMore("reporting problems", problemReportJsModel.documentationLink),
         messageTree = createMessageTree(problems),
         groupTree = createGroupTree(problems),
-        fileLocationTree = createLocationTree(problems, LocationTreeType.FILE),
-        pluginLocationTree = createLocationTree(problems, LocationTreeType.PLUGIN),
-        taskLocationTree = createLocationTree(problems, LocationTreeType.TASK),
+        fileLocationTree = createLocationTree(problems, LocationType.FILE),
+        pluginLocationTree = createLocationTree(problems, LocationType.PLUGIN),
+        taskLocationTree = createLocationTree(problems, LocationType.TASK),
         problemCount = problems.size,
         tab = Tab.ByMessage
     )
@@ -106,17 +106,19 @@ fun createMessageTree(problems: Array<JsProblem>): ProblemTreeModel =
             label = ProblemApiNode.Text("message tree root"),
             children = problems.groupBy { it.problemId.messageTreeGroupingString }
                 .entries.sortedBy { it.value.first().displayName }.map { it.value }
-                .map { jsProblems ->
-                    jsProblems.first().let { jsProblem ->
+                .map { problemsForMessage ->
+                    problemsForMessage.first().let { problemTemplate ->
                         Tree(
                             label = createPrimaryMessageNode(
-                                jsProblem = jsProblem,
-                                label = ProblemNode.Message(buildProblemPrettyText(jsProblem.displayName)),
-                                count = jsProblems.size
+                                problem = problemTemplate,
+                                label = ProblemNode.Message(buildProblemPrettyText(problemTemplate.displayName)),
+                                count = problemsForMessage.size
                             ),
-                            children = jsProblems.sortedBy { it.contextualLabel ?: it.displayName }.map { prob ->
-                                createMessageTreeElement(prob, useContextualAsPrimary = true)
-                            }
+                            children = problemsForMessage
+                                .sortedBy { it.contextualLabel ?: it.displayName }
+                                .map { prob ->
+                                    createMessageTreeElement(prob, useContextualAsPrimary = true)
+                                }
                         )
                     }
                 })
@@ -202,18 +204,35 @@ fun createGroupTreeProblemChildren(
 
 //region LOCATION_TREE
 
-private enum class LocationTreeType(
-    val propertySelector: (JsLocation) -> String?
+
+private
+enum class LocationType(
+    val displayName: String,
+    val propertySelector: (JsLocation) -> String?,
+    val messageNodeLocation: (JsLocation) -> JsLocation?,
 ) {
-    FILE(propertySelector = { it.path }),
-    PLUGIN(propertySelector = { it.pluginId }),
-    TASK(propertySelector = { it.taskPath });
+    FILE(
+        displayName = "File",
+        propertySelector = { it.path },
+        messageNodeLocation = { it },
+    ),
+    PLUGIN(
+        displayName = "Plugin",
+        propertySelector = { it.pluginId },
+        messageNodeLocation = { null },
+    ),
+    TASK(
+        displayName = "Task",
+        propertySelector = { it.taskPath },
+        messageNodeLocation = { null },
+    );
 }
+
 
 private
 fun createLocationTree(
     problems: Array<JsProblem>,
-    type: LocationTreeType
+    type: LocationType
 ): ProblemTreeModel {
 
     val problemsByLocation: Map<String, MutableList<Pair<JsProblem, JsLocation>>> = buildMap {
@@ -231,9 +250,12 @@ fun createLocationTree(
             label = ProblemApiNode.Text("locations tree root"),
             children = problemsByLocation.keys.sorted().map { locationRef ->
                 Tree(
-                    label = ProblemIdNode(PrettyText.build { ref(locationRef) }),
+                    label = ProblemIdNode(PrettyText.build {
+                        text(type.displayName)
+                        ref(locationRef)
+                    }),
                     children = problemsByLocation[locationRef]
-                        ?.let { problems -> createLocationTreeProblemChildren(problems) }
+                        ?.let { problems -> createLocationTreeProblemChildren(type, problems) }
                         ?: emptyList()
                 )
             }
@@ -241,14 +263,20 @@ fun createLocationTree(
     )
 }
 
+
 private
 fun createLocationTreeProblemChildren(
+    type: LocationType,
     problems: List<Pair<JsProblem, JsLocation>>,
 ): List<Tree<ProblemNode>> =
     problems
         .sortedBy { it.second.lineReferencePart + it.first.displayName }
         .map { (problem, location) ->
-            createMessageTreeElement(problem, location = location, useContextualAsPrimary = true)
+            createMessageTreeElement(
+                problem = problem,
+                labelLocation = type.messageNodeLocation(location),
+                useContextualAsPrimary = true
+            )
         }
 
 
@@ -260,26 +288,30 @@ fun createLocationTreeProblemChildren(
 
 private
 fun createMessageTreeElement(
-    jsProblem: JsProblem,
-    location: JsLocation? = null,
+    problem: JsProblem,
+    labelLocation: JsLocation? = null,
     useContextualAsPrimary: Boolean = false
 ): Tree<ProblemNode> =
     Tree(
-        label = createPrimaryLabelMessageNode(jsProblem, location, useContextualAsPrimary),
-        children = createMessageTreeElementChildren(jsProblem, location == null, useContextualAsPrimary)
+        label = createMessageTreeElementLabel(problem, labelLocation, useContextualAsPrimary),
+        children = createMessageTreeElementChildren(
+            problem = problem,
+            locationViewState = if (labelLocation != null) Tree.ViewState.Collapsed else Tree.ViewState.Expanded,
+            skipContextual = useContextualAsPrimary
+        )
     )
 
 
 private
-fun createPrimaryLabelMessageNode(
-    jsProblem: JsProblem,
+fun createMessageTreeElementLabel(
+    problem: JsProblem,
     location: JsLocation? = null,
     useContextualAsPrimary: Boolean = false
 ): ProblemNode =
     createPrimaryMessageNode(
-        jsProblem = jsProblem,
+        problem = problem,
         label = ProblemNode.Message(
-            buildProblemPrettyText(jsProblem.getPrimaryLabelText(useContextualAsPrimary), location)
+            buildProblemPrettyText(problem.getPrimaryLabelText(useContextualAsPrimary), location)
         )
     )
 
@@ -296,13 +328,13 @@ val JsProblem.displayName: String
 
 
 private
-fun createPrimaryMessageNode(jsProblem: JsProblem, label: ProblemNode.Message, count: Int? = null): ProblemNode {
-    val docLink = jsProblem.documentationLink?.let { ProblemNode.Link(it) }
-    return when (jsProblem.severity) {
+fun createPrimaryMessageNode(problem: JsProblem, label: ProblemNode.Message, count: Int? = null): ProblemNode {
+    val docLink = problem.documentationLink?.let { ProblemNode.Link(it) }
+    return when (problem.severity) {
         "WARNING" -> ProblemNode.Warning(label, docLink, count)
         "ERROR" -> ProblemNode.Error(label, docLink, count)
         "ADVICE" -> ProblemApiNode.Advice(label, docLink, count)
-        else -> label.also { console.error("no severity ${jsProblem.severity}") }
+        else -> label.also { console.error("no severity ${problem.severity}") }
     }
 }
 
@@ -345,63 +377,73 @@ val JsLocation.lineReferencePart: String
 
 private
 fun createMessageTreeElementChildren(
-    jsProblem: JsProblem,
-    addLocationNodes: Boolean,
-    skipContextual: Boolean = false
+    problem: JsProblem,
+    locationViewState: Tree.ViewState,
+    skipContextual: Boolean,
 ): List<Tree<ProblemNode>> =
     buildList {
         // to avoid duplication on the UI, if the contextual label is used in a parent tree item, we skip it here
-        if (!skipContextual && jsProblem.contextualLabel != null) {
-            add(Tree(ProblemNode.Message(PrettyText.ofText(jsProblem.contextualLabel!!))))
+        if (!skipContextual && problem.contextualLabel != null) {
+            add(Tree(ProblemNode.Message(PrettyText.ofText(problem.contextualLabel!!))))
         }
 
-        jsProblem.problemDetails?.let { problemDetails ->
+        problem.problemDetails?.let { problemDetails ->
             add(Tree(label = ProblemNode.Message(PrettyText.build {
                 wrap()
                 text(problemDetails)
             })))
         }
 
-        jsProblem.error
+        problem.error
             ?.let(::problemNodeForError)
             ?.let { errorNode -> add(Tree(errorNode)) }
 
-        if (addLocationNodes) {
-            createMessageLocationsNode(jsProblem)?.let { add(it) }
-        }
+        createMessageLocationsNode(problem, locationViewState)?.let { add(it) }
 
-        createMessageSolutionsNode(jsProblem)?.let { add(it) }
+        createMessageSolutionsNode(problem)?.let { add(it) }
     }
 
 
 private
-fun createMessageLocationsNode(jsProblem: JsProblem): Tree<ProblemNode>? =
-    jsProblem.locations?.let { locations ->
+fun createMessageLocationsNode(problem: JsProblem, locationViewState: Tree.ViewState): Tree<ProblemNode>? =
+    problem.locations?.takeIf { it.isNotEmpty() }?.let { locations ->
         Tree(
             label = ProblemNode.Label("Locations"),
             children = locations.map { location ->
-                Tree(ProblemNode.ListElement(PrettyText.build {
-                    ref(location.referenceString)
-                }))
+                Tree(ProblemNode.ListElement(location.buildLabelPrettyText()))
             },
-            state = Tree.ViewState.Expanded
+            state = locationViewState,
         )
     }
 
 
 private
-val JsLocation.referenceString: String
-    get() = when {
-        path != null -> "$path$lineReferencePart"
-        taskPath != null -> taskPath!!
-        pluginId != null -> pluginId!!
-        else -> "<undefined>"
+fun JsLocation.buildLabelPrettyText(): PrettyText =
+    PrettyText.build {
+        when {
+            path != null -> {
+                text(LocationType.FILE.displayName)
+                ref("$path$lineReferencePart")
+            }
+
+            taskPath != null -> {
+                text(LocationType.TASK.displayName)
+                ref(taskPath!!)
+            }
+
+            pluginId != null -> {
+                text(LocationType.PLUGIN.displayName)
+                ref(pluginId!!)
+            }
+
+            else -> text("<undefined>")
+        }
     }
 
 
 private
-fun createMessageSolutionsNode(jsProblem: JsProblem): Tree<ProblemNode>? =
-    jsProblem.solutions?.takeIf { it.isNotEmpty() }?.let { solutions ->
+fun createMessageSolutionsNode(problem: JsProblem): Tree<ProblemNode>? =
+    problem.solutions?.takeIf { it.isNotEmpty() }?.let { solutions ->
         Tree(
             label = ProblemNode.TreeNode(PrettyText.ofText("Solutions")),
             children = solutions.map { solution ->
