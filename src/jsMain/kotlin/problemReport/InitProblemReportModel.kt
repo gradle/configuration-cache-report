@@ -45,7 +45,7 @@ fun problemsReportPageModelFromJsModel(problemReportJsModel: ProblemReportJsMode
 internal
 enum class Tab(val text: String) {
     ByMessage("Messages"),
-    ByGroup("Group"),
+    ByGroup("Groups"),
     ByFileLocation("File Locations"),
     ByPluginLocation("Plugin Locations"),
     ByTaskLocation("Task Locations"),
@@ -105,20 +105,22 @@ fun createMessageTree(problems: Array<JsProblem>): ProblemTreeModel =
     ProblemTreeModel(
         Tree(
             label = ProblemApiNode.Text("message tree root"),
-            children = problems.groupBy { it.problemId.messageTreeGroupingString }.values.map { jsProblems ->
-                jsProblems.first().let { jsProblem ->
-                    Tree(
-                        label = createPrimaryMessageNode(
-                            jsProblem = jsProblem,
-                            label = ProblemNode.Message(buildProblemPrettyText(jsProblem.displayName)),
-                            count = jsProblems.size
-                        ),
-                        children = jsProblems.map { prob ->
-                            createMessageTreeElement(prob, null, true)
-                        }
-                    )
-                }
-            })
+            children = problems.groupBy { it.problemId.messageTreeGroupingString }
+                .entries.sortedBy { it.value.first().displayName }.map { it.value }
+                .map { jsProblems ->
+                    jsProblems.first().let { jsProblem ->
+                        Tree(
+                            label = createPrimaryMessageNode(
+                                jsProblem = jsProblem,
+                                label = ProblemNode.Message(buildProblemPrettyText(jsProblem.displayName)),
+                                count = jsProblems.size
+                            ),
+                            children = jsProblems.sortedBy { it.contextualLabel ?: it.displayName }.map { prob ->
+                                createMessageTreeElement(prob, null, true)
+                            }
+                        )
+                    }
+                })
     )
 
 
@@ -164,23 +166,26 @@ fun createGroupTreeChildren(
     groupIds: Set<List<JsProblemIdElement>>,
     problemsByGroupId: Map<List<JsProblemIdElement>, List<JsProblem>>
 ): List<Tree<ProblemNode>> =
-    groupIds.mapNotNull { id -> id.firstOrNull() }.distinct().map { groupIdSegment ->
-        val currentGroupId = previousGroupId + groupIdSegment
-        Tree(
-            label = ProblemNode.TreeNode(PrettyText.ofText(groupIdSegment.displayName)),
-            children = createGroupTreeChildren(
-                previousGroupId = currentGroupId,
-                groupIds = groupIds
-                    .filter { id -> id.firstOrNull() == groupIdSegment }
-                    .map { id -> id.drop(1) }
-                    .toSet(),
-                problemsByGroupId = problemsByGroupId
-            ) + createGroupTreeProblemChildren(
-                groupId = currentGroupId,
-                problemsByGroupId = problemsByGroupId
+    groupIds.mapNotNull { id -> id.firstOrNull() }
+        .distinct()
+        .sortedBy { it.displayName }
+        .map { groupIdSegment ->
+            val currentGroupId = previousGroupId + groupIdSegment
+            Tree(
+                label = ProblemNode.TreeNode(PrettyText.ofText(groupIdSegment.displayName)),
+                children = createGroupTreeChildren(
+                    previousGroupId = currentGroupId,
+                    groupIds = groupIds
+                        .filter { id -> id.firstOrNull() == groupIdSegment }
+                        .map { id -> id.drop(1) }
+                        .toSet(),
+                    problemsByGroupId = problemsByGroupId
+                ) + createGroupTreeProblemChildren(
+                    groupId = currentGroupId,
+                    problemsByGroupId = problemsByGroupId
+                )
             )
-        )
-    }
+        }
 
 
 private
@@ -189,6 +194,7 @@ fun createGroupTreeProblemChildren(
     problemsByGroupId: Map<List<JsProblemIdElement>, List<JsProblem>>
 ): List<Tree<ProblemNode>> =
     problemsByGroupId[groupId]
+        ?.sortedBy { it.displayName }
         ?.map { problem -> createMessageTreeElement(problem) }
         ?: emptyList()
 
