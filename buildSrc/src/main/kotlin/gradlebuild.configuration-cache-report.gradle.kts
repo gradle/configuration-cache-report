@@ -17,8 +17,6 @@ import gradlebuild.configcachereport.tasks.MergeReportAssets
 import gradlebuild.configcachereport.tasks.VerifyDevWorkflow
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
-// Uncomment the next line for better debugging experience
-// import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig.Mode
 import org.jlleitschuh.gradle.ktlint.tasks.KtLintCheckTask
 
 plugins {
@@ -31,8 +29,8 @@ kotlin {
         browser {
             commonWebpackConfig {
                 sourceMaps = true
-                // uncomment the following line for better debugging experience, also uncomment the import above
-//                 mode = Mode.DEVELOPMENT
+                // uncomment the following line for better debugging experience
+                // mode = org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig.Mode.DEVELOPMENT
             }
         }
 
@@ -102,10 +100,7 @@ val jar by tasks.registering(Jar::class) {
     from(assembleReport)
 }
 
-configurations.create("configurationCacheReport") {
-    isVisible = false
-    isCanBeResolved = false
-    isCanBeConsumed = true
+configurations.consumable("configurationCacheReport") {
     attributes {
         attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.JAVA_RUNTIME))
         attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.DOCUMENTATION))
