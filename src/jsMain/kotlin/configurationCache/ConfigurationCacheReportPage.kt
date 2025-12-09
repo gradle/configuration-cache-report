@@ -65,6 +65,12 @@ sealed class ProblemCCNode : ProblemNode() {
 
     data class Property(val kind: String, val name: String, val owner: String) : ProblemNode()
 
+    /**
+     * Unlike real [Property], the virtual property doesn't have a name in code and thus has a slightly different
+     * rendering.
+     * It can be used to give better user-facing names to concepts not really obvious from their implementation,
+     * like up-to-date predicates of `TaskOutputs` or task actions.
+     */
     data class VirtualProperty(val name: String, val owner: String) : ProblemNode()
 
     data class BuildLogic(val location: String) : ProblemNode()
