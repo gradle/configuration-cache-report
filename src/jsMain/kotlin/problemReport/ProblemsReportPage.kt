@@ -34,6 +34,7 @@ import elmish.div
 import elmish.empty
 import elmish.h1
 import elmish.ol
+import elmish.pre
 import elmish.small
 import elmish.span
 import elmish.tree.Tree
@@ -61,6 +62,7 @@ import reporting.BaseIntent.TreeIntent as BaseIntentTreeIntent
 internal
 sealed class ProblemApiNode : ProblemNode() {
     data class Text(val text: String) : ProblemApiNode()
+    data class Detail(val text: String) : ProblemApiNode()
     data class ProblemIdNode(val prettyText: PrettyText) : ProblemApiNode()
     data class Advice(val label: ProblemNode, val docLink: ProblemNode? = null, val count: Int?) : ProblemNode()
 }
@@ -350,12 +352,22 @@ object ProblemsReportPage : Component<ProblemsReportPage.Model, BaseIntent> {
                     countBalloonIfNecessary(label.count)
                 )
 
+            is ProblemApiNode.Detail ->
+                viewProblemDetail(label.text)
+
             is ProblemNode.Label ->
                 div(treeButtonFor(focus, treeIntent), viewPrettyText(PrettyText.ofText(label.text)))
 
             else ->
                 span("Unknown node type viewNode: $label")
         }
+
+    private
+    fun viewProblemDetail(text: String): View<BaseIntent> =
+        pre(
+            attributes { className("problem-detail") },
+            text
+        )
 
     private
     fun countBalloonIfNecessary(count: Int?): View<Nothing> =

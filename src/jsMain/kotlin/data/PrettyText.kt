@@ -17,7 +17,7 @@
 package data
 
 
-data class PrettyText(val fragments: List<Fragment>, val wrap: Boolean = false) {
+data class PrettyText(val fragments: List<Fragment>) {
 
     sealed class Fragment {
 
@@ -31,13 +31,6 @@ data class PrettyText(val fragments: List<Fragment>, val wrap: Boolean = false) 
         private
         val fragments = mutableListOf<Fragment>()
 
-        private
-        var wrap: Boolean = false
-
-        fun wrap() = apply {
-            wrap = true
-        }
-
         fun text(text: String) = apply {
             fragments.add(Fragment.Text(text))
         }
@@ -46,7 +39,7 @@ data class PrettyText(val fragments: List<Fragment>, val wrap: Boolean = false) 
             fragments.add(Fragment.Reference(reference, clipboardString))
         }
 
-        fun build() = PrettyText(fragments.toList(), wrap)
+        fun build() = PrettyText(fragments.toList())
     }
 
     companion object {

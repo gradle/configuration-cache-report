@@ -388,10 +388,7 @@ fun createMessageTreeElementChildren(
         }
 
         problem.problemDetails?.let { problemDetails ->
-            add(Tree(label = ProblemNode.Message(PrettyText.build {
-                wrap()
-                text(problemDetails)
-            })))
+            add(Tree(label = ProblemApiNode.Detail(problemDetails)))
         }
 
         problem.error
