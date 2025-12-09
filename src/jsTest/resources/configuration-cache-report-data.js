@@ -390,7 +390,7 @@ function configurationCacheProblems() {
                 "solutions": ["Use a valid test name glob as the 'tests' option for the ':test' task"]
             }, {
                 "severity": "ERROR",
-                "contextualLabel": "Could not execute build using connection to Gradle installation '/Users/reinholddegenfellner/IdeaProjects/gradle-resilient/packaging/distributions-full/build/bin distribution'.Gradle requires JVM 17 or later to run. Your build is currently configured to use JVM 8.",
+                "contextualLabel": "Could not execute build using connection to Gradle installation '/path/to/gradle-installation'.Gradle requires JVM 17 or later to run. Your build is currently configured to use JVM 8.",
                 "problemId": [
                     {"name": "environment", "displayName": "Environment"},
                     {"name": "jdk", "displayName": "JDK"},
@@ -493,11 +493,11 @@ function configurationCacheProblems() {
             }, {
                 "locations": [
                     {"pluginId": "org.jetbrains.kotlin.multiplatform"},
-                    {"path": "/Users/reinholddegenfellner/IdeaProjects/gradle/testing/internal-testing/src/main/groovy/org/gradle/util/internal/RedirectStdOutAndErr.java"},
+                    {"path": "testing/internal-testing/src/main/groovy/org/gradle/util/internal/RedirectStdOutAndErr.java"},
                     {"taskPath": "tassskskskspahththt"}
                 ],
                 "severity": "ADVICE",
-                "contextualLabel": "/Users/reinholddegenfellner/IdeaProjects/gradle/testing/internal-testing/src/main/groovy/org/gradle/util/internal/RedirectStdOutAndErr.java uses or overrides a deprecated API.",
+                "contextualLabel": "testing/internal-testing/src/main/groovy/org/gradle/util/internal/RedirectStdOutAndErr.java uses or overrides a deprecated API.",
                 "problemId": [
                     {"name": "compilation", "displayName": "Compilation"},
                     {"name": "java", "displayName": "Java compilation"},
@@ -598,13 +598,13 @@ function configurationCacheProblems() {
                 "error": {}
             }, {
                 "locations": [{
-                    "path": "/Users/reinholddegenfellner/Documents/GitHub/ide-smoke-tests/04-java-build-src/lib/src/main/java/org/gradle/example/MyLibraryClass.java",
+                    "path": "lib/src/main/java/org/gradle/example/MyLibraryClass.java",
                     "line": 5,
                     "column": 24,
                     "length": 0
                 }],
                 "severity": "ERROR",
-                "problemDetails": "/Users/reinholddegenfellner/Documents/GitHub/ide-smoke-tests/04-java-build-src/lib/src/main/java/org/gradle/example/MyLibraryClass.java:5: error: '(' or '[' expected\n        new MyOtherLib raryClass();\n                       ^",
+                "problemDetails": "lib/src/main/java/org/gradle/example/MyLibraryClass.java:5: error: '(' or '[' expected\n        new MyOtherLib raryClass();\n                       ^",
                 "contextualLabel": "'(' or '[' expected",
                 "problemId": [
                     {"name": "compilation", "displayName": "Compilation"},
