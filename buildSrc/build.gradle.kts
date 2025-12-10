@@ -1,6 +1,5 @@
 plugins {
     `kotlin-dsl`
-    `java-library`
 }
 
 repositories {
@@ -9,9 +8,6 @@ repositories {
 }
 
 dependencies {
-    implementation(gradleApi())
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.0") {
-        because("this includes the multiplatform plugin")
-    }
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.21")
     implementation("org.gradle.kotlin:gradle-kotlin-dsl-conventions:0.9.0")
 }
