@@ -619,3 +619,10 @@ code + .copy-button {
     background: azure;
     color: #686868;
 }
+
+.problem-detail {
+    color: #02303A;
+    font-size: 14px;
+    margin: 0;
+    padding: 0;
+}

@@ -22,7 +22,7 @@ import elmish.mountComponentAt
 import problemReport.JsProblem
 import problemReport.ProblemReportJsModel
 import problemReport.ProblemsReportPage
-import problemReport.reportProblemsReportPageModelFromJsModel
+import problemReport.problemsReportPageModelFromJsModel
 
 
 fun main() {
@@ -38,7 +38,7 @@ fun main() {
         mountComponentAt(
             elementById("report"),
             ProblemsReportPage,
-            reportProblemsReportPageModelFromJsModel(
+            problemsReportPageModelFromJsModel(
                 problemReportJsModel,
                 // We are reusing this array for JsProblems, because the diagnostics are written in a predefined order on the fly to the html report file.
                 // Having this separate would require more changes to the way diagnostics/problems are written in the file.

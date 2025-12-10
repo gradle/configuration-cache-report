@@ -31,9 +31,13 @@ data class PrettyText(val fragments: List<Fragment>) {
         private
         val fragments = mutableListOf<Fragment>()
 
-        fun text(text: String) = apply { fragments.add(Fragment.Text(text)) }
+        fun text(text: String) = apply {
+            fragments.add(Fragment.Text(text))
+        }
 
-        fun ref(reference: String, clipboardString: String = reference) = apply { fragments.add(Fragment.Reference(reference, clipboardString)) }
+        fun ref(reference: String, clipboardString: String = reference) = apply {
+            fragments.add(Fragment.Reference(reference, clipboardString))
+        }
 
         fun build() = PrettyText(fragments.toList())
     }

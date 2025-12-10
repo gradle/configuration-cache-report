@@ -34,6 +34,7 @@ import elmish.div
 import elmish.empty
 import elmish.h1
 import elmish.ol
+import elmish.pre
 import elmish.small
 import elmish.span
 import elmish.tree.Tree
@@ -58,22 +59,23 @@ import reporting.warningIcon
 import reporting.BaseIntent.TreeIntent as BaseIntentTreeIntent
 
 
+internal
 sealed class ProblemApiNode : ProblemNode() {
     data class Text(val text: String) : ProblemApiNode()
-
-    data class ProblemIdNode(val prettyText: PrettyText, val separator: Boolean = false) : ProblemApiNode()
-
+    data class Detail(val text: String) : ProblemApiNode()
+    data class ProblemIdNode(val prettyText: PrettyText) : ProblemApiNode()
     data class Advice(val label: ProblemNode, val docLink: ProblemNode? = null, val count: Int?) : ProblemNode()
 }
 
 
-object ProblemsReportPage :
-    Component<ProblemsReportPage.Model, BaseIntent> {
+internal
+object ProblemsReportPage : Component<ProblemsReportPage.Model, BaseIntent> {
 
     init {
         document.title = "Gradle - Problems Report"
     }
 
+    internal
     data class Model(
         val heading: PrettyText,
         val summary: List<PrettyText>,
@@ -84,101 +86,83 @@ object ProblemsReportPage :
         val pluginLocationTree: ProblemTreeModel,
         val taskLocationTree: ProblemTreeModel,
         val problemCount: Int,
-        val tab: Tab
+        val tab: Tab,
     )
 
+    private
     sealed class Intent : BaseIntent() {
         data class MessageTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
-
         data class ProblemIdTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
-
         data class FileLocationTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
         data class PluginLocationTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
         data class TaskLocationTreeIntent(override val delegate: ProblemTreeIntent) : TreeIntent()
-
         data class SetTab(val tab: Tab) : Intent()
     }
 
 
     private
-    fun Model.updateNodeAt(
-        tree: TreeIntent,
-        update: ProblemNode.() -> ProblemNode
-    ) = when (tree) {
-        is Intent.MessageTreeIntent -> copy(
-            messageTree = messageTree.updateNodeTreeAt(tree, update)
-        )
+    fun Model.updateNodeAt(tree: TreeIntent, update: ProblemNode.() -> ProblemNode) =
+        when (tree) {
+            is Intent.MessageTreeIntent ->
+                copy(messageTree = messageTree.updateNodeTreeAt(tree, update))
 
-        is Intent.ProblemIdTreeIntent -> copy(
-            groupTree = groupTree.updateNodeTreeAt(tree, update)
-        )
+            is Intent.ProblemIdTreeIntent ->
+                copy(groupTree = groupTree.updateNodeTreeAt(tree, update))
 
-        is Intent.FileLocationTreeIntent -> copy(
-            fileLocationTree = fileLocationTree.updateNodeTreeAt(tree, update)
-        )
+            is Intent.FileLocationTreeIntent ->
+                copy(fileLocationTree = fileLocationTree.updateNodeTreeAt(tree, update))
 
-        is Intent.PluginLocationTreeIntent -> copy(
-            pluginLocationTree = pluginLocationTree.updateNodeTreeAt(tree, update)
-        )
+            is Intent.PluginLocationTreeIntent ->
+                copy(pluginLocationTree = pluginLocationTree.updateNodeTreeAt(tree, update))
 
-        is Intent.TaskLocationTreeIntent -> copy(
-            taskLocationTree = taskLocationTree.updateNodeTreeAt(tree, update)
-        )
+            is Intent.TaskLocationTreeIntent ->
+                copy(taskLocationTree = taskLocationTree.updateNodeTreeAt(tree, update))
 
-        else -> {
-            console.error("Unhandled tree intent: $tree")
-            this
-        }
-    }
-
-    override fun step(intent: BaseIntent, model: Model): Model = when (intent) {
-        is Intent.FileLocationTreeIntent -> model.copy(
-            fileLocationTree = TreeView.step(intent.delegate, model.fileLocationTree)
-        )
-
-        is Intent.PluginLocationTreeIntent -> model.copy(
-            pluginLocationTree = TreeView.step(intent.delegate, model.pluginLocationTree)
-        )
-
-        is Intent.TaskLocationTreeIntent -> model.copy(
-            taskLocationTree = TreeView.step(intent.delegate, model.taskLocationTree)
-        )
-
-        is Intent.ProblemIdTreeIntent -> model.copy(
-            groupTree = TreeView.step(intent.delegate, model.groupTree)
-        )
-
-        is Intent.MessageTreeIntent -> model.copy(
-            messageTree = TreeView.step(intent.delegate, model.messageTree)
-        )
-
-        is BaseIntent.ToggleStackTracePart -> model.updateNodeAt(intent.location) {
-            require(this is ProblemNode.Exception)
-            copy(parts = parts.mapAt(intent.partIndex) {
-                it.copy(state = it.state?.toggle())
-            })
+            else ->
+                this.also { console.error("Unhandled tree intent: $tree") }
         }
 
-        is BaseIntent.Copy -> {
-            window.navigator.clipboard.writeText(intent.text)
-            model
+    override fun step(intent: BaseIntent, model: Model): Model =
+        when (intent) {
+            is Intent.FileLocationTreeIntent ->
+                model.copy(fileLocationTree = TreeView.step(intent.delegate, model.fileLocationTree))
+
+            is Intent.PluginLocationTreeIntent ->
+                model.copy(pluginLocationTree = TreeView.step(intent.delegate, model.pluginLocationTree))
+
+            is Intent.TaskLocationTreeIntent ->
+                model.copy(taskLocationTree = TreeView.step(intent.delegate, model.taskLocationTree))
+
+            is Intent.ProblemIdTreeIntent ->
+                model.copy(groupTree = TreeView.step(intent.delegate, model.groupTree))
+
+            is Intent.MessageTreeIntent ->
+                model.copy(messageTree = TreeView.step(intent.delegate, model.messageTree))
+
+            is BaseIntent.ToggleStackTracePart ->
+                model.updateNodeAt(intent.location) {
+                    require(this is ProblemNode.Exception)
+                    copy(parts = parts.mapAt(intent.partIndex) {
+                        it.copy(state = it.state?.toggle())
+                    })
+                }
+
+            is BaseIntent.Copy ->
+                model.also { window.navigator.clipboard.writeText(intent.text) }
+
+            is Intent.SetTab ->
+                model.copy(tab = intent.tab)
+
+            else ->
+                model.also { console.error("Unhandled intent: $intent") }
         }
 
-        is Intent.SetTab -> model.copy(
-            tab = intent.tab
+    override fun view(model: Model): View<BaseIntent> =
+        div(
+            attributes { className("report-wrapper") },
+            viewHeader(model),
+            viewProblems(model)
         )
-
-        else -> {
-            console.error("Unhandled intent: $intent")
-            model
-        }
-    }
-
-    override fun view(model: Model): View<BaseIntent> = div(
-        attributes { className("report-wrapper") },
-        viewHeader(model),
-        viewProblems(model)
-    )
 
     private
     fun viewHeader(model: Model): View<BaseIntent> =
@@ -203,72 +187,77 @@ object ProblemsReportPage :
         )
 
     private
-    fun viewProblems(model: Model) = div(
-        attributes { className("content") },
-        when (model.tab) {
-            Tab.ByMessage -> viewTree(model.messageTree, Intent::MessageTreeIntent)
-            Tab.ByGroup -> viewTree(model.groupTree, Intent::ProblemIdTreeIntent)
-            Tab.ByFileLocation -> viewTree(model.fileLocationTree, Intent::FileLocationTreeIntent)
-            Tab.ByPluginLocation -> viewTree(model.pluginLocationTree, Intent::PluginLocationTreeIntent)
-            Tab.ByTaskLocation -> viewTree(model.taskLocationTree, Intent::TaskLocationTreeIntent)
-        }
-    )
-
-    private
-    fun displaySummary(model: Model): View<BaseIntent> = div(
-        displayHeading(model),
-        viewSummaryParagraphs(model),
-    )
-
-    private
-    fun viewSummaryParagraphs(model: Model): View<BaseIntent> = div(
-        model.summary.flatMapIndexed { index, item ->
-            if (index == 0) listOf(viewSummaryParagraph(item))
-            else listOf(br(), viewSummaryParagraph(item))
-        }
-    )
-
-    private
-    fun viewSummaryParagraph(content: PrettyText): View<BaseIntent> = small(viewPrettyText(content))
-
-    private
-    fun displayHeading(model: Model): View<BaseIntent> = h1(PrettyTextNoCopy.view(model.heading))
-
-    private
-    fun displayTabButton(tab: Tab, activeTab: Tab, problemsCount: Int): View<Intent> = div(
-        attributes {
-            className("group-selector")
-            when {
-                problemsCount == 0 -> className("group-selector--disabled")
-                tab == activeTab -> className("group-selector--active")
-                else -> onClick { Intent.SetTab(tab) }
+    fun viewProblems(model: Model) =
+        div(
+            attributes { className("content") },
+            when (model.tab) {
+                Tab.ByMessage -> viewTree(model.messageTree, Intent::MessageTreeIntent)
+                Tab.ByGroup -> viewTree(model.groupTree, Intent::ProblemIdTreeIntent)
+                Tab.ByFileLocation -> viewTree(model.fileLocationTree, Intent::FileLocationTreeIntent)
+                Tab.ByPluginLocation -> viewTree(model.pluginLocationTree, Intent::PluginLocationTreeIntent)
+                Tab.ByTaskLocation -> viewTree(model.taskLocationTree, Intent::TaskLocationTreeIntent)
             }
-        },
-        span(
-            tab.text,
-            countBalloon(problemsCount)
         )
-    )
 
     private
-    fun countBalloon(count: Int): View<Intent> = span(
-        attributes { className("group-selector__count") },
-        invisibleSpace,
-        invisibleOpenParen,
-        span("$count"),
-        invisibleCloseParen
-    )
+    fun displaySummary(model: Model): View<BaseIntent> =
+        div(displayHeading(model), viewSummaryParagraphs(model))
 
     private
-    fun learnMore(learnMore: LearnMore): View<Intent> = div(
-        attributes { className("learn-more") },
-        span("Learn more about "),
-        a(
-            attributes { href(learnMore.documentationLink) },
-            learnMore.text
-        ),
-        span(".")
-    )
+    fun viewSummaryParagraphs(model: Model): View<BaseIntent> =
+        div(
+            model.summary.flatMapIndexed { index, item ->
+                if (index == 0) listOf(viewSummaryParagraph(item))
+                else listOf(br(), viewSummaryParagraph(item))
+            }
+        )
+
+    private
+    fun viewSummaryParagraph(content: PrettyText): View<BaseIntent> =
+        small(viewPrettyText(content))
+
+    private
+    fun displayHeading(model: Model): View<BaseIntent> =
+        h1(PrettyTextNoCopy.view(model.heading))
+
+    private
+    fun displayTabButton(tab: Tab, activeTab: Tab, problemsCount: Int): View<Intent> =
+        div(
+            attributes {
+                className("group-selector")
+                when {
+                    problemsCount == 0 -> className("group-selector--disabled")
+                    tab == activeTab -> className("group-selector--active")
+                    else -> onClick { Intent.SetTab(tab) }
+                }
+            },
+            span(
+                tab.text,
+                countBalloon(problemsCount)
+            )
+        )
+
+    private
+    fun countBalloon(count: Int): View<Intent> =
+        span(
+            attributes { className("group-selector__count") },
+            invisibleSpace,
+            invisibleOpenParen,
+            span("$count"),
+            invisibleCloseParen
+        )
+
+    private
+    fun learnMore(learnMore: LearnMore): View<Intent> =
+        div(
+            attributes { className("learn-more") },
+            span("Learn more about "),
+            a(
+                attributes { href(learnMore.documentationLink) },
+                learnMore.text
+            ),
+            span(".")
+        )
 
     private
     fun viewTree(model: ProblemTreeModel, treeIntent: (ProblemTreeIntent) -> BaseIntentTreeIntent): View<BaseIntent> =
@@ -278,17 +267,18 @@ object ProblemsReportPage :
     fun viewTree(
         subTrees: Sequence<Tree.Focus<ProblemNode>>,
         treeIntent: (ProblemTreeIntent) -> BaseIntentTreeIntent
-    ): View<BaseIntent> = div(
-        ol(
-            viewSubTrees(subTrees) { focus ->
-                viewNode(focus.tree.label, focus, treeIntent)
-            }
+    ): View<BaseIntent> =
+        div(
+            ol(
+                viewSubTrees(subTrees) { focus ->
+                    viewNode(focus.tree.label, focus, treeIntent)
+                }
+            )
         )
-    )
 
     private
-    fun viewIt(node: ProblemNode): View<BaseIntent> {
-        return when (node) {
+    fun viewIt(node: ProblemNode): View<BaseIntent> =
+        when (node) {
             is ProblemNode.Link -> viewDocLink(node)
             is ProblemNode.Label -> viewPrettyText(PrettyText.ofText(node.text))
             is ProblemNode.Message -> viewPrettyText(node.prettyText)
@@ -298,106 +288,95 @@ object ProblemsReportPage :
                 span(o)
             }
         }
-    }
 
     private
     fun viewNode(
         label: ProblemNode,
         focus: Tree.Focus<ProblemNode>,
         treeIntent: (ProblemTreeIntent) -> TreeIntent
-    ): View<BaseIntent> = when (label) {
-        is ProblemApiNode.Text -> viewPrettyText(PrettyText.ofText(label.text))
-        is ProblemApiNode.ProblemIdNode -> {
-            div(
-                attributes {
-                    if (label.separator) {
-                        className("uncategorized")
-                    }
-                },
-                div(
-                    treeButtonFor(focus, treeIntent),
-                    viewPrettyText(label.prettyText)
-                )
-            )
-        }
-
-        is ProblemNode.Exception -> viewException(treeIntent, focus, label)
-        is ProblemNode.Message -> {
-            viewPrettyText(label.prettyText)
-        }
-
-        is ProblemNode.ListElement -> {
-            div(
-                enumIcon,
-                viewPrettyText(label.prettyText)
-            )
-        }
-
-        is ProblemNode.TreeNode -> {
-            div(
-                treeButtonFor(focus, treeIntent),
-                viewPrettyText(label.prettyText)
-            )
-        }
-
-        is ProblemNode.Error -> {
-            treeLabel(
-                treeIntent,
-                ::viewIt,
-                focus,
-                label.label,
-                label.docLink,
-                errorIcon,
-                countBalloonIfNecessary(label.count)
-            )
-        }
-
-        is ProblemApiNode.Advice -> {
-            treeLabel(
-                treeIntent,
-                ::viewIt,
-                focus,
-                label.label,
-                label.docLink,
-                adviceIcon,
-                countBalloonIfNecessary(label.count)
-            )
-        }
-
-        is ProblemNode.Warning -> {
-            treeLabel(
-                treeIntent,
-                ::viewIt,
-                focus,
-                label.label,
-                label.docLink,
-                warningIcon,
-                countBalloonIfNecessary(label.count)
-            )
-        }
-
-        is ProblemNode.Label -> {
-            div(
-                treeButtonFor(focus, treeIntent),
+    ): View<BaseIntent> =
+        when (label) {
+            is ProblemApiNode.Text ->
                 viewPrettyText(PrettyText.ofText(label.text))
-            )
-        }
 
-        else -> {
-            span("Unknown node type viewNode: $label")
+            is ProblemApiNode.ProblemIdNode ->
+                div(
+                    div(
+                        treeButtonFor(focus, treeIntent),
+                        viewPrettyText(label.prettyText)
+                    )
+                )
+
+            is ProblemNode.Exception ->
+                viewException(treeIntent, focus, label)
+
+            is ProblemNode.Message ->
+                viewPrettyText(label.prettyText)
+
+            is ProblemNode.ListElement ->
+                div(enumIcon, viewPrettyText(label.prettyText))
+
+            is ProblemNode.TreeNode ->
+                div(treeButtonFor(focus, treeIntent), viewPrettyText(label.prettyText))
+
+            is ProblemNode.Error ->
+                treeLabel(
+                    treeIntent,
+                    ::viewIt,
+                    focus,
+                    label.label,
+                    label.docLink,
+                    errorIcon,
+                    countBalloonIfNecessary(label.count)
+                )
+
+            is ProblemApiNode.Advice ->
+                treeLabel(
+                    treeIntent,
+                    ::viewIt,
+                    focus,
+                    label.label,
+                    label.docLink,
+                    adviceIcon,
+                    countBalloonIfNecessary(label.count)
+                )
+
+            is ProblemNode.Warning ->
+                treeLabel(
+                    treeIntent,
+                    ::viewIt,
+                    focus,
+                    label.label,
+                    label.docLink,
+                    warningIcon,
+                    countBalloonIfNecessary(label.count)
+                )
+
+            is ProblemApiNode.Detail ->
+                viewProblemDetail(label.text)
+
+            is ProblemNode.Label ->
+                div(treeButtonFor(focus, treeIntent), viewPrettyText(PrettyText.ofText(label.text)))
+
+            else ->
+                span("Unknown node type viewNode: $label")
         }
-    }
 
     private
-    fun countBalloonIfNecessary(count: Int?): View<Nothing> {
-        return if (count == null) empty
-        else
-            span(
-                attributes { className("group-selector__count") },
-                invisibleSpace,
-                invisibleOpenParen,
-                span("$count"),
-                invisibleCloseParen
-            )
-    }
+    fun viewProblemDetail(text: String): View<BaseIntent> =
+        pre(
+            attributes { className("problem-detail") },
+            text
+        )
+
+    private
+    fun countBalloonIfNecessary(count: Int?): View<Nothing> =
+        if (count == null) empty
+        else span(
+            attributes { className("group-selector__count") },
+            invisibleSpace,
+            invisibleOpenParen,
+            span("$count"),
+            invisibleCloseParen
+        )
 }
