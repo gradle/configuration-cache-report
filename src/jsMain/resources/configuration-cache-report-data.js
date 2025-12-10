@@ -463,7 +463,7 @@ function configurationCacheProblems() {
                 "severity": "ERROR",
                 "contextualLabel": "Cannot locate tasks that match ':ba' as task 'ba' is ambiguous in root project 'root'. Candidates are: 'bar', 'baz'.",
                 "problemId": [
-                    {"name": "miscellaneous", "displayName": "Miscellaneous"},
+                    {"name": "invocation", "displayName": "Invocation"},
                     {"name": "task-selection-ambiguous", "displayName": "Ambiguous matches"}
                 ],
                 "solutions": ["Use the full task path to disambiguate"]
@@ -500,7 +500,7 @@ function configurationCacheProblems() {
                 "contextualLabel": "testing/internal-testing/src/main/groovy/org/gradle/util/internal/RedirectStdOutAndErr.java uses or overrides a deprecated API.",
                 "problemId": [
                     {"name": "compilation", "displayName": "Compilation"},
-                    {"name": "java", "displayName": "Java compilation"},
+                    {"name": "java", "displayName": "Java"},
                     {"name": "java-compilation-note", "displayName": "Java compilation note"}
                 ]
             }, {
@@ -546,7 +546,7 @@ function configurationCacheProblems() {
                 "problemDetails": "Some input files use or override a deprecated API.",
                 "problemId": [
                     {"name": "compilation", "displayName": "Compilation"},
-                    {"name": "java", "displayName": "Java compilation"},
+                    {"name": "java", "displayName": "Java"},
                     {"name": "java-compilation-note", "displayName": "Java compilation note"}
                 ],
                 "solutions": []
@@ -608,7 +608,7 @@ function configurationCacheProblems() {
                 "contextualLabel": "'(' or '[' expected",
                 "problemId": [
                     {"name": "compilation", "displayName": "Compilation"},
-                    {"name": "java", "displayName": "Java compilation"},
+                    {"name": "java", "displayName": "Java"},
                     {"name": "compiler-err-expected2", "displayName": "Java compilation error"}
                 ],
                 "solutions": ["Check your code and dependencies to fix the compilation error(s)"]

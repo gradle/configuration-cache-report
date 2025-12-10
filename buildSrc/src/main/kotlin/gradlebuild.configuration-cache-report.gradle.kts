@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 import gradlebuild.configcachereport.tasks.MergeReportAssets
-import gradlebuild.configcachereport.tasks.VerifyDevWorkflow
+import gradlebuild.configcachereport.tasks.VerifyJar
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
-import org.jlleitschuh.gradle.ktlint.tasks.KtLintCheckTask
 
 plugins {
     kotlin("multiplatform")
@@ -29,15 +28,9 @@ kotlin {
         browser {
             commonWebpackConfig {
                 sourceMaps = true
-                // uncomment the following line for better debugging experience
-                // mode = org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig.Mode.DEVELOPMENT
             }
         }
-
-        // Creating a distribution of the JS code as a single executable file
         binaries.executable()
-        // Also bunding all dependencies into a single file using a Gradle property:
-        // kotlin.js.ir.output.granularity=whole-program
     }
 
     sourceSets {
@@ -67,37 +60,45 @@ rootProject.run {
 tasks {
     withType<KotlinJsCompile>().configureEach {
         compilerOptions {
-            allWarningsAsErrors.set(true)
-            moduleKind.set(org.jetbrains.kotlin.gradle.dsl.JsModuleKind.MODULE_PLAIN)
+            allWarningsAsErrors = true
+            moduleKind = org.jetbrains.kotlin.gradle.dsl.JsModuleKind.MODULE_PLAIN
         }
     }
-}
 
-val assembleReport by tasks.registering(MergeReportAssets::class) {
-    htmlFile.set(layout.buildDirectory.file("processedResources/js/main/configuration-cache-report.html"))
-    logoFile.set(layout.buildDirectory.file("processedResources/js/main/configuration-cache-report-logo.png"))
-    cssFile.set(layout.buildDirectory.file("processedResources/js/main/configuration-cache-report.css"))
-    jsFile.set(webpackFile("configuration-cache-report.js"))
-    outputFile.set(layout.buildDirectory.file("$name/configuration-cache-report.html"))
+    val jsBrowserProductionWebpack = named<KotlinWebpack>("jsBrowserProductionWebpack")
 
-    // This is a workaround for "undeclared" dependency when running the build as included build of gradle/gradle.
-    // The KMP plugin declares its outputs both on Webpack and lifecycle task, which trips over missing dependency
-    // detector.
-    dependsOn("jsBrowserDistribution")
-    dependsOn("jsProcessResources")
-}
+    val assembleReport = register<MergeReportAssets>("assembleReport") {
+        htmlFile = layout.buildDirectory.file("processedResources/js/main/configuration-cache-report.html")
+        logoFile = layout.buildDirectory.file("processedResources/js/main/configuration-cache-report-logo.png")
+        cssFile = layout.buildDirectory.file("processedResources/js/main/configuration-cache-report.css")
+        jsFile = jsBrowserProductionWebpack.flatMap {
+            it.outputDirectory.file("configuration-cache-report.js")
+        }
+        outputFile = layout.buildDirectory.file("$name/configuration-cache-report.html")
 
-fun webpackFile(fileName: String) =
-    tasks.named<KotlinWebpack>("jsBrowserProductionWebpack").flatMap {
-        it.outputDirectory.file(fileName)
+        // This is a workaround for "undeclared" dependency when running the build as included build of gradle/gradle.
+        // The KMP plugin declares its outputs both on Webpack and lifecycle task, which trips over missing dependency
+        // detector.
+        dependsOn("jsBrowserDistribution")
+        dependsOn("jsProcessResources")
     }
 
-tasks.assemble {
-    dependsOn(assembleReport)
-}
+    val jar = register<Jar>("jar") {
+        from(assembleReport)
+    }
 
-val jar by tasks.registering(Jar::class) {
-    from(assembleReport)
+    assemble {
+        dependsOn(jar)
+    }
+
+    val verifyJar = register<VerifyJar>("verifyJar") {
+        jarFile = jar.flatMap { it.archiveFile }
+        receiptFile = layout.buildDirectory.file("$name/receipt.txt")
+    }
+
+    check {
+        dependsOn(verifyJar)
+    }
 }
 
 configurations.consumable("configurationCacheReport") {
@@ -106,32 +107,5 @@ configurations.consumable("configurationCacheReport") {
         attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.DOCUMENTATION))
         attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named("configuration-cache-report"))
     }
-    outgoing.artifact(jar)
-}
-
-val stageDir = layout.buildDirectory.dir("stageDevReport")
-
-val stageDevReport by tasks.registering(Sync::class) {
-    from(assembleReport)
-    from("src/jsTest/resources")
-    into(stageDir)
-}
-
-val verifyDevWorkflow by tasks.registering(VerifyDevWorkflow::class) {
-    stageDirectory.set(stageDevReport.map { projectDir(it.destinationDir) })
-}
-
-tasks.named("check") {
-    dependsOn(verifyDevWorkflow)
-}
-
-fun projectFile(file: File) =
-    layout.projectDirectory.file(file.absolutePath)
-
-fun projectDir(dir: File) =
-    layout.projectDirectory.dir(dir.absolutePath)
-
-tasks.named<KtLintCheckTask>("runKtlintCheckOverKotlinScripts") {
-    // Only check the build files, not all *.kts files in the project
-    setIncludes(mutableListOf("*.gradle.kts"))
+    outgoing.artifact(tasks.named<Jar>("jar"))
 }
