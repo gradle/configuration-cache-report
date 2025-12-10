@@ -1,5 +1,5 @@
 plugins {
-    id("com.gradle.develocity").version("3.17.4")
-    id("io.github.gradle.gradle-enterprise-conventions-plugin").version("0.10.1")
+    id("com.gradle.develocity").version("4.2.2")
+    id("io.github.gradle.develocity-conventions-plugin").version("0.13.0")
 }
 rootProject.name = "configuration-cache-report"
