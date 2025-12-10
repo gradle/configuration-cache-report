@@ -6,3 +6,6 @@ build
 
 # IDEA
 .idea
+
+# Kotlin
+.kotlin

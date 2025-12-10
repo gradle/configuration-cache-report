@@ -4,7 +4,8 @@ build with configuration caching.
 
 The output of `:configuration-cache-report` is completely produced by the
 `assembleReport` task into `build/report` which then gets published to repo.grdev.net.
-It's consumed by `gradle/gradle`'s [`configuration-cache` module](https://github.com/gradle/gradle/tree/master/subprojects/configuration-cache).
+It's consumed by `gradle/gradle`'s
+[`configuration-problems-base` module](https://github.com/gradle/gradle/tree/master/platforms/core-configuration/configuration-problems-base).
 
 ## Architecture
 
@@ -15,34 +16,31 @@ The interface between `:configuration-cache` and
 `:configuration-cache` module from the data collected at configuration
 time.
 
-An [example file](./src/test/resources/configuration-cache-report-data.js)
+An [example file](./src/jsMain/resources/configuration-cache-report-data.js)
 is kept for documentation and testing purposes.
 
-The app itself is built according to [the Elm
-architecture](https://guide.elm-lang.org/architecture/).
+The app itself is built according to
+[the Elm architecture](https://guide.elm-lang.org/architecture/).
 
 ## Setting up a quick feedback loop
 
-Start a build on one shell:
+Run in development mode with Kotlin sources in the browser debugger:
 
-    $ ./gradlew stageDevReport
+```shell
+./gradlew :jsBrowserDevelopmentRun
+```
 
-Start `browser-sync` (https://browsersync.io/) on another:
+Add live-reload by using Gradle's continuous mode:
 
-    $ browser-sync start -s build/stageDevReport --startPath configuration-cache-report.html -w
-
-Then make some changes and start the build again:
-
-    $ ./gradlew stageDevReport
-
-Hack away!
+```shell
+./gradlew :jsBrowserDevelopmentRun --continuous
+```
 
 ## Development with `gradle/gradle` and composite build
 
-To quickly make and verify changes for `gradle/gradle` build, you can run (this assumes you have cloned `configuration-cache-report` in the same directory as `gradle`):
+To quickly make and verify changes for `gradle/gradle` build, you can run
+(this assumes you have cloned `configuration-cache-report` in the same directory as `gradle`):
 
 ```
 ./gradlew <TheTaskToBeRunInGradleBuild> --include-build ../configuration-cache-report -Dorg.gradle.dependency.verification=lenient
 ```
-
-
