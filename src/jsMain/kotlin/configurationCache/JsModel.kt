@@ -29,6 +29,8 @@ external interface JsModel {
     val cacheActionDescription: Array<JsMessageFragment>?
     val documentationLink: String
     val totalProblemCount: Int
+    val uniqueProblemCount: Int
+    val overflownProblemCount: Int
     val diagnostics: Array<JsDiagnostic>
 }
 

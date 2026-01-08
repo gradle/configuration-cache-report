@@ -86,7 +86,7 @@ private
 fun summaryPrettyText(jsModel: JsModel, diagnostics: ImportedDiagnostics): List<PrettyText> {
     val cacheActionDescription = jsModel.cacheActionDescription?.let(::toPrettyText)
     val inputsSummary = PrettyText.ofText(inputsSummary(diagnostics))
-    val problemsSummary = PrettyText.ofText(problemsSummary(jsModel, diagnostics))
+    val problemsSummary = PrettyText.ofText(problemsSummary(jsModel))
 
     return listOfNotNull(
         cacheActionDescription,
@@ -107,11 +107,19 @@ fun inputsSummary(diagnostics: ImportedDiagnostics): String {
 
 
 private
-fun problemsSummary(jsModel: JsModel, diagnostics: ImportedDiagnostics): String {
+fun problemsSummary(jsModel: JsModel): String {
     val totalProblems = jsModel.totalProblemCount
-    val reportedProblems = diagnostics.problems.size
+    val uniqueProblems = jsModel.uniqueProblemCount
+    val consideredProblems = jsModel.totalProblemCount - jsModel.overflownProblemCount
+
     return found(totalProblems, "problem").let {
-        if (totalProblems > reportedProblems) "$it, only the first $reportedProblems ${wasOrWere(reportedProblems)} included in this report"
+        if (consideredProblems < totalProblems) "$it; only the first $consideredProblems ${wasOrWere(consideredProblems)} considered"
+        else it
+    }.let {
+        if (uniqueProblems < consideredProblems) "$it; of those, only $uniqueProblems ${wasOrWere(uniqueProblems)} unique"
+        else it
+    }.let {
+        if (uniqueProblems < totalProblems || consideredProblems < totalProblems) "$it and appear in this report"
         else it
     }
 }
