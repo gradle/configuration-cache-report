@@ -1,6 +1,6 @@
 function configurationCacheProblems() {
     // Toggle between problems report and CC report
-    const useProblemsReport = false; // Set to false for CC report
+    const useProblemsReport = true; // Set to false for CC report
 
     const baseConfig = {
         "buildName": "sampleProject",
