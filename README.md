@@ -44,3 +44,13 @@ To quickly make and verify changes for `gradle/gradle` build, you can run
 ```
 ./gradlew <TheTaskToBeRunInGradleBuild> --include-build ../configuration-cache-report -Dorg.gradle.dependency.verification=lenient
 ```
+
+## Releasing
+
+Release steps:
+
+1. Update the report version in `gradle.properties` (via the `configuration-cache-report.version` property) to remove the `-SNAPSHOT` suffix in preparation for the release
+2. Publish the report to the internal repository by running this [TeamCity job](https://builds.gradle.org/buildConfiguration/Gradle_ConfigurationCacheReport_Publish) (on the default branch)
+3. Check that the publishing was successful and the artifacts are [present in the internal repository](https://repo.grdev.net/ui/repos/tree/General/public/org/gradle/buildtool/internal/configuration-cache-report)
+4. Update the [report version](https://github.com/gradle/gradle/blob/master/build-logic/dependency-modules/src/main/kotlin/gradlebuild/modules/extension/ExternalModulesExtension.kt#L24) in `gradle/gradle` repository
+5. Increment the report version in `gradle.properties` (via the `configuration-cache-report.version` property) and add the `-SNAPSHOT` suffix back in preparation for the next development cycle
