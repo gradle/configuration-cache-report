@@ -44,3 +44,7 @@ To quickly make and verify changes for `gradle/gradle` build, you can run
 ```
 ./gradlew <TheTaskToBeRunInGradleBuild> --include-build ../configuration-cache-report -Dorg.gradle.dependency.verification=lenient
 ```
+
+## Releasing
+
+See [internal docs](https://bt-internal-docs.grdev.net/gbt/satellites/cc-report-release/#releasing).
