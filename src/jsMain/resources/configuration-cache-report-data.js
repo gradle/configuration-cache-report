@@ -471,6 +471,14 @@ function configurationCacheProblems() {
                 "solutions": ["Use the full task path to disambiguate"]
             }, {
                 "severity": "ERROR",
+                "contextualLabel": "Cannot locate tasks that match ':ba' as task 'ba' is ambiguous in root project 'root'. Candidates are: 'bar', 'baz'.",
+                "problemId": [
+                    {"name": "invocation", "displayName": "Invocation"},
+                    {"name": "task-selection-ambiguous", "displayName": "Ambiguous matches but different display name"}
+                ],
+                "solutions": ["Use the full task path to disambiguate"]
+            }, {
+                "severity": "ERROR",
                 "contextualLabel": "Custom build validation failed: Project must have a README.md file",
                 "problemId": [
                     {"name": "miscellaneous", "displayName": "Miscellaneous"},
