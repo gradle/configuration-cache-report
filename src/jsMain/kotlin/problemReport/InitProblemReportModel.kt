@@ -127,7 +127,7 @@ fun createMessageTree(problems: Array<JsProblem>): ProblemTreeModel =
 
 private
 val Array<JsProblemIdElement>.messageTreeGroupingString: String
-    get() = joinToString(":") { it.name }
+    get() = joinToString(":") { "${it.name}|${it.displayName}" }
 
 
 //endregion
