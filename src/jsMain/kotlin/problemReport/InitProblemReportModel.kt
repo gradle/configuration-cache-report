@@ -117,7 +117,7 @@ fun createMessageTree(problems: Array<JsProblem>): ProblemTreeModel =
                             children = problemsForMessage
                                 .sortedBy { it.contextualLabel ?: it.displayName }
                                 .map { prob ->
-                                    createMessageTreeElement(prob, useContextualAsPrimary = true)
+                                    createMessageTreeElement(prob, showDisplayNameAsChild = false)
                                 }
                         )
                     }
@@ -127,7 +127,7 @@ fun createMessageTree(problems: Array<JsProblem>): ProblemTreeModel =
 
 private
 val Array<JsProblemIdElement>.messageTreeGroupingString: String
-    get() = joinToString(":") { it.name }
+    get() = joinToString(":") { "${it.name}|${it.displayName}" }
 
 
 //endregion
@@ -196,7 +196,7 @@ fun createGroupTreeProblemChildren(
 ): List<Tree<ProblemNode>> =
     problemsByGroupId[groupId]
         ?.sortedBy { it.displayName }
-        ?.map { problem -> createMessageTreeElement(problem, useContextualAsPrimary = true) }
+        ?.map { problem -> createMessageTreeElement(problem, showDisplayNameAsChild = true) }
         ?: emptyList()
 
 //endregion
@@ -275,7 +275,7 @@ fun createLocationTreeProblemChildren(
             createMessageTreeElement(
                 problem = problem,
                 labelLocation = type.messageNodeLocation(location),
-                useContextualAsPrimary = true
+                showDisplayNameAsChild = true
             )
         }
 
@@ -290,14 +290,14 @@ private
 fun createMessageTreeElement(
     problem: JsProblem,
     labelLocation: JsLocation? = null,
-    useContextualAsPrimary: Boolean = false
+    showDisplayNameAsChild: Boolean = false
 ): Tree<ProblemNode> =
     Tree(
-        label = createMessageTreeElementLabel(problem, labelLocation, useContextualAsPrimary),
+        label = createMessageTreeElementLabel(problem, labelLocation, useContextualAsPrimary = true),
         children = createMessageTreeElementChildren(
             problem = problem,
             locationViewState = if (labelLocation != null) Tree.ViewState.Collapsed else Tree.ViewState.Expanded,
-            skipContextual = useContextualAsPrimary
+            showDisplayNameAsChild = showDisplayNameAsChild
         )
     )
 
@@ -379,12 +379,17 @@ private
 fun createMessageTreeElementChildren(
     problem: JsProblem,
     locationViewState: Tree.ViewState,
-    skipContextual: Boolean,
+    showDisplayNameAsChild: Boolean,
 ): List<Tree<ProblemNode>> =
     buildList {
         // to avoid duplication on the UI, if the contextual label is used in a parent tree item, we skip it here
-        if (!skipContextual && problem.contextualLabel != null) {
+        if (problem.contextualLabel != null) {
             add(Tree(ProblemNode.Message(PrettyText.ofText(problem.contextualLabel!!))))
+        }
+
+        // Add displayName when contextualLabel was used as primary
+        if (showDisplayNameAsChild || problem.contextualLabel == null) {
+            add(Tree(ProblemNode.Message(buildProblemPrettyText(problem.displayName))))
         }
 
         problem.problemDetails?.let { problemDetails ->
