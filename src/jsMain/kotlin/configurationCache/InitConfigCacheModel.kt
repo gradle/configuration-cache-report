@@ -250,6 +250,14 @@ fun toProblemNode(trace: JsTrace): ProblemNode = when (trace.kind) {
         ProblemCCNode.Bean(type)
     }
 
+    "CapturedArguments" -> trace.unsafeCast<JsTraceCapturedArguments>().run {
+        ProblemCCNode.CapturedArguments(`class`, method, subkind)
+    }
+
+    "SerializedLambda" -> trace.unsafeCast<JsTraceSerializedLambda>().run {
+        ProblemCCNode.SerializedLambda(type, returns)
+    }
+
     "Field" -> trace.unsafeCast<JsTraceField>().run {
         ProblemCCNode.Property("field", name, declaringType)
     }

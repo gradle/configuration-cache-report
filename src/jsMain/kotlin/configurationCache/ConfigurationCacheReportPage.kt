@@ -61,6 +61,13 @@ sealed class ProblemCCNode : ProblemNode() {
 
     data class Bean(val type: String) : ProblemNode()
 
+    data class CapturedArguments(val implClass: String, val methodName: String, val subkind: String) : ProblemNode()
+
+    data class SerializedLambda(
+        val type: String,
+        val returnType: String
+    ) : ProblemNode()
+
     data class SystemProperty(val name: String) : ProblemNode()
 
     data class Property(val kind: String, val name: String, val owner: String) : ProblemNode()
@@ -369,6 +376,24 @@ object ConfigurationCacheReportPage :
         is ProblemCCNode.Bean -> viewPrettyText {
             text("bean of type ")
             ref(node.type)
+        }
+
+        is ProblemCCNode.CapturedArguments -> viewPrettyText {
+            if (node.subkind == "boundReceiver") {
+                text("bound receiver of method ")
+            } else {
+                text("captured state from method ")
+            }
+            ref(node.methodName)
+            text(" of ")
+            ref(node.implClass)
+        }
+
+        is ProblemCCNode.SerializedLambda -> viewPrettyText {
+            text("lambda of type ")
+            ref(node.type)
+            text(" returning ")
+            ref(node.returnType)
         }
 
         is ProblemCCNode.BuildLogic -> viewPrettyText {
