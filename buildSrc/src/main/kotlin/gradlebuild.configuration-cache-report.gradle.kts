@@ -84,7 +84,9 @@ tasks {
     }
 
     val jar = register<Jar>("jar") {
-        from(assembleReport)
+        from(assembleReport) {
+            into("org/gradle/internal/configuration/problems")
+        }
     }
 
     assemble {
