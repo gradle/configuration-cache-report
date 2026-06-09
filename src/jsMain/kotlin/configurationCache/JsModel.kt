@@ -72,6 +72,19 @@ external interface JsTraceBean : JsTrace {
 }
 
 
+external interface JsTraceCapturedArguments : JsTrace {
+    val `class`: String
+    val method: String
+    val subkind: String
+}
+
+
+external interface JsTraceSerializedLambda : JsTrace {
+    val type: String
+    val returns: String
+}
+
+
 external interface JsTraceField : JsTrace {
     val name: String
     val declaringType: String
