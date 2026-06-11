@@ -1,6 +1,9 @@
 #
 # https://help.github.com/articles/dealing-with-line-endings/
 #
-# These are explicitly windows files and should use crlf
-*.bat           text eol=crlf
+# BAT files must use CRLF, but automatic translation with `text eol=crlf` causes "ever changed" issue with Dependabot.
+# It commits CRLF directly to the repo bypassing the content filter, while Git machinery expects it to have LF there.
+*.bat -text
 
+# Binary files
+*.jar binary
