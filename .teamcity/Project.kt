@@ -84,7 +84,7 @@ object PublishToMavenCentral : AbstractCheck({
     steps {
         gradle {
             useGradleWrapper = true
-            gradleParams = "publishMavenPublicationToRemoteRepository"
+            gradleParams = "publish"
         }
     }
 })

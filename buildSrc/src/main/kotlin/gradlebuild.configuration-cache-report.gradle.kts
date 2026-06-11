@@ -33,6 +33,10 @@ kotlin {
         binaries.executable()
     }
 
+    // For now, the JVM target exists purely to produce the resource-only JAR that bundles the
+    // assembled report HTML. It has no Kotlin/JVM sources.
+    jvm()
+
     sourceSets {
         commonTest {
             dependencies {
@@ -83,29 +87,22 @@ tasks {
         dependsOn("jsProcessResources")
     }
 
-    val jar = register<Jar>("jar") {
-        from(assembleReport)
+    // Pack the assembled report HTML into the JVM target's resources, so the standard
+    // jvmJar produced by the KMP plugin bundles it at the path the consumer reads from.
+    named<Copy>("jvmProcessResources") {
+        from(assembleReport) {
+            into("org/gradle/internal/configuration/problems")
+        }
     }
 
-    assemble {
-        dependsOn(jar)
-    }
+    val jvmJar = named<Jar>("jvmJar")
 
     val verifyJar = register<VerifyJar>("verifyJar") {
-        jarFile = jar.flatMap { it.archiveFile }
+        jarFile = jvmJar.flatMap { it.archiveFile }
         receiptFile = layout.buildDirectory.file("$name/receipt.txt")
     }
 
     check {
         dependsOn(verifyJar)
     }
-}
-
-configurations.consumable("configurationCacheReport") {
-    attributes {
-        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.JAVA_RUNTIME))
-        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.DOCUMENTATION))
-        attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named("configuration-cache-report"))
-    }
-    outgoing.artifact(tasks.named<Jar>("jar"))
 }

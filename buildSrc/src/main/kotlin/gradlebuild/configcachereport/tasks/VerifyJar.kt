@@ -1,7 +1,6 @@
 package gradlebuild.configcachereport.tasks
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.file.ArchiveOperations
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputFile
@@ -9,7 +8,7 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
-import javax.inject.Inject
+import java.util.zip.ZipFile
 
 
 @CacheableTask
@@ -22,22 +21,17 @@ abstract class VerifyJar : DefaultTask() {
     @get:OutputFile
     abstract val receiptFile: RegularFileProperty
 
-    @get:Inject
-    protected abstract val archiveOps: ArchiveOperations
-
     @TaskAction
     fun action() {
-        val jarFiles = archiveOps.zipTree(jarFile.get().asFile).files
-        require(jarFiles.isNotEmpty()) {
-            "The JAR is empty!"
+        val entries = ZipFile(jarFile.get().asFile).use { zip ->
+            zip.entries().asSequence().filter { !it.isDirectory }.map { it.name }.toList()
         }
-        require(jarFiles.size == 2) {
-            "Expected two files in the JAR, but got ${jarFiles.size}!"
-        }
-        val expectedFilenames = listOf("MANIFEST.MF", "configuration-cache-report.html")
-        val actualFilenames = jarFiles.map { it.name }
-        require(actualFilenames == expectedFilenames) {
-            "Expected file names $expectedFilenames but got $actualFilenames"
+        val expectedEntries = listOf(
+            "META-INF/MANIFEST.MF",
+            "org/gradle/internal/configuration/problems/configuration-cache-report.html",
+        )
+        require(entries.sorted() == expectedEntries.sorted()) {
+            "Expected JAR entries $expectedEntries but got $entries"
         }
         receiptFile.get().asFile.writeText("OK")
     }

@@ -5,7 +5,7 @@ plugins {
 
 group = "org.gradle.buildtool.internal"
 description = "Configuration cache problems HTML report"
-version = "1.0"
+version = providers.gradleProperty("configuration-cache-report.version").get()
 
 repositories {
     mavenCentral()
