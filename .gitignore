@@ -1,11 +1,18 @@
-# Ignore Gradle project-specific cache directory
-.gradle
+# Ignore all dotfiles by default
+.*
 
-# Ignore Gradle build output directory
+# Ignore Gradle build outputs
 build
 
-# IDEA
-.idea
+# Include Git configuration
+!.gitignore
+!.gitattributes
 
-# Kotlin
-.kotlin
+# Include code style
+!.editorconfig
+
+# GitHub configuration
+!.github
+
+# Teamcity configuration
+!.teamcity
