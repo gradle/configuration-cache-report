@@ -65,12 +65,12 @@ sealed class ProblemCCNode : ProblemNode() {
      * @param label the input description; in practice always a [ProblemNode.Label].
      * @param docLink a link to relevant documentation; in practice always a [ProblemNode.Link] or null.
      */
-    data class Info(val label: ProblemNode, val docLink: ProblemNode?) : ProblemNode()
+    data class Info(val label: ProblemNode, val docLink: ProblemNode?) : ProblemCCNode()
 
     /**
      * A Gradle project referenced in the property trace, e.g. `:app` or `:lib:core`.
      */
-    data class Project(val path: String) : ProblemNode()
+    data class Project(val path: String) : ProblemCCNode()
 
     /**
      * A Gradle task referenced in the property trace, including its implementation type,
@@ -79,19 +79,19 @@ sealed class ProblemCCNode : ProblemNode() {
      * [path] is the build-tree-qualified identity path of the task. For tasks in included builds
      * this includes the build name prefix, e.g. `:my-build:app:compileJava`.
      */
-    data class Task(val path: String, val type: String) : ProblemNode()
+    data class Task(val path: String, val type: String) : ProblemCCNode()
 
     /**
      * A Gradle task referenced only by path, without its type. Used where the task type is not
      * relevant, e.g. for tasks that are incompatible with the configuration cache.
      */
-    data class TaskPath(val path: String) : ProblemNode()
+    data class TaskPath(val path: String) : ProblemCCNode()
 
     /**
      * A Java bean being serialized as part of the configuration cache entry,
      * e.g. `org.gradle.api.internal.artifacts.configurations.DefaultConfiguration`.
      */
-    data class Bean(val type: String) : ProblemNode()
+    data class Bean(val type: String) : ProblemCCNode()
 
     /**
      * State captured by a lambda expression or method reference that appears in the property trace.
@@ -109,7 +109,7 @@ sealed class ProblemCCNode : ProblemNode() {
      * @param subkind either `"lambdaBody"` (state captured by a lambda expression) or `"boundReceiver"`
      *   (the bound receiver of a method reference).
      */
-    data class CapturedArguments(val implClass: String, val methodName: String, val subkind: String) : ProblemNode()
+    data class CapturedArguments(val implClass: String, val methodName: String, val subkind: String) : ProblemCCNode()
 
     /**
      * A lambda appearing in the property trace chain. The lambda itself is not necessarily the
@@ -122,13 +122,13 @@ sealed class ProblemCCNode : ProblemNode() {
     data class SerializedLambda(
         val type: String,
         val returnType: String
-    ) : ProblemNode()
+    ) : ProblemCCNode()
 
     /**
      * A JVM system property read during configuration, e.g. `java.io.tmpdir` or `user.home`.
      * Reading system properties is tracked as a configuration input.
      */
-    data class SystemProperty(val name: String) : ProblemNode()
+    data class SystemProperty(val name: String) : ProblemCCNode()
 
     /**
      * A named property that is part of the property trace. Covers four JSON trace kinds,
@@ -143,7 +143,7 @@ sealed class ProblemCCNode : ProblemNode() {
      * @param name the property name in code, e.g. `"outputDir"`.
      * @param owner the task path, project path, or declaring class depending on [kind].
      */
-    data class Property(val kind: String, val name: String, val owner: String) : ProblemNode()
+    data class Property(val kind: String, val name: String, val owner: String) : ProblemCCNode()
 
     /**
      * A synthetic property that has a user-facing name but no direct counterpart in code.
@@ -153,21 +153,21 @@ sealed class ProblemCCNode : ProblemNode() {
      * Unlike [Property], the virtual property doesn't have a name in code and has no
      * property-kind classification.
      */
-    data class VirtualProperty(val name: String, val owner: String) : ProblemNode()
+    data class VirtualProperty(val name: String, val owner: String) : ProblemCCNode()
 
     /**
      * A location in a build script or settings file, e.g. `build.gradle.kts:42` or
      * `settings.gradle:10`. The outermost element of the trace for problems that originate
      * directly in build logic.
      */
-    data class BuildLogic(val location: String) : ProblemNode()
+    data class BuildLogic(val location: String) : ProblemCCNode()
 
     /**
      * A class defined in build logic (a buildSrc class or an included build plugin class),
      * e.g. `com.example.MyPlugin`. Appears in the trace when a plugin class itself is
      * the source of the problem rather than a specific script line.
      */
-    data class BuildLogicClass(val type: String) : ProblemNode()
+    data class BuildLogicClass(val type: String) : ProblemCCNode()
 }
 
 
