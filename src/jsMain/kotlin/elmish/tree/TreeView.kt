@@ -18,8 +18,6 @@ package elmish.tree
 
 import data.mapAt
 import elmish.View
-import elmish.attributes
-import elmish.div
 import elmish.empty
 import elmish.li
 import elmish.ul
@@ -46,16 +44,6 @@ object TreeView {
 
         data class Toggle<T>(override val focus: Tree.Focus<T>) : Intent<T>()
     }
-
-    fun <T> view(model: Model<T>): View<Intent<T>> =
-        viewTree(model.tree.focus()) { focus ->
-            div(
-                attributes {
-                    onClick { Intent.Toggle(focus) }
-                },
-                focus.tree.label.toString()
-            )
-        }
 
     fun <T> step(intent: Intent<T>, model: Model<T>): Model<T> = when (intent) {
         is Intent.Toggle -> model.copy(
@@ -143,14 +131,6 @@ data class Tree<T>(
         }
     }
 }
-
-
-fun <T, I> viewTree(
-    focus: Tree.Focus<T>,
-    viewLabel: (Tree.Focus<T>) -> View<I>
-): View<I> = ul(
-    viewSubTree(focus, viewLabel)
-)
 
 
 fun <T, I> viewSubTree(
