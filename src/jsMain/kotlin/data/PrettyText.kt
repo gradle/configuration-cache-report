@@ -17,12 +17,28 @@
 package data
 
 
+/**
+ * A structured text value composed of plain-text and code-reference fragments.
+ *
+ * A [Fragment.Text] is a run of prose; a [Fragment.Reference] is a code-style identifier such as
+ * a class name, task path, or property name.
+ *
+ * Use [PrettyText.build] for multi-fragment values or [PrettyText.ofText] for plain text.
+ */
 data class PrettyText(val fragments: List<Fragment>) {
 
     sealed class Fragment {
 
+        /** A run of prose, e.g. `"task "` or `" of type "`. */
         data class Text(val text: String) : Fragment()
 
+        /**
+         * A code-style identifier, e.g. a class name, task path, or property name.
+         *
+         * @param name the identifier text.
+         * @param clipboardString the text associated with this reference for copying; defaults to
+         *   [name]. An empty string means the reference has no copyable value.
+         */
         data class Reference(val name: String, val clipboardString: String) : Fragment()
     }
 

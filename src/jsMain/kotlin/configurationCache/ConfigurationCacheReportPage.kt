@@ -50,38 +50,123 @@ import reporting.viewPrettyText
 import reporting.warningIcon
 
 
+/**
+ * Configuration Cache-specific [ProblemNode] subtypes. Most describe elements of the
+ * CC property trace — the path from the build graph root down to the offending value.
+ */
 sealed class ProblemCCNode : ProblemNode() {
+
+    /**
+     * A neutral-severity node representing a configuration cache input rather than a problem,
+     * e.g. a `System.getProperty` access or a file system check recorded as a configuration input.
+     *
+     * Shares the shape of [ProblemNode.Error]/[ProblemNode.Warning] but is informational.
+     *
+     * @param label the input description; in practice always a [ProblemNode.Label].
+     * @param docLink a link to relevant documentation; in practice always a [ProblemNode.Link] or null.
+     */
     data class Info(val label: ProblemNode, val docLink: ProblemNode?) : ProblemNode()
 
+    /**
+     * A Gradle project referenced in the property trace, e.g. `:app` or `:lib:core`.
+     */
     data class Project(val path: String) : ProblemNode()
 
+    /**
+     * A Gradle task referenced in the property trace, including its implementation type,
+     * e.g. task `:app:compileJava` of type `org.gradle.api.tasks.compile.JavaCompile`.
+     *
+     * [path] is the build-tree-qualified identity path of the task. For tasks in included builds
+     * this includes the build name prefix, e.g. `:my-build:app:compileJava`.
+     */
     data class Task(val path: String, val type: String) : ProblemNode()
 
+    /**
+     * A Gradle task referenced only by path, without its type. Used where the task type is not
+     * relevant, e.g. for tasks that are incompatible with the configuration cache.
+     */
     data class TaskPath(val path: String) : ProblemNode()
 
+    /**
+     * A Java bean being serialized as part of the configuration cache entry,
+     * e.g. `org.gradle.api.internal.artifacts.configurations.DefaultConfiguration`.
+     */
     data class Bean(val type: String) : ProblemNode()
 
+    /**
+     * State captured by a lambda expression or method reference that appears in the property trace.
+     *
+     * [subkind] is chosen per functional object by whether its JVM implementation method is a
+     * compiler-synthesized lambda method (`lambda$...`) — it does not split the captured values of a
+     * single lambda into two categories.
+     *
+     * @param implClass the class that declares the implementation method, e.g. `com.example.MyPlugin`.
+     *   For a lambda this is the class enclosing the lambda; for a method reference it is the class
+     *   declaring the referenced method, which may differ from where the reference appears.
+     * @param methodName the enclosing/referenced method name. For a lambda this is the assumed enclosing method,
+     *   derived from the generated implementation method name;
+     *   for a method reference it is the referenced method name.
+     * @param subkind either `"lambdaBody"` (state captured by a lambda expression) or `"boundReceiver"`
+     *   (the bound receiver of a method reference).
+     */
     data class CapturedArguments(val implClass: String, val methodName: String, val subkind: String) : ProblemNode()
 
+    /**
+     * A lambda appearing in the property trace chain. The lambda itself is not necessarily the
+     * source of the problem — it is an intermediate step on the path to the offending property.
+     *
+     * @param type the raw functional interface class name (no generic arguments),
+     *   e.g. `org.gradle.api.Action`.
+     * @param returnType the instantiated return type, e.g. `void` for an `Action`.
+     */
     data class SerializedLambda(
         val type: String,
         val returnType: String
     ) : ProblemNode()
 
+    /**
+     * A JVM system property read during configuration, e.g. `java.io.tmpdir` or `user.home`.
+     * Reading system properties is tracked as a configuration input.
+     */
     data class SystemProperty(val name: String) : ProblemNode()
 
+    /**
+     * A named property that is part of the property trace. Covers four JSON trace kinds,
+     * each mapped by [toProblemNode] to a human-readable [kind] string:
+     *
+     * - `Field` → `"field"` — a Java field; [owner] is the declaring class name.
+     * - `InputProperty` → `"input property"` — a task `@Input*` property; [owner] is the task path.
+     * - `OutputProperty` → `"output property"` — a task `@Output*` property; [owner] is the task path.
+     * - `PropertyUsage` → `"property"` — a property accessed from a project; [owner] is the project path.
+     *
+     * @param kind a human-readable string (not the raw JSON kind) describing the property kind.
+     * @param name the property name in code, e.g. `"outputDir"`.
+     * @param owner the task path, project path, or declaring class depending on [kind].
+     */
     data class Property(val kind: String, val name: String, val owner: String) : ProblemNode()
 
     /**
-     * Unlike real [Property], the virtual property doesn't have a name in code and thus has a slightly different
-     * rendering.
-     * It can be used to give better user-facing names to concepts not really obvious from their implementation,
-     * like up-to-date predicates of `TaskOutputs` or task actions.
+     * A synthetic property that has a user-facing name but no direct counterpart in code.
+     * Used to give readable labels to concepts like the up-to-date predicate of `TaskOutputs`
+     * or a task action registered via `doFirst`/`doLast`.
+     *
+     * Unlike [Property], the virtual property doesn't have a name in code and has no
+     * property-kind classification.
      */
     data class VirtualProperty(val name: String, val owner: String) : ProblemNode()
 
+    /**
+     * A location in a build script or settings file, e.g. `build.gradle.kts:42` or
+     * `settings.gradle:10`. The outermost element of the trace for problems that originate
+     * directly in build logic.
+     */
     data class BuildLogic(val location: String) : ProblemNode()
 
+    /**
+     * A class defined in build logic (a buildSrc class or an included build plugin class),
+     * e.g. `com.example.MyPlugin`. Appears in the trace when a plugin class itself is
+     * the source of the problem rather than a specific script line.
+     */
     data class BuildLogicClass(val type: String) : ProblemNode()
 }
 

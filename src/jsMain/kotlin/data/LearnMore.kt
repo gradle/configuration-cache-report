@@ -17,6 +17,12 @@
 package data
 
 
+/**
+ * A "Learn more about …" documentation link for a report topic.
+ *
+ * @param text the link text, e.g. `"Gradle Configuration Cache"` or `"reporting problems"`.
+ * @param documentationLink the URL the link points to.
+ */
 data class LearnMore(
     val text: String,
     val documentationLink: String
