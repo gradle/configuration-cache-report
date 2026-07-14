@@ -17,80 +17,34 @@
 package org.gradle.problems.internal.report.model
 
 import data.PrettyText
+import kotlinx.serialization.json.Json
 
 
 /**
- * Builds a [JsModel] from the `dynamic` JSON object embedded in the report page.
+ * Decodes the report models from the report JSON text.
+ *
+ * The report data is produced by `ConfigurationCacheReport` (see `configuration-cache-report-data.js`)
+ * and reaches the page as a JavaScript object; the caller stringifies it and we parse the resulting
+ * text with [Json.decodeFromString], so decoding is driven entirely by the `@Serializable` model
+ * definitions instead of hand-written field extraction.
  */
-fun buildCcReportJsModel(json: dynamic): JsModel =
-    JsModel(
-        problemsReport = json.problemsReport,
-        buildName = json.buildName as String?,
-        cacheAction = json.cacheAction as String,
-        requestedTasks = json.requestedTasks as String?,
-        cacheActionDescription = buildJsMessageFragmentsOrNull(json.cacheActionDescription),
-        documentationLink = json.documentationLink as String,
-        totalProblemCount = json.totalProblemCount as Int,
-        uniqueProblemCount = json.uniqueProblemCount as Int,
-        overflownProblemCount = json.overflownProblemCount as Int,
-        diagnostics = json.diagnostics.unsafeCast<Array<dynamic>>().map(::buildJsDiagnostic)
-    )
+private
+val reportJson = Json {
+    // A problems report is decoded from the same top-level object as a configuration cache report
+    // (see JsProblemsModel), so the configuration-cache-specific fields are unknown to it and must
+    // be ignored rather than treated as errors.
+    ignoreUnknownKeys = true
+}
 
 
-fun buildJsDiagnostic(json: dynamic): JsDiagnostic =
-    JsDiagnostic(
-        input = buildJsMessageFragmentsOrNull(json.input),
-        problem = buildJsMessageFragmentsOrNull(json.problem),
-        incompatibleTask = buildJsMessageFragmentsOrNull(json.incompatibleTask),
-        trace = json.trace.unsafeCast<Array<dynamic>>().map(::buildJsTrace),
-        documentationLink = json.documentationLink as String?,
-        error = buildJsErrorOrNull(json.error)
-    )
+/** Decodes a configuration cache report [JsModel] from the report JSON text. */
+fun parseCcReportJsModel(jsonText: String): JsModel =
+    reportJson.decodeFromString(JsModel.serializer(), jsonText)
 
 
-fun buildJsTrace(json: dynamic): JsTrace =
-    when (val kind = json.kind as String?) {
-        "Project" -> JsTraceProject(json.path as String)
-        "Task" -> JsTraceTask(json.path as String, json.type as String)
-        "TaskPath" -> JsTraceTaskPath(json.path as String)
-        "Bean" -> JsTraceBean(json.type as String)
-        "CapturedArguments" -> JsTraceCapturedArguments(
-            json.`class` as String,
-            json.method as String,
-            json.subkind as String
-        )
-        "SerializedLambda" -> JsTraceSerializedLambda(json.type as String, json.returns as String)
-        "Field" -> JsTraceField(json.name as String, json.declaringType as String)
-        "InputProperty" -> JsTraceInputProperty(json.name as String, json.task as String)
-        "OutputProperty" -> JsTraceOutputProperty(json.name as String, json.task as String)
-        "VirtualProperty" -> JsTraceVirtualProperty(json.name as String, json.owner as String)
-        "PropertyUsage" -> JsTracePropertyUsage(json.name as String, json.from as String)
-        "SystemProperty" -> JsTraceSystemProperty(json.name as String)
-        "BuildLogic" -> JsBuildLogic(json.location as String)
-        "BuildLogicClass" -> JsBuildLogicClass(json.type as String)
-        else -> JsGenericTrace(kind ?: "")
-    }
-
-
-fun buildJsError(json: dynamic): JsError =
-    JsError(
-        summary = buildJsMessageFragmentsOrNull(json.summary),
-        parts = buildJsStackTracePartsOrNull(json.parts)
-    )
-
-
-fun buildJsStackTracePart(json: dynamic): JsStackTracePart =
-    JsStackTracePart(
-        text = json.text as String?,
-        internalText = json.internalText as String?
-    )
-
-
-fun buildJsMessageFragment(json: dynamic): JsMessageFragment =
-    JsMessageFragment(
-        text = json.text as String?,
-        name = json.name as String?
-    )
+/** Decodes a [JsProblemsModel] from the report JSON text, used when a problems report is present. */
+fun parseProblemsJsModel(jsonText: String): JsProblemsModel =
+    reportJson.decodeFromString(JsProblemsModel.serializer(), jsonText)
 
 
 fun toPrettyText(message: List<JsMessageFragment>): PrettyText =
@@ -100,83 +54,3 @@ fun toPrettyText(message: List<JsMessageFragment>): PrettyText =
             fragment.name?.let { ref(it) }
         }
     }
-
-
-/**
- * Builds a [ProblemReportJsModel] from the `dynamic` JSON object embedded in the report page.
- */
-fun buildProblemReportJsModel(json: dynamic): ProblemReportJsModel =
-    ProblemReportJsModel(
-        buildName = json.buildName as String?,
-        requestedTasks = json.requestedTasks as String?,
-        documentationLink = json.documentationLink as String,
-        summaries = json.summaries.unsafeCast<Array<dynamic>>().map(::buildJsProblemSummary)
-    )
-
-
-fun buildJsProblem(json: dynamic): JsProblem =
-    JsProblem(
-        problemId = json.problemId.unsafeCast<Array<dynamic>>().map(::buildJsProblemIdElement),
-        documentationLink = json.documentationLink as String?,
-        severity = json.severity as String,
-        error = buildJsErrorOrNull(json.error),
-        problemDetails = json.problemDetails as String?,
-        contextualLabel = json.contextualLabel as String?,
-        solutions = buildStringListOrNull(json.solutions),
-        locations = buildJsLocationsOrNull(json.locations)
-    )
-
-
-fun buildJsProblemIdElement(json: dynamic): JsProblemIdElement =
-    JsProblemIdElement(
-        name = json.name as String,
-        displayName = json.displayName as String
-    )
-
-
-fun buildJsProblemSummary(json: dynamic): JsProblemSummary =
-    JsProblemSummary(
-        problemId = json.problemId.unsafeCast<Array<dynamic>>().map(::buildJsProblemIdElement),
-        count = json.count as Int
-    )
-
-
-fun buildJsLocation(json: dynamic): JsLocation =
-    JsLocation(
-        path = json.path as String?,
-        line = json.line as Int?,
-        column = json.column as Int?,
-        length = json.length as Int?,
-        pluginId = json.pluginId as String?,
-        taskPath = json.taskPath as String?
-    )
-
-
-private
-fun buildJsErrorOrNull(json: dynamic): JsError? =
-    if (json == null) null
-    else buildJsError(json)
-
-
-private
-fun buildJsStackTracePartsOrNull(json: dynamic): List<JsStackTracePart>? =
-    if (json == null) null
-    else json.unsafeCast<Array<dynamic>>().map(::buildJsStackTracePart)
-
-
-private
-fun buildJsMessageFragmentsOrNull(json: dynamic): List<JsMessageFragment>? =
-    if (json == null) null
-    else json.unsafeCast<Array<dynamic>>().map(::buildJsMessageFragment)
-
-
-private
-fun buildJsLocationsOrNull(json: dynamic): List<JsLocation>? =
-    if (json == null) null
-    else json.unsafeCast<Array<dynamic>>().map(::buildJsLocation)
-
-
-private
-fun buildStringListOrNull(json: dynamic): List<String>? =
-    if (json == null) null
-    else json.unsafeCast<Array<String>>().toList()
