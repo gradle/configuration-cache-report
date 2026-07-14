@@ -22,7 +22,7 @@ import data.PrettyText
 /**
  * Builds a [JsModel] from the `dynamic` JSON object embedded in the report page.
  */
-fun buildJsModel(json: dynamic): JsModel =
+fun buildCcReportJsModel(json: dynamic): JsModel =
     JsModel(
         problemsReport = json.problemsReport,
         buildName = json.buildName as String?,
@@ -102,6 +102,56 @@ fun toPrettyText(message: List<JsMessageFragment>): PrettyText =
     }
 
 
+/**
+ * Builds a [ProblemReportJsModel] from the `dynamic` JSON object embedded in the report page.
+ */
+fun buildProblemReportJsModel(json: dynamic): ProblemReportJsModel =
+    ProblemReportJsModel(
+        buildName = json.buildName as String?,
+        requestedTasks = json.requestedTasks as String?,
+        documentationLink = json.documentationLink as String,
+        summaries = json.summaries.unsafeCast<Array<dynamic>>().map(::buildJsProblemSummary)
+    )
+
+
+fun buildJsProblem(json: dynamic): JsProblem =
+    JsProblem(
+        problemId = json.problemId.unsafeCast<Array<dynamic>>().map(::buildJsProblemIdElement),
+        documentationLink = json.documentationLink as String?,
+        severity = json.severity as String,
+        error = buildJsErrorOrNull(json.error),
+        problemDetails = json.problemDetails as String?,
+        contextualLabel = json.contextualLabel as String?,
+        solutions = buildStringListOrNull(json.solutions),
+        locations = buildJsLocationsOrNull(json.locations)
+    )
+
+
+fun buildJsProblemIdElement(json: dynamic): JsProblemIdElement =
+    JsProblemIdElement(
+        name = json.name as String,
+        displayName = json.displayName as String
+    )
+
+
+fun buildJsProblemSummary(json: dynamic): JsProblemSummary =
+    JsProblemSummary(
+        problemId = json.problemId.unsafeCast<Array<dynamic>>().map(::buildJsProblemIdElement),
+        count = json.count as Int
+    )
+
+
+fun buildJsLocation(json: dynamic): JsLocation =
+    JsLocation(
+        path = json.path as String?,
+        line = json.line as Int?,
+        column = json.column as Int?,
+        length = json.length as Int?,
+        pluginId = json.pluginId as String?,
+        taskPath = json.taskPath as String?
+    )
+
+
 private
 fun buildJsErrorOrNull(json: dynamic): JsError? =
     if (json == null) null
@@ -118,3 +168,15 @@ private
 fun buildJsMessageFragmentsOrNull(json: dynamic): List<JsMessageFragment>? =
     if (json == null) null
     else json.unsafeCast<Array<dynamic>>().map(::buildJsMessageFragment)
+
+
+private
+fun buildJsLocationsOrNull(json: dynamic): List<JsLocation>? =
+    if (json == null) null
+    else json.unsafeCast<Array<dynamic>>().map(::buildJsLocation)
+
+
+private
+fun buildStringListOrNull(json: dynamic): List<String>? =
+    if (json == null) null
+    else json.unsafeCast<Array<String>>().toList()

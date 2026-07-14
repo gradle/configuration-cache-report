@@ -21,13 +21,16 @@ import configurationCache.problemNodeForError
 import data.LearnMore
 import data.PrettyText
 import elmish.tree.Tree
-import org.gradle.problems.internal.report.model.buildJsError
+import org.gradle.problems.internal.report.model.JsLocation
+import org.gradle.problems.internal.report.model.JsProblem
+import org.gradle.problems.internal.report.model.JsProblemIdElement
+import org.gradle.problems.internal.report.model.ProblemReportJsModel
 import problemReport.ProblemApiNode.ProblemIdNode
 import reporting.ProblemTreeModel
 
 
 internal
-fun problemsReportPageModelFromJsModel(problemReportJsModel: ProblemReportJsModel, problems: Array<JsProblem>) =
+fun problemsReportPageModelFromJsModel(problemReportJsModel: ProblemReportJsModel, problems: List<JsProblem>) =
     ProblemsReportPage.Model(
         heading = PrettyText.ofText("Problems Report"),
         summary = createSummary(problemReportJsModel, problems),
@@ -56,7 +59,7 @@ enum class Tab(val text: String) {
 
 
 private
-fun createSummary(problemReportJsModel: ProblemReportJsModel, problems: Array<JsProblem>) =
+fun createSummary(problemReportJsModel: ProblemReportJsModel, problems: List<JsProblem>) =
     buildList {
         add(
             PrettyText.build {
@@ -101,7 +104,7 @@ fun createSummary(problemReportJsModel: ProblemReportJsModel, problems: Array<Js
 
 
 private
-fun createMessageTree(problems: Array<JsProblem>): ProblemTreeModel =
+fun createMessageTree(problems: List<JsProblem>): ProblemTreeModel =
     ProblemTreeModel(
         Tree(
             label = ProblemApiNode.Text("message tree root"),
@@ -127,7 +130,7 @@ fun createMessageTree(problems: Array<JsProblem>): ProblemTreeModel =
 
 
 private
-val Array<JsProblemIdElement>.messageTreeGroupingString: String
+val List<JsProblemIdElement>.messageTreeGroupingString: String
     get() = joinToString(":") { "${it.name}|${it.displayName}" }
 
 
@@ -138,14 +141,11 @@ val Array<JsProblemIdElement>.messageTreeGroupingString: String
 
 
 private
-fun createGroupTree(problems: Array<JsProblem>): ProblemTreeModel {
-
-    // Data class for equality
-    data class JsProblemIdElementData(override val name: String, override val displayName: String) : JsProblemIdElement
+fun createGroupTree(problems: List<JsProblem>): ProblemTreeModel {
 
     val problemsByGroupId: Map<List<JsProblemIdElement>, MutableList<JsProblem>> = buildMap {
         problems.forEach { problem ->
-            val key = problem.problemId.dropLast(1).map { JsProblemIdElementData(it.name, it.displayName) }
+            val key = problem.problemId.dropLast(1)
             getOrPut(key) { mutableListOf() }.add(problem)
         }
     }
@@ -232,7 +232,7 @@ enum class LocationType(
 
 private
 fun createLocationTree(
-    problems: Array<JsProblem>,
+    problems: List<JsProblem>,
     type: LocationType
 ): ProblemTreeModel {
 
@@ -319,7 +319,7 @@ fun createMessageTreeElementLabel(
 
 private
 fun JsProblem.getPrimaryLabelText(useContextualAsPrimary: Boolean): String =
-    if (useContextualAsPrimary && contextualLabel != null) contextualLabel!!
+    if (useContextualAsPrimary && contextualLabel != null) contextualLabel
     else displayName
 
 
@@ -352,10 +352,10 @@ fun buildProblemPrettyText(text: String, location: JsLocation? = null): PrettyTe
                     }
 
                 location.taskPath != null ->
-                    ref(location.taskPath!!)
+                    ref(location.taskPath)
 
                 location.pluginId != null ->
-                    ref(location.pluginId!!)
+                    ref(location.pluginId)
             }
         }
     }
@@ -385,7 +385,7 @@ fun createMessageTreeElementChildren(
     buildList {
         // to avoid duplication on the UI, if the contextual label is used in a parent tree item, we skip it here
         if (problem.contextualLabel != null) {
-            add(Tree(ProblemNode.Message(PrettyText.ofText(problem.contextualLabel!!))))
+            add(Tree(ProblemNode.Message(PrettyText.ofText(problem.contextualLabel))))
         }
 
         // Add displayName when contextualLabel was used as primary
@@ -398,7 +398,6 @@ fun createMessageTreeElementChildren(
         }
 
         problem.error
-            ?.let { buildJsError(it) }
             ?.let(::problemNodeForError)
             ?.let { errorNode -> add(Tree(errorNode)) }
 
@@ -432,12 +431,12 @@ fun JsLocation.buildLabelPrettyText(): PrettyText =
 
             taskPath != null -> {
                 text(LocationType.TASK.displayName)
-                ref(taskPath!!)
+                ref(taskPath)
             }
 
             pluginId != null -> {
                 text(LocationType.PLUGIN.displayName)
-                ref(pluginId!!)
+                ref(pluginId)
             }
 
             else -> text("<undefined>")

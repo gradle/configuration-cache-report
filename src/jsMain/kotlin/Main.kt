@@ -18,9 +18,9 @@ import configurationCache.ConfigurationCacheReportPage
 import configurationCache.reportPageModelFromJsModel
 import elmish.elementById
 import elmish.mountComponentAt
-import org.gradle.problems.internal.report.model.buildJsModel
-import problemReport.JsProblem
-import problemReport.ProblemReportJsModel
+import org.gradle.problems.internal.report.model.buildCcReportJsModel
+import org.gradle.problems.internal.report.model.buildJsProblem
+import org.gradle.problems.internal.report.model.buildProblemReportJsModel
 import problemReport.ProblemsReportPage
 import problemReport.problemsReportPageModelFromJsModel
 
@@ -31,10 +31,10 @@ fun main() {
         mountComponentAt(
             elementById("report"),
             ConfigurationCacheReportPage,
-            reportPageModelFromJsModel(buildJsModel(jsModel))
+            reportPageModelFromJsModel(buildCcReportJsModel(jsModel))
         )
     } else {
-        val problemReportJsModel = jsModel.problemsReport.unsafeCast<ProblemReportJsModel>()
+        val problemReportJsModel = buildProblemReportJsModel(jsModel.problemsReport)
         mountComponentAt(
             elementById("report"),
             ProblemsReportPage,
@@ -42,7 +42,7 @@ fun main() {
                 problemReportJsModel,
                 // We are reusing this array for JsProblems, because the diagnostics are written in a predefined order on the fly to the html report file.
                 // Having this separate would require more changes to the way diagnostics/problems are written in the file.
-                jsModel.diagnostics.unsafeCast<Array<JsProblem>>()
+                jsModel.diagnostics.unsafeCast<Array<dynamic>>().map(::buildJsProblem)
             )
         )
     }
