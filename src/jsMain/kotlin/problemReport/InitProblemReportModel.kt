@@ -21,6 +21,7 @@ import configurationCache.problemNodeForError
 import data.LearnMore
 import data.PrettyText
 import elmish.tree.Tree
+import org.gradle.problems.internal.report.model.buildJsError
 import problemReport.ProblemApiNode.ProblemIdNode
 import reporting.ProblemTreeModel
 
@@ -397,6 +398,7 @@ fun createMessageTreeElementChildren(
         }
 
         problem.error
+            ?.let { buildJsError(it) }
             ?.let(::problemNodeForError)
             ?.let { errorNode -> add(Tree(errorNode)) }
 

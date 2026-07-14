@@ -16,7 +16,23 @@
 
 package problemReport
 
-import configurationCache.JsError
+
+external interface JsMessageFragment {
+    val text: String?
+    val name: String?
+}
+
+
+external interface JsError {
+    val summary: Array<JsMessageFragment>?
+    val parts: Array<JsStackTracePart>?
+}
+
+
+external interface JsStackTracePart {
+    val text: String?
+    val internalText: String?
+}
 
 
 external interface JsProblemIdElement {

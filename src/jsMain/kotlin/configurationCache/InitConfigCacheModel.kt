@@ -25,6 +25,28 @@ import data.itsOrTheir
 import data.wasOrWere
 import elmish.tree.Tree
 import elmish.tree.TreeView
+import org.gradle.problems.internal.report.model.JsBuildLogic
+import org.gradle.problems.internal.report.model.JsBuildLogicClass
+import org.gradle.problems.internal.report.model.JsDiagnostic
+import org.gradle.problems.internal.report.model.JsError
+import org.gradle.problems.internal.report.model.JsGenericTrace
+import org.gradle.problems.internal.report.model.JsMessageFragment
+import org.gradle.problems.internal.report.model.JsModel
+import org.gradle.problems.internal.report.model.JsStackTracePart
+import org.gradle.problems.internal.report.model.JsTrace
+import org.gradle.problems.internal.report.model.JsTraceBean
+import org.gradle.problems.internal.report.model.JsTraceCapturedArguments
+import org.gradle.problems.internal.report.model.JsTraceField
+import org.gradle.problems.internal.report.model.JsTraceInputProperty
+import org.gradle.problems.internal.report.model.JsTraceOutputProperty
+import org.gradle.problems.internal.report.model.JsTraceProject
+import org.gradle.problems.internal.report.model.JsTracePropertyUsage
+import org.gradle.problems.internal.report.model.JsTraceSerializedLambda
+import org.gradle.problems.internal.report.model.JsTraceSystemProperty
+import org.gradle.problems.internal.report.model.JsTraceTask
+import org.gradle.problems.internal.report.model.JsTraceTaskPath
+import org.gradle.problems.internal.report.model.JsTraceVirtualProperty
+import org.gradle.problems.internal.report.model.toPrettyText
 
 
 private
@@ -134,7 +156,7 @@ class ImportedDiagnostics(
 
 
 private
-fun importDiagnostics(jsDiagnostics: Array<JsDiagnostic>): ImportedDiagnostics {
+fun importDiagnostics(jsDiagnostics: List<JsDiagnostic>): ImportedDiagnostics {
     val importedProblems = mutableListOf<ImportedProblem>()
     val importedInputs = mutableListOf<ImportedProblem>()
     val incompatibleTasks = mutableListOf<ImportedProblem>()
@@ -152,7 +174,7 @@ fun importDiagnostics(jsDiagnostics: Array<JsDiagnostic>): ImportedDiagnostics {
 
 
 private
-fun toImportedProblem(label: Array<JsMessageFragment>, jsProblem: JsDiagnostic) = ImportedProblem(
+fun toImportedProblem(label: List<JsMessageFragment>, jsProblem: JsDiagnostic) = ImportedProblem(
     jsProblem,
     label.let(::toPrettyText),
     jsProblem.trace.map(::toProblemNode)
@@ -233,64 +255,36 @@ fun problemNodeFor(problem: ImportedProblem) = errorOrWarningNodeFor(
 
 
 private
-fun toProblemNode(trace: JsTrace): ProblemNode = when (trace.kind) {
-    "Project" -> trace.unsafeCast<JsTraceProject>().run {
-        ProblemCCNode.Project(path)
-    }
+fun toProblemNode(trace: JsTrace): ProblemNode = when (trace) {
+    is JsTraceProject -> ProblemCCNode.Project(trace.path)
 
-    "Task" -> trace.unsafeCast<JsTraceTask>().run {
-        ProblemCCNode.Task(path, type)
-    }
+    is JsTraceTask -> ProblemCCNode.Task(trace.path, trace.type)
 
-    "TaskPath" -> trace.unsafeCast<JsTraceTaskPath>().run {
-        ProblemCCNode.TaskPath(path)
-    }
+    is JsTraceTaskPath -> ProblemCCNode.TaskPath(trace.path)
 
-    "Bean" -> trace.unsafeCast<JsTraceBean>().run {
-        ProblemCCNode.Bean(type)
-    }
+    is JsTraceBean -> ProblemCCNode.Bean(trace.type)
 
-    "CapturedArguments" -> trace.unsafeCast<JsTraceCapturedArguments>().run {
-        ProblemCCNode.CapturedArguments(`class`, method, subkind)
-    }
+    is JsTraceCapturedArguments -> ProblemCCNode.CapturedArguments(trace.`class`, trace.method, trace.subkind)
 
-    "SerializedLambda" -> trace.unsafeCast<JsTraceSerializedLambda>().run {
-        ProblemCCNode.SerializedLambda(type, returns)
-    }
+    is JsTraceSerializedLambda -> ProblemCCNode.SerializedLambda(trace.type, trace.returns)
 
-    "Field" -> trace.unsafeCast<JsTraceField>().run {
-        ProblemCCNode.Property("field", name, declaringType)
-    }
+    is JsTraceField -> ProblemCCNode.Property("field", trace.name, trace.declaringType)
 
-    "InputProperty" -> trace.unsafeCast<JsTraceProperty>().run {
-        ProblemCCNode.Property("input property", name, task)
-    }
+    is JsTraceInputProperty -> ProblemCCNode.Property("input property", trace.name, trace.task)
 
-    "OutputProperty" -> trace.unsafeCast<JsTraceProperty>().run {
-        ProblemCCNode.Property("output property", name, task)
-    }
+    is JsTraceOutputProperty -> ProblemCCNode.Property("output property", trace.name, trace.task)
 
-    "VirtualProperty" -> trace.unsafeCast<JsTraceVirtualProperty>().run {
-        ProblemCCNode.VirtualProperty(name, owner)
-    }
+    is JsTraceVirtualProperty -> ProblemCCNode.VirtualProperty(trace.name, trace.owner)
 
-    "SystemProperty" -> trace.unsafeCast<JsTraceSystemProperty>().run {
-        ProblemCCNode.SystemProperty(name)
-    }
+    is JsTraceSystemProperty -> ProblemCCNode.SystemProperty(trace.name)
 
-    "PropertyUsage" -> trace.unsafeCast<JsTracePropertyUsage>().run {
-        ProblemCCNode.Property("property", name, from)
-    }
+    is JsTracePropertyUsage -> ProblemCCNode.Property("property", trace.name, trace.from)
 
-    "BuildLogic" -> trace.unsafeCast<JSBuildLogic>().run {
-        ProblemCCNode.BuildLogic(location)
-    }
+    is JsBuildLogic -> ProblemCCNode.BuildLogic(trace.location)
 
-    "BuildLogicClass" -> trace.unsafeCast<JSBuildLogicClass>().run {
-        ProblemCCNode.BuildLogicClass(type)
-    }
+    is JsBuildLogicClass -> ProblemCCNode.BuildLogicClass(trace.type)
 
-    else -> ProblemNode.Label("Gradle runtime")
+    is JsGenericTrace -> ProblemNode.Label("Gradle runtime")
 }
 
 
