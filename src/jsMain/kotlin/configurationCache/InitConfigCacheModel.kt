@@ -29,7 +29,6 @@ import org.gradle.problems.internal.report.model.JsBuildLogic
 import org.gradle.problems.internal.report.model.JsBuildLogicClass
 import org.gradle.problems.internal.report.model.JsDiagnostic
 import org.gradle.problems.internal.report.model.JsError
-import org.gradle.problems.internal.report.model.JsGenericTrace
 import org.gradle.problems.internal.report.model.JsMessageFragment
 import org.gradle.problems.internal.report.model.JsModel
 import org.gradle.problems.internal.report.model.JsStackTracePart
@@ -37,6 +36,7 @@ import org.gradle.problems.internal.report.model.JsTrace
 import org.gradle.problems.internal.report.model.JsTraceBean
 import org.gradle.problems.internal.report.model.JsTraceCapturedArguments
 import org.gradle.problems.internal.report.model.JsTraceField
+import org.gradle.problems.internal.report.model.JsTraceGradle
 import org.gradle.problems.internal.report.model.JsTraceInputProperty
 import org.gradle.problems.internal.report.model.JsTraceOutputProperty
 import org.gradle.problems.internal.report.model.JsTraceProject
@@ -45,6 +45,7 @@ import org.gradle.problems.internal.report.model.JsTraceSerializedLambda
 import org.gradle.problems.internal.report.model.JsTraceSystemProperty
 import org.gradle.problems.internal.report.model.JsTraceTask
 import org.gradle.problems.internal.report.model.JsTraceTaskPath
+import org.gradle.problems.internal.report.model.JsTraceUnknown
 import org.gradle.problems.internal.report.model.JsTraceVirtualProperty
 import org.gradle.problems.internal.report.model.toPrettyText
 
@@ -284,7 +285,7 @@ fun toProblemNode(trace: JsTrace): ProblemNode = when (trace) {
 
     is JsBuildLogicClass -> ProblemCCNode.BuildLogicClass(trace.type)
 
-    is JsGenericTrace -> ProblemNode.Label("Gradle runtime")
+    JsTraceGradle, JsTraceUnknown -> ProblemNode.Label("Gradle runtime")
 }
 
 
