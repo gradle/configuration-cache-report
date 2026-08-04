@@ -1,3 +1,4 @@
+*   @gradle/bt-cortex
 
 .teamcity/ @gradle/bt-developer-productivity
 .github/ @gradle/bt-developer-productivity
