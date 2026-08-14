@@ -105,8 +105,8 @@ class HtmlReportWriterTest {
         StringWriter().also { out ->
             HtmlReportWriter(out).run {
                 beginHtmlReport()
-                diagnostics.forEach { writeDiagnostic(it.toJson(json)) }
-                endHtmlReport(envelope.toJson(json))
+                diagnostics.forEach { writeDiagnostic(it) }
+                endHtmlReport(envelope)
                 close()
             }
         }.toString()
