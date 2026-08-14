@@ -24,14 +24,18 @@ import kotlinx.serialization.json.JsonClassDiscriminator
 
 
 /**
- * The serialized model of a configuration cache report.
+ * The summary of a configuration cache report: what the build did with the cache, and the problem
+ * counts that the individually reported diagnostics are a subset of.
  *
- * A build produces this model when it finishes storing or loading the configuration cache, and the
- * report renderer turns it into the HTML page shown to the user. It summarizes what the cache did
- * and lists every build configuration input, problem and incompatible task that was encountered.
+ * A build produces this summary when it finishes storing or loading the configuration cache, and the
+ * report renderer turns it, together with the separately streamed [JsDiagnostic]s, into the HTML page
+ * shown to the user.
+ *
+ * Being a configuration cache summary rather than a problems one (see [JsProblemsSummary]) is what
+ * makes the report render as a configuration cache report; see [JsReportSummary].
  */
 @Serializable
-data class JsModel(
+data class JsConfigurationCacheSummary(
     /** The name of the build the report was produced for, or null for the root build. */
     val buildName: String? = null,
     /**
@@ -52,12 +56,21 @@ data class JsModel(
     val totalProblemCount: Int,
     /** The number of distinct problems among the [totalProblemCount]. */
     val uniqueProblemCount: Int,
-    /** The number of problems that exceeded the reporting limit and are therefore not present in [diagnostics]. */
-    val overflownProblemCount: Int,
-    /** The build configuration inputs, problems and incompatible tasks to display. */
-    val diagnostics: List<JsDiagnostic> = emptyList()
+    /**
+     * The number of problems that exceeded the reporting limit and are therefore not among the
+     * reported [JsDiagnostic]s.
+     */
+    val overflownProblemCount: Int
 ) : JsReportSummary {
+    override val elementId: String
+        get() = ELEMENT_ID
+
     override fun toJson(json: Json): String = json.encodeToString(this)
+
+    companion object {
+        /** The id of the `<script>` element carrying this summary. */
+        const val ELEMENT_ID = "configuration-cache-summary"
+    }
 }
 
 

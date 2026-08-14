@@ -35,11 +35,24 @@ interface JsonSource {
 
 
 /**
+ * The id of the `<script>` element carrying the reported items. See [JsReportSummary].
+ */
+const val DIAGNOSTICS_ELEMENT_ID = "diagnostics"
+
+
+/**
  * The summary of a report: everything the report says about itself that isn't one of the streamed
  * diagnostics. A report has exactly one summary, and which kind it is decides how the report is
  * rendered.
+ *
+ * The report data reaches the page as the text of `<script type="application/json">` elements (see
+ * `HtmlReportWriter`): the diagnostics under [DIAGNOSTICS_ELEMENT_ID], and the summary under
+ * [elementId]. That id doubles as the discriminator between the kinds of report, so the page can
+ * tell what it is looking at by which element it finds, without parsing anything.
  */
-interface JsReportSummary : JsonSource
+interface JsReportSummary : JsonSource {
+    val elementId: String
+}
 
 
 /**

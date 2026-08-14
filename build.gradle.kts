@@ -19,5 +19,10 @@ kotlin {
                 implementation(kotlin("test"))
             }
         }
+        jvmTest {
+            dependencies {
+                implementation(project(":configuration-cache-report-fixtures"))
+            }
+        }
     }
 }
