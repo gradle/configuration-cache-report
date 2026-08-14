@@ -17,7 +17,8 @@
 package org.gradle.problems.internal.report
 
 import kotlinx.serialization.json.Json
-import org.gradle.problems.internal.report.model.JsonSource
+import org.gradle.problems.internal.report.model.JsReportDiagnostic
+import org.gradle.problems.internal.report.model.JsReportSummary
 import java.io.Writer
 
 
@@ -61,23 +62,22 @@ class HtmlReportWriter internal constructor(
     }
 
     /**
-     * Appends one already-serialized diagnostic to the streamed `diagnostics` array.
+     * Appends one diagnostic to the streamed `diagnostics` array.
      */
-    fun writeDiagnostic(diagnostic: JsonSource) {
-        writeDiagnostic(diagnostic.toJson(json))
-    }
-
-    fun writeDiagnostic(diagnosticJson: String) {
+    fun writeDiagnostic(diagnostic: JsReportDiagnostic) {
         writer.run {
             if (!firstDiagnostic) {
                 appendLine(",")
             }
             firstDiagnostic = false
-            append(diagnosticJson)
+            append(diagnostic.toJson(json))
         }
     }
 
-    fun endHtmlReport(summary: JsonSource) {
+    /**
+     * Closes the report by appending its summary.
+     */
+    fun endHtmlReport(summary: JsReportSummary) {
         writer.run {
             appendLine()
             appendLine("]")

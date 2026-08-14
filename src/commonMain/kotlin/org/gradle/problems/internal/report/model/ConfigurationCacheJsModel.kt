@@ -56,7 +56,7 @@ data class JsModel(
     val overflownProblemCount: Int,
     /** The build configuration inputs, problems and incompatible tasks to display. */
     val diagnostics: List<JsDiagnostic> = emptyList()
-) : JsonSource {
+) : JsReportSummary {
     override fun toJson(json: Json): String = json.encodeToString(this)
 }
 
@@ -87,7 +87,7 @@ data class JsDiagnostic(
     val documentationLink: String? = null,
     /** The exception this item was caused by or reported with, if any. */
     val error: JsError? = null
-) : JsonSource {
+) : JsReportDiagnostic {
     override fun toJson(json: Json): String = json.encodeToString(this)
 }
 
