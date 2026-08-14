@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
 
 plugins {
     kotlin("multiplatform")
+    kotlin("plugin.serialization")
     id("org.gradle.kotlin-dsl.ktlint-convention")
 }
 
@@ -33,11 +34,16 @@ kotlin {
         binaries.executable()
     }
 
-    // For now, the JVM target exists purely to produce the resource-only JAR that bundles the
-    // assembled report HTML. It has no Kotlin/JVM sources.
     jvm()
 
     sourceSets {
+        commonMain {
+            dependencies {
+                api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0") {
+                    because("Exposes serialization types in the wire model classes")
+                }
+            }
+        }
         commonTest {
             dependencies {
                 implementation(kotlin("test"))
