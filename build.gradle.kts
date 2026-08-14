@@ -3,10 +3,21 @@ plugins {
     id("gradlebuild.publish-libraries")
 }
 
-group = "org.gradle.buildtool.internal"
 description = "Configuration cache problems HTML report"
-version = providers.gradleProperty("configuration-cache-report.version").get()
 
-repositories {
-    mavenCentral()
+kotlin {
+    sourceSets {
+        commonMain {
+            dependencies {
+                api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0") {
+                    because("Exposes serialization types in the wire model classes")
+                }
+            }
+        }
+        commonTest {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
+    }
 }
