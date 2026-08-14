@@ -18,20 +18,23 @@ package org.gradle.problems.internal.report
 
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+import org.gradle.problems.internal.report.model.DIAGNOSTICS_ELEMENT_ID
+import org.gradle.problems.internal.report.model.JsConfigurationCacheSummary
 import org.gradle.problems.internal.report.model.JsDiagnostic
 import org.gradle.problems.internal.report.model.JsMessageFragment
-import org.gradle.problems.internal.report.model.JsModel
+import org.gradle.problems.internal.report.model.JsReportSummary
 import org.gradle.problems.internal.report.model.JsTraceProject
 import java.io.StringWriter
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 
 /**
- * Verifies that the writer emits the report data in the layout the consumers rely on: the JS module
- * bundled with this library reads it back by calling `configurationCacheProblems()`, and the Gradle
- * integration test fixture parses the marked regions as plain JSON.
+ * Verifies that the writer emits the report data in the layout the consumers rely on: the page
+ * bundled with this library looks the pieces up by element id, and so does the fixtures library the
+ * Gradle integration tests read reports with.
  *
  * The template these tests load is the real assembled report resource that ships in the jar, so a
  * template edit that drops the data placeholder fails here rather than at Gradle runtime.
@@ -48,16 +51,16 @@ class HtmlReportWriterTest {
         assertTrue(template.header.startsWith("<!DOCTYPE html>"), "unexpected header start: ${template.header.take(40)}")
         assertTrue(template.header.contains("""<div class="report" id="report">"""), "report element missing from the header")
         assertTrue(template.footer.trimEnd().endsWith("</html>"), "unexpected footer end: ${template.footer.takeLast(40)}")
-        // The renderer bundle is inlined into the template by `assembleReport`, and reads the model
-        // by calling the function the writer emits just before it.
+        // The renderer bundle is inlined into the template by `assembleReport`, and finds the report
+        // data in the elements the writer emits just before it.
         assertTrue(
-            template.footer.contains("configurationCacheProblems"),
-            "the renderer must follow the report data"
+            template.footer.contains(JsConfigurationCacheSummary.ELEMENT_ID),
+            "the renderer must follow the report data and look it up by id"
         )
     }
 
     @Test
-    fun `emits the model and the diagnostics as JSON in their marked regions`() {
+    fun `emits the summary and the diagnostics as JSON in their own elements`() {
         val diagnostics = listOf(
             JsDiagnostic(
                 problem = listOf(JsMessageFragment(text = "invocation of "), JsMessageFragment(name = "Task.project")),
@@ -65,61 +68,95 @@ class HtmlReportWriterTest {
             ),
             JsDiagnostic(input = listOf(JsMessageFragment(text = "system property "), JsMessageFragment(name = "user.home")))
         )
-        val envelope = JsModel(
-            cacheAction = "storing",
-            documentationLink = "https://docs/cc",
-            totalProblemCount = 2,
-            uniqueProblemCount = 2,
-            overflownProblemCount = 0
+        val summary = configurationCacheSummary(totalProblemCount = 2)
+
+        val report = writeReport(diagnostics, summary)
+
+        assertEquals(
+            summary,
+            json.decodeFromString(JsConfigurationCacheSummary.serializer(), report.jsonIn(summary.elementId))
         )
-
-        val report = writeReport(diagnostics, envelope)
-
-        assertEquals(envelope, json.decodeFromString(JsModel.serializer(), report.regionBetween("model")))
         assertEquals(
             diagnostics,
-            json.decodeFromString(ListSerializer(JsDiagnostic.serializer()), report.regionBetween("diagnostics"))
+            json.decodeFromString(ListSerializer(JsDiagnostic.serializer()), report.jsonIn(DIAGNOSTICS_ELEMENT_ID))
+        )
+    }
+
+    @Test
+    fun `writes each diagnostic on a line of its own`() {
+        val diagnostics = (1..3).map { JsDiagnostic(problem = listOf(JsMessageFragment(text = "problem $it"))) }
+
+        val report = writeReport(diagnostics, configurationCacheSummary(totalProblemCount = 3))
+
+        // The array is read by a JSON parser either way, but one diagnostic per line keeps a report
+        // that can reach several megabytes greppable and diffable.
+        assertEquals(
+            3,
+            report.jsonIn(DIAGNOSTICS_ELEMENT_ID).lines().count { it.startsWith("{") }
         )
     }
 
     @Test
     fun `emits an empty diagnostics array when there is nothing to report`() {
-        val envelope = JsModel(
-            cacheAction = "storing",
-            documentationLink = "https://docs/cc",
-            totalProblemCount = 0,
-            uniqueProblemCount = 0,
-            overflownProblemCount = 0
-        )
-
-        val report = writeReport(emptyList(), envelope)
+        val report = writeReport(emptyList(), configurationCacheSummary(totalProblemCount = 0))
 
         assertEquals(
             emptyList(),
-            json.decodeFromString(ListSerializer(JsDiagnostic.serializer()), report.regionBetween("diagnostics"))
+            json.decodeFromString(ListSerializer(JsDiagnostic.serializer()), report.jsonIn(DIAGNOSTICS_ELEMENT_ID))
+        )
+    }
+
+    @Test
+    fun `escapes report data that would otherwise end the enclosing element`() {
+        val diagnostics = listOf(
+            JsDiagnostic(problem = listOf(JsMessageFragment(text = """</script><script>alert("x")</script>""")))
+        )
+
+        val report = writeReport(diagnostics, configurationCacheSummary(totalProblemCount = 1))
+
+        // The html parser reads the content of a script element in its own tokenizer state, where a
+        // `<` can end the element early or change how the rest of it is read.
+        assertFalse(
+            report.jsonIn(DIAGNOSTICS_ELEMENT_ID).contains("<"),
+            "no `<` may reach the page as itself"
+        )
+        assertEquals(
+            diagnostics,
+            json.decodeFromString(ListSerializer(JsDiagnostic.serializer()), report.jsonIn(DIAGNOSTICS_ELEMENT_ID))
         )
     }
 
     private
-    fun writeReport(diagnostics: List<JsDiagnostic>, envelope: JsModel): String =
+    fun configurationCacheSummary(totalProblemCount: Int) = JsConfigurationCacheSummary(
+        cacheAction = "storing",
+        documentationLink = "https://docs/cc",
+        totalProblemCount = totalProblemCount,
+        uniqueProblemCount = totalProblemCount,
+        overflownProblemCount = 0
+    )
+
+    private
+    fun writeReport(diagnostics: List<JsDiagnostic>, summary: JsReportSummary): String =
         StringWriter().also { out ->
             HtmlReportWriter(out).run {
                 beginHtmlReport()
                 diagnostics.forEach { writeDiagnostic(it) }
-                endHtmlReport(envelope)
+                endHtmlReport(summary)
                 close()
             }
         }.toString()
 
     /**
-     * Extracts the text between the `// begin-report-$name`/`// end-report-$name` markers, which the
-     * writer's contract says is valid JSON on its own.
+     * Returns the text of the `<script>` element with the given id, which the writer's contract says
+     * is the JSON of that piece of the report.
      */
     private
-    fun String.regionBetween(name: String): String {
-        val begin = indexOf("// begin-report-$name")
-        val end = indexOf("// end-report-$name")
-        assertTrue(begin >= 0 && end > begin, "no `$name` region in the emitted report")
-        return substring(begin + "// begin-report-$name".length, end)
+    fun String.jsonIn(elementId: String): String {
+        val lines = lines()
+            .dropWhile { !it.endsWith("""id="$elementId">""") }
+            .drop(1)
+            .takeWhile { it != "</script>" }
+        assertTrue(lines.isNotEmpty(), "no `$elementId` element in the emitted report")
+        return lines.joinToString("\n")
     }
 }

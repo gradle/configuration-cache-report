@@ -84,4 +84,8 @@ fun <M, I> mountComponentAt(
 
 
 fun elementById(id: String): Element =
-    document.getElementById(id) ?: throw IllegalStateException("'$id' element missing")
+    findElementById(id) ?: throw IllegalStateException("'$id' element missing")
+
+
+fun findElementById(id: String): Element? =
+    document.getElementById(id)

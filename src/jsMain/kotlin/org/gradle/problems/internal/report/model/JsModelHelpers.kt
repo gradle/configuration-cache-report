@@ -17,34 +17,45 @@
 package org.gradle.problems.internal.report.model
 
 import data.PrettyText
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 
 
 /**
  * Decodes the report models from the report JSON text.
  *
- * The report data is produced by `ConfigurationCacheReport` (see `configuration-cache-report-data.js`)
- * and reaches the page as a JavaScript object; the caller stringifies it and we parse the resulting
- * text with [Json.decodeFromString], so decoding is driven entirely by the `@Serializable` model
- * definitions instead of hand-written field extraction.
+ * The report data is produced by `ConfigurationCacheReport` (see `configuration-cache-report-data.js`),
+ * which carries each piece of the report in a `<script type="application/json">` element of its own.
+ * We parse the text of those elements with
+ * [Json.decodeFromString], so decoding is driven entirely by the `@Serializable` model definitions
+ * instead of hand-written field extraction. Each piece is decoded on its own, which is why the
+ * producer can stream the diagnostics without knowing the summary yet.
  */
 private
 val reportJson = Json {
-    // A problems report is decoded from the same top-level object as a configuration cache report
-    // (see JsProblemsModel), so the configuration-cache-specific fields are unknown to it and must
-    // be ignored rather than treated as errors.
+    // Fields a producer adds ahead of the renderer that consumes them must not break the report.
     ignoreUnknownKeys = true
 }
 
 
-/** Decodes a configuration cache report [JsModel] from the report JSON text. */
-fun parseCcReportJsModel(jsonText: String): JsModel =
-    reportJson.decodeFromString(JsModel.serializer(), jsonText)
+/** Decodes the summary of a configuration cache report. */
+fun parseCcSummary(jsonText: String): JsConfigurationCacheSummary =
+    reportJson.decodeFromString(JsConfigurationCacheSummary.serializer(), jsonText)
 
 
-/** Decodes a [JsProblemsModel] from the report JSON text, used when a problems report is present. */
-fun parseProblemsJsModel(jsonText: String): JsProblemsModel =
-    reportJson.decodeFromString(JsProblemsModel.serializer(), jsonText)
+/** Decodes the summary of a problems report. */
+fun parseProblemsSummary(jsonText: String): JsProblemsSummary =
+    reportJson.decodeFromString(JsProblemsSummary.serializer(), jsonText)
+
+
+/** Decodes the streamed diagnostics of a configuration cache report. */
+fun parseCcDiagnostics(jsonText: String): List<JsDiagnostic> =
+    reportJson.decodeFromString(ListSerializer(JsDiagnostic.serializer()), jsonText)
+
+
+/** Decodes the streamed problems of a problems report. */
+fun parseProblems(jsonText: String): List<JsProblem> =
+    reportJson.decodeFromString(ListSerializer(JsProblem.serializer()), jsonText)
 
 
 fun toPrettyText(message: List<JsMessageFragment>): PrettyText =
