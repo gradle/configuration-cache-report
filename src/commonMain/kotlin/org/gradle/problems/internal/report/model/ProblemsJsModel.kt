@@ -58,7 +58,7 @@ data class JsProblemsModel(
     val problemsReport: ProblemReportJsModel,
     /** The reported problems, sharing the top-level `diagnostics` array with configuration cache reports. */
     val diagnostics: List<JsProblem> = emptyList()
-) : JsonSource {
+) : JsReportSummary {
     override fun toJson(json: Json): String = json.encodeToString(this)
 }
 
@@ -90,7 +90,7 @@ data class JsProblem(
     val solutions: List<String>? = null,
     /** Where the problem occurred, if any locations were captured. See [JsLocation]. */
     val locations: List<JsLocation>? = null
-) : JsonSource {
+) : JsReportDiagnostic {
     override fun toJson(json: Json): String = json.encodeToString(this)
 }
 
