@@ -94,10 +94,11 @@ tasks {
     }
 
     // Pack the assembled report HTML into the JVM target's resources, so the standard
-    // jvmJar produced by the KMP plugin bundles it at the path the consumer reads from.
+    // jvmJar produced by the KMP plugin bundles it next to the HtmlReportTemplateLoader
+    // that reads it.
     named<Copy>("jvmProcessResources") {
         from(assembleReport) {
-            into("org/gradle/internal/configuration/problems")
+            into("org/gradle/problems/internal/report")
         }
     }
 

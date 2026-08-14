@@ -26,9 +26,9 @@ abstract class VerifyJar : DefaultTask() {
         val entries = ZipFile(jarFile.get().asFile).use { zip ->
             zip.entries().asSequence().filter { !it.isDirectory }.map { it.name }.toList()
         }
-        // Check that the report HTML resource is present in the resulting JAR at the expected path.
-        // TODO(mlopatkin) Align with the model classes package name.
-        val reportHtml = "org/gradle/internal/configuration/problems/configuration-cache-report.html"
+        // Check that the report HTML resource is present in the resulting JAR next to the
+        // HtmlReportTemplateLoader that reads it.
+        val reportHtml = "org/gradle/problems/internal/report/configuration-cache-report.html"
         require(reportHtml in entries) {
             "Expected JAR to contain $reportHtml but got $entries"
         }
