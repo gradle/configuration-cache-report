@@ -1,8 +1,10 @@
-function configurationCacheProblems() {
+function sampleReportData() {
     // Toggle between problems report and CC report
     const useProblemsReport = true; // Set to false for CC report
 
-    const baseConfig = {
+    // A report carries exactly one of the two summaries, which is what tells the two kinds apart.
+    // Both carry their reported items in the same top-level "diagnostics" array.
+    const configurationCacheSummary = {
         "buildName": "sampleProject",
         "cacheAction": "storing",
         "cacheActionDescription": [{"text": "Calculating task graph as configuration cache cannot be reused because file"}, {"name": "build.gradle"}, {"text": " has changed."}],
@@ -13,17 +15,16 @@ function configurationCacheProblems() {
         "overflownProblemCount": 1,
     };
 
+    const problemsSummary = {
+        "buildName": "problems-playground",
+        "requestedTasks": "help",
+        "documentationLink": "https://docs.gradle.org/9.2.0/userguide/reporting_problems.html",
+        "summaries": []
+    };
+
     if (useProblemsReport) {
         return {
-            ...baseConfig,
-            "problemsReport": {
-                "totalProblemCount": 41,
-                "buildName": "problems-playground",
-                "requestedTasks": "help",
-                "documentationLink": "https://docs.gradle.org/9.2.0/userguide/reporting_problems.html",
-                "documentationLinkCaption": "Problem report",
-                "summaries": []
-            },
+            "problems-summary": problemsSummary,
             "diagnostics": [{
                 "locations": [
                     {"path": "src/main/java/com/example/MyClass.java", "line": 42, "column": 8},
@@ -627,7 +628,7 @@ function configurationCacheProblems() {
     } else {
         // CC report (Configuration Cache) format
         return {
-            ...baseConfig,
+            "configuration-cache-summary": configurationCacheSummary,
             "diagnostics": [
                 {
                     "trace": [{"kind": "BuildLogic", "location": "build file 'build.gradle'"}],
@@ -707,3 +708,20 @@ function configurationCacheProblems() {
         };
     }
 }
+
+/**
+ * The generated report carries every piece of report data as the text of a
+ * `<script type="application/json">` element, which the page finds by id. This sample data is
+ * authored as objects so that it stays readable and editable, so build those elements from it.
+ */
+function emitReportData(report) {
+    for (const [elementId, piece] of Object.entries(report)) {
+        const element = document.createElement("script");
+        element.type = "application/json";
+        element.id = elementId;
+        element.textContent = JSON.stringify(piece);
+        document.body.appendChild(element);
+    }
+}
+
+emitReportData(sampleReportData());

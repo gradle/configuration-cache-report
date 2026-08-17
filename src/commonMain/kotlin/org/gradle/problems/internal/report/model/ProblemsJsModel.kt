@@ -21,15 +21,18 @@ import kotlinx.serialization.json.Json
 
 
 /**
- * The model of a problems report.
+ * The summary of a problems report: the surrounding context of the build, plus the counts of
+ * problems that were aggregated rather than reported individually.
  *
- * A build produces this model to report the problems collected through the Problems API, and the
- * report renderer turns it into the HTML page shown to the user. The reported problems themselves
- * are carried separately; this model holds the surrounding context and the summaries of problems
- * that were aggregated rather than listed individually.
+ * A build produces this summary for the problems collected through the Problems API, and the report
+ * renderer turns it, together with the separately streamed [JsProblem]s, into the HTML page shown to
+ * the user.
+ *
+ * Being a problems summary rather than a configuration cache one (see [JsConfigurationCacheSummary])
+ * is what makes the report render as a problems report; see [JsReportSummary].
  */
 @Serializable
-data class ProblemReportJsModel(
+data class JsProblemsSummary(
     /** The name of the build the report was produced for, or null for the root build. */
     val buildName: String? = null,
     /** The tasks requested for the build as a display string, or null when the build ran its default tasks. */
@@ -37,29 +40,17 @@ data class ProblemReportJsModel(
     /** A link to the documentation about reporting problems. */
     val documentationLink: String,
     /** Counts of problems that were aggregated by their id instead of being reported individually. */
-    val summaries: List<JsProblemSummary> = emptyList()
-)
-
-
-/**
- * The root of a report rendered as a problems report rather than a configuration cache report.
- *
- * When the top-level report object carries a [problemsReport] field it is decoded into this model.
- * The [problemsReport] holds the surrounding context (see [ProblemReportJsModel]), while the
- * reported problems are carried in the same top-level `diagnostics` array that a configuration cache
- * report uses — hence [diagnostics] here holds [JsProblem]s rather than [JsDiagnostic]s. Producers
- * write the problems in a predefined order directly to the report file, which is why the two report
- * kinds share the one array. The configuration-cache-specific top-level fields are ignored in this
- * mode.
- */
-@Serializable
-data class JsProblemsModel(
-    /** The surrounding context of the problems report. */
-    val problemsReport: ProblemReportJsModel,
-    /** The reported problems, sharing the top-level `diagnostics` array with configuration cache reports. */
-    val diagnostics: List<JsProblem> = emptyList()
+    val summaries: List<JsProblemIdSummary> = emptyList()
 ) : JsReportSummary {
+    override val elementId: String
+        get() = ELEMENT_ID
+
     override fun toJson(json: Json): String = json.encodeToString(this)
+
+    companion object {
+        /** The id of the `<script>` element carrying this summary. */
+        const val ELEMENT_ID = "problems-summary"
+    }
 }
 
 
@@ -136,7 +127,7 @@ data class JsLocation(
  * reported individually in the report.
  */
 @Serializable
-data class JsProblemSummary(
+data class JsProblemIdSummary(
     val problemId: List<JsProblemIdElement>,
     val count: Int
 )
