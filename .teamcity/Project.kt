@@ -74,6 +74,7 @@ object PublishToMavenCentral : AbstractCheck({
     description = "Publish configuration-cache-report to repo.grdev.net"
 
     params {
+        param("env.PGP_SIGNING_KEY_ID", "%pgpSigningKeyId%")
         param("env.PGP_SIGNING_KEY", "%pgpSigningKey%")
         param("env.PGP_SIGNING_KEY_PASSPHRASE", "%pgpSigningPassphrase%")
         param("env.GRADLE_INTERNAL_REPO_URL", "%gradle.internal.repository.url%")
