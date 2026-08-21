@@ -29,6 +29,8 @@ tasks.withType<AbstractPublishToMaven>().configureEach {
 
 signing {
     useInMemoryPgpKeys(
+        // Key ID required when signing with a subkey
+        providers.environmentVariable("PGP_SIGNING_KEY_ID").orNull,
         providers.environmentVariable("PGP_SIGNING_KEY").orNull,
         providers.environmentVariable("PGP_SIGNING_KEY_PASSPHRASE").orNull
     )
