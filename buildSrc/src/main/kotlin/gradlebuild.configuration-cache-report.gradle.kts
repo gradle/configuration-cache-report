@@ -21,7 +21,8 @@ import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
 plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
-    id("org.gradle.kotlin-dsl.ktlint-convention")
+
+    id("gradlebuild.common-kotlin")
 }
 
 kotlin {
@@ -35,21 +36,6 @@ kotlin {
     }
 
     jvm()
-
-    sourceSets {
-        commonMain {
-            dependencies {
-                api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0") {
-                    because("Exposes serialization types in the wire model classes")
-                }
-            }
-        }
-        commonTest {
-            dependencies {
-                implementation(kotlin("test"))
-            }
-        }
-    }
 }
 
 rootProject.run {
@@ -94,10 +80,11 @@ tasks {
     }
 
     // Pack the assembled report HTML into the JVM target's resources, so the standard
-    // jvmJar produced by the KMP plugin bundles it at the path the consumer reads from.
+    // jvmJar produced by the KMP plugin bundles it next to the HtmlReportTemplateLoader
+    // that reads it.
     named<Copy>("jvmProcessResources") {
         from(assembleReport) {
-            into("org/gradle/internal/configuration/problems")
+            into("org/gradle/problems/internal/report")
         }
     }
 
