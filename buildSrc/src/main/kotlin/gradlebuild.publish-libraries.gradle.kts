@@ -1,3 +1,6 @@
+import org.gradle.api.credentials.HttpHeaderCredentials
+import org.gradle.authentication.http.HttpHeaderAuthentication
+
 plugins {
     `maven-publish`
     signing
@@ -6,11 +9,8 @@ plugins {
 val artifactoryUrl
     get() = providers.environmentVariable("GRADLE_INTERNAL_REPO_URL").orNull ?: ""
 
-val artifactoryUserName
-    get() = providers.gradleProperty("artifactoryUserName").orNull
-
-val artifactoryUserPassword
-    get() = providers.gradleProperty("artifactoryUserPassword").orNull
+val artifactoryToken
+    get() = providers.gradleProperty("artifactoryToken").orNull
 
 val pgpSigningKey: Provider<String> = providers.environmentVariable("PGP_SIGNING_KEY")
 val signArtifacts: Boolean = !pgpSigningKey.orNull.isNullOrEmpty()
@@ -51,9 +51,12 @@ publishing {
             name = "remote"
             val libsType = if (isSnapshot) "snapshots" else "releases"
             url = uri("$artifactoryUrl/libs-$libsType-local")
-            credentials {
-                username = artifactoryUserName
-                password = artifactoryUserPassword
+            credentials(HttpHeaderCredentials::class) {
+                name = "Authorization"
+                value = "Bearer $artifactoryToken"
+            }
+            authentication {
+                create<HttpHeaderAuthentication>("header")
             }
         }
     }

@@ -78,8 +78,7 @@ object PublishToMavenCentral : AbstractCheck({
         param("env.PGP_SIGNING_KEY", "%pgpSigningKey%")
         param("env.PGP_SIGNING_KEY_PASSPHRASE", "%pgpSigningPassphrase%")
         param("env.GRADLE_INTERNAL_REPO_URL", "%gradle.internal.repository.url%")
-        param("env.ORG_GRADLE_PROJECT_artifactoryUserName", "%gradle.internal.repository.build-tool.publish.username%")
-        password("env.ORG_GRADLE_PROJECT_artifactoryUserPassword", "%gradle.internal.repository.build-tool.publish.password%")
+        password("env.ORG_GRADLE_PROJECT_artifactoryToken", "%gradle.internal.repository.build-tool.publish.token%")
     }
 
     steps {
