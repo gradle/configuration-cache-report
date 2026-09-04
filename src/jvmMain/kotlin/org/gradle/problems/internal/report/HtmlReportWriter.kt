@@ -17,6 +17,7 @@
 package org.gradle.problems.internal.report
 
 import kotlinx.serialization.json.Json
+import org.gradle.problems.internal.report.model.DIAGNOSTICS_ELEMENT_ID
 import org.gradle.problems.internal.report.model.JsReportDiagnostic
 import org.gradle.problems.internal.report.model.JsReportSummary
 import java.io.Writer
@@ -25,17 +26,15 @@ import java.io.Writer
 /**
  * Writes the configuration cache / problems html report.
  *
- * The model is emitted as a generated `configurationCacheProblems()` function that assembles the
- * report object at load time: the diagnostics are streamed into a `const diagnostics` array as they
- * arrive, and the surrounding model (the "envelope") is appended last, once its totals are known.
+ * The report data is carried by `<script type="application/json">` elements, one per piece, which
+ * the page finds by id and hands straight to a JSON parser. Nothing has to build a JavaScript object
+ * of the whole report, which matters for reports that can reach several megabytes:
+ * - the diagnostics, under `id="diagnostics"`, streamed into the element as they arrive
+ * - the summary, under the id that says which kind of report this is (see [JsReportSummary]),
+ *   written last, once its totals are known.
  *
- * To keep the two pieces readable as plain JSON (e.g. by the integration test fixture), each is wrapped in its
- * own marker pair:
- * - the diagnostics array between `// begin-report-diagnostics`/`// end-report-diagnostics`
- * - the envelope object between `// begin-report-model`/`// end-report-model`.
- *
- * Array elements are comma-separated, so each marked region is valid JSON on its own.
- * The whole region remains delimited by the outer `// begin-report-data`/`// end-report-data` markers.
+ * The same elements are what the test fixtures read the report back from, so each piece is the plain
+ * JSON text of that piece, with no wrapping to undo.
  */
 class HtmlReportWriter internal constructor(
     private val writer: Writer,
@@ -52,17 +51,13 @@ class HtmlReportWriter internal constructor(
     fun beginHtmlReport() {
         writer.append(htmlTemplate.header)
         writer.run {
-            appendLine("""<script type="text/javascript">""")
-            appendLine("function configurationCacheProblems() {")
-            appendLine("// begin-report-data")
-            appendLine("const diagnostics =")
-            appendLine("// begin-report-diagnostics")
+            appendLine(ReportDataElement.openingTag(DIAGNOSTICS_ELEMENT_ID))
             appendLine("[")
         }
     }
 
     /**
-     * Appends one diagnostic to the streamed `diagnostics` array.
+     * Appends one diagnostic to the streamed `diagnostics` array, on a line of its own.
      */
     fun writeDiagnostic(diagnostic: JsReportDiagnostic) {
         writer.run {
@@ -70,34 +65,50 @@ class HtmlReportWriter internal constructor(
                 appendLine(",")
             }
             firstDiagnostic = false
-            append(diagnostic.toJson(json))
+            appendEscaped(diagnostic.toJson(json))
         }
     }
 
     /**
-     * Closes the report by appending its summary.
+     * Closes the report by writing its summary.
+     *
+     * @param summary the summary of the report
      */
     fun endHtmlReport(summary: JsReportSummary) {
         writer.run {
-            appendLine()
+            if (!firstDiagnostic) {
+                appendLine()
+            }
             appendLine("]")
-            appendLine("// end-report-diagnostics")
-            appendLine(";")
-            appendLine("const report =")
-            appendLine("// begin-report-model")
-            appendLine(summary.toJson(json))
-            appendLine("// end-report-model")
-            appendLine(";")
-            appendLine("report.diagnostics = diagnostics;")
-            appendLine("return report;")
-            appendLine("// end-report-data")
-            appendLine("}")
-            appendLine("</script>")
+            appendLine(ReportDataElement.CLOSING_TAG)
+            appendLine(ReportDataElement.openingTag(summary.elementId))
+            appendEscaped(summary.toJson(json))
+            appendLine()
+            appendLine(ReportDataElement.CLOSING_TAG)
         }
         writer.append(htmlTemplate.footer)
     }
 
     fun close() {
         writer.close()
+    }
+}
+
+
+/**
+ * Appends [json] as the text content of a `<script>` element.
+ *
+ * The html parser reads that content in its own tokenizer state, where a `<` can end the element
+ * early or change how the rest of it is read, so no `<` may reach the page as itself. Escaping it as
+ * `\u003c` leaves the content valid JSON, which is all the page ever parses it as.
+ */
+private
+fun Writer.appendEscaped(json: String) {
+    for (character in json) {
+        if (character == '<') {
+            append("\\u003c")
+        } else {
+            append(character)
+        }
     }
 }

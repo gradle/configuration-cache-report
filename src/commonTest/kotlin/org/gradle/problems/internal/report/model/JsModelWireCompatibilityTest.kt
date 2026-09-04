@@ -16,6 +16,7 @@
 
 package org.gradle.problems.internal.report.model
 
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -36,8 +37,8 @@ class JsModelWireCompatibilityTest {
 
     @Test
     fun `decodes a configuration cache report`() {
-        val model = json.decodeFromString(
-            JsModel.serializer(),
+        val summary = json.decodeFromString(
+            JsConfigurationCacheSummary.serializer(),
             """
             {
                 "buildName": "sampleProject",
@@ -47,8 +48,15 @@ class JsModelWireCompatibilityTest {
                 "documentationLink": "https://docs/cc",
                 "totalProblemCount": 20,
                 "uniqueProblemCount": 19,
-                "overflownProblemCount": 1,
-                "diagnostics": [
+                "overflownProblemCount": 1
+            }
+            """.trimIndent()
+        )
+
+        val diagnostics = json.decodeFromString(
+            ListSerializer(JsDiagnostic.serializer()),
+            """
+            [
                     {
                         "trace": [{"kind": "BuildLogic", "location": "build file 'build.gradle'"}],
                         "problem": [{"text": "invocation of "}, {"name": "Task.project"}],
@@ -75,25 +83,24 @@ class JsModelWireCompatibilityTest {
                         "problem": [{"text": "no error details"}],
                         "error": {}
                     }
-                ]
-            }
+            ]
             """.trimIndent()
         )
 
-        assertEquals("sampleProject", model.buildName)
-        assertEquals("storing", model.cacheAction)
-        assertEquals("clean build", model.requestedTasks)
-        assertEquals("https://docs/cc", model.documentationLink)
-        assertEquals(20, model.totalProblemCount)
-        assertEquals(19, model.uniqueProblemCount)
-        assertEquals(1, model.overflownProblemCount)
+        assertEquals("sampleProject", summary.buildName)
+        assertEquals("storing", summary.cacheAction)
+        assertEquals("clean build", summary.requestedTasks)
+        assertEquals("https://docs/cc", summary.documentationLink)
+        assertEquals(20, summary.totalProblemCount)
+        assertEquals(19, summary.uniqueProblemCount)
+        assertEquals(1, summary.overflownProblemCount)
         assertEquals(
             listOf(JsMessageFragment(text = "Calculating "), JsMessageFragment(name = "build.gradle")),
-            model.cacheActionDescription
+            summary.cacheActionDescription
         )
-        assertEquals(4, model.diagnostics.size)
+        assertEquals(4, diagnostics.size)
 
-        val problem = model.diagnostics[0]
+        val problem = diagnostics[0]
         assertEquals(listOf(JsMessageFragment(text = "invocation of "), JsMessageFragment(name = "Task.project")), problem.problem)
         assertNull(problem.input)
         assertNull(problem.incompatibleTask)
@@ -104,7 +111,7 @@ class JsModelWireCompatibilityTest {
             problem.error?.parts
         )
 
-        val input = model.diagnostics[1]
+        val input = diagnostics[1]
         assertEquals(listOf(JsMessageFragment(text = "system property "), JsMessageFragment(name = "someMessage")), input.input)
         assertEquals(
             listOf(
@@ -115,11 +122,11 @@ class JsModelWireCompatibilityTest {
             input.trace
         )
 
-        val incompatible = model.diagnostics[2]
+        val incompatible = diagnostics[2]
         assertEquals(JsTraceTaskPath(":incompatible"), incompatible.trace.single())
         assertTrue(incompatible.incompatibleTask != null)
 
-        val emptyError = model.diagnostics[3]
+        val emptyError = diagnostics[3]
         // An empty `{}` error object must decode to an error with neither summary nor parts.
         assertEquals(JsError(summary = null, parts = null), emptyError.error)
     }
@@ -177,27 +184,27 @@ class JsModelWireCompatibilityTest {
     }
 
     @Test
-    fun `decodes a problems report from the shared top-level object`() {
-        val model = json.decodeFromString(
-            JsProblemsModel.serializer(),
+    fun `decodes a problems report`() {
+        val summary = json.decodeFromString(
+            JsProblemsSummary.serializer(),
             """
             {
-                "buildName": "sampleProject",
-                "cacheAction": "storing",
-                "requestedTasks": "help",
-                "documentationLink": "https://docs/cc",
                 "totalProblemCount": 41,
-                "problemsReport": {
-                    "totalProblemCount": 41,
-                    "buildName": "problems-playground",
-                    "requestedTasks": "help",
-                    "documentationLink": "https://docs/problems",
-                    "documentationLinkCaption": "Problem report",
-                    "summaries": [
-                        {"problemId": [{"name": "deprecation", "displayName": "Deprecation"}], "count": 3}
-                    ]
-                },
-                "diagnostics": [
+                "buildName": "problems-playground",
+                "requestedTasks": "help",
+                "documentationLink": "https://docs/problems",
+                "documentationLinkCaption": "Problem report",
+                "summaries": [
+                    {"problemId": [{"name": "deprecation", "displayName": "Deprecation"}], "count": 3}
+                ]
+            }
+            """.trimIndent()
+        )
+
+        val problems = json.decodeFromString(
+            ListSerializer(JsProblem.serializer()),
+            """
+            [
                     {
                         "locations": [
                             {"path": "src/main/java/MyClass.java", "line": 42, "column": 8},
@@ -216,21 +223,19 @@ class JsModelWireCompatibilityTest {
                         "severity": "ERROR",
                         "problemId": [{"name": "compiler-err", "displayName": "Java compilation error"}]
                     }
-                ]
-            }
+            ]
             """.trimIndent()
         )
 
-        val report = model.problemsReport
-        // Configuration-cache-specific and unknown fields are ignored, not errors.
-        assertEquals("problems-playground", report.buildName)
-        assertEquals("help", report.requestedTasks)
-        assertEquals("https://docs/problems", report.documentationLink)
-        assertEquals(listOf(JsProblemSummary(listOf(JsProblemIdElement("deprecation", "Deprecation")), 3)), report.summaries)
+        // Unknown fields are ignored, not errors.
+        assertEquals("problems-playground", summary.buildName)
+        assertEquals("help", summary.requestedTasks)
+        assertEquals("https://docs/problems", summary.documentationLink)
+        assertEquals(listOf(JsProblemIdSummary(listOf(JsProblemIdElement("deprecation", "Deprecation")), 3)), summary.summaries)
 
-        assertEquals(2, model.diagnostics.size)
+        assertEquals(2, problems.size)
 
-        val warning = model.diagnostics[0]
+        val warning = problems[0]
         assertEquals("WARNING", warning.severity)
         assertEquals("Variable 'x' is never used", warning.contextualLabel)
         assertEquals(listOf("Remove the unused variable"), warning.solutions)
@@ -243,12 +248,40 @@ class JsModelWireCompatibilityTest {
             warning.locations
         )
 
-        val error = model.diagnostics[1]
+        val error = problems[1]
         assertEquals("ERROR", error.severity)
         // Absent optional collections must stay null so the renderer can distinguish "none captured".
         assertNull(error.locations)
         assertNull(error.solutions)
         assertNull(error.contextualLabel)
+    }
+
+    @Test
+    fun `summaries serialize as the producer emits them`() {
+        // The producer serializes a summary on its own and writes it into the report under its
+        // elementId, which is also what tells the two kinds of report apart. Json is the
+        // default-configured one the producers use, see HtmlReportWriter.
+        val producerJson = Json
+
+        val ccSummary = JsConfigurationCacheSummary(
+            cacheAction = "storing",
+            documentationLink = "https://docs/cc",
+            totalProblemCount = 0,
+            uniqueProblemCount = 0,
+            overflownProblemCount = 0
+        )
+        assertEquals("configuration-cache-summary", ccSummary.elementId)
+        assertEquals(
+            """{"cacheAction":"storing","documentationLink":"https://docs/cc","totalProblemCount":0,"uniqueProblemCount":0,"overflownProblemCount":0}""",
+            ccSummary.toJson(producerJson)
+        )
+
+        val problemsSummary = JsProblemsSummary(documentationLink = "https://docs/problems")
+        assertEquals("problems-summary", problemsSummary.elementId)
+        assertEquals(
+            """{"documentationLink":"https://docs/problems"}""",
+            problemsSummary.toJson(producerJson)
+        )
     }
 
     @Test

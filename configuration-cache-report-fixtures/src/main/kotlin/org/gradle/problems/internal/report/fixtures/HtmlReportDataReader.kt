@@ -16,6 +16,10 @@
 
 package org.gradle.problems.internal.report.fixtures
 
+import org.gradle.problems.internal.report.ReportDataElement
+import org.gradle.problems.internal.report.model.DIAGNOSTICS_ELEMENT_ID
+import org.gradle.problems.internal.report.model.JsConfigurationCacheSummary
+import org.gradle.problems.internal.report.model.JsProblemsSummary
 import java.io.File
 
 
@@ -23,7 +27,7 @@ import java.io.File
  * Reads the pieces of report data out of an html report file, for tests that want to assert on the
  * contents of a report a build produced.
  *
- * This is the read counterpart of `HtmlReportWriter`: it knows where in the file the pieces are, so
+ * This is the read counterpart of `HtmlReportWriter`: it knows which element carries which piece, so
  * that callers do not have to. Each piece is returned as the JSON text to parse; parsing it is left
  * to the caller, which usually has a JSON library of its own already.
  */
@@ -32,29 +36,38 @@ class HtmlReportDataReader(private val reportFile: File) {
     /**
      * Returns the JSON text of the reported items, an array.
      */
-    fun readDiagnosticsJson(): String = readRegion("diagnostics")
+    fun readDiagnosticsJson(): String = readElement(DIAGNOSTICS_ELEMENT_ID)
 
     /**
-     * Returns the JSON text of the report model, an object.
+     * Returns the JSON text of the report summary, an object.
+     *
+     * A report carries exactly one summary, so this returns whichever of the two kinds it has.
      */
-    fun readModelJson(): String = readRegion("model")
+    fun readSummaryJson(): String =
+        findElement(JsConfigurationCacheSummary.ELEMENT_ID)
+            ?: findElement(JsProblemsSummary.ELEMENT_ID)
+            ?: throw IllegalArgumentException("malformed report file: no summary element in $reportFile")
 
     private
-    fun readRegion(name: String): String {
-        val region = linesBetween("// begin-report-$name", "// end-report-$name")
-        require(region.isNotEmpty()) {
-            "malformed report file: $name region not found in $reportFile"
+    fun readElement(elementId: String): String =
+        requireNotNull(findElement(elementId)) {
+            "malformed report file: no <script id=\"$elementId\"> element in $reportFile"
         }
-        return region
-    }
 
+    /**
+     * Returns the text content of the `<script>` element with the given id, or null when the report
+     * does not have one. The producer writes the tags on lines of their own (see [ReportDataElement]),
+     * so the element is found by scanning for those lines.
+     */
     private
-    fun linesBetween(beginLine: String, endLine: String): String =
+    fun findElement(elementId: String): String? =
         reportFile.bufferedReader().use { reader ->
-            reader.lineSequence()
-                .dropWhile { it != beginLine }
+            val openingTag = ReportDataElement.openingTag(elementId)
+            val lines = reader.lineSequence()
+                .dropWhile { it != openingTag }
                 .drop(1)
-                .takeWhile { it != endLine }
-                .joinToString("\n")
+                .takeWhile { it != ReportDataElement.CLOSING_TAG }
+                .toList()
+            lines.takeIf { it.isNotEmpty() }?.joinToString("\n")
         }
 }

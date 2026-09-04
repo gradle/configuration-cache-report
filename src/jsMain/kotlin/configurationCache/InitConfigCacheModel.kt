@@ -27,10 +27,10 @@ import elmish.tree.Tree
 import elmish.tree.TreeView
 import org.gradle.problems.internal.report.model.JsBuildLogic
 import org.gradle.problems.internal.report.model.JsBuildLogicClass
+import org.gradle.problems.internal.report.model.JsConfigurationCacheSummary
 import org.gradle.problems.internal.report.model.JsDiagnostic
 import org.gradle.problems.internal.report.model.JsError
 import org.gradle.problems.internal.report.model.JsMessageFragment
-import org.gradle.problems.internal.report.model.JsModel
 import org.gradle.problems.internal.report.model.JsStackTracePart
 import org.gradle.problems.internal.report.model.JsTrace
 import org.gradle.problems.internal.report.model.JsTraceBean
@@ -58,13 +58,16 @@ data class ImportedProblem(
 )
 
 
-fun reportPageModelFromJsModel(jsModel: JsModel): ConfigurationCacheReportPage.Model {
-    val diagnostics = importDiagnostics(jsModel.diagnostics)
-    val totalProblems = jsModel.totalProblemCount
+fun reportPageModelFromJsModel(
+    jsSummary: JsConfigurationCacheSummary,
+    jsDiagnostics: List<JsDiagnostic>
+): ConfigurationCacheReportPage.Model {
+    val diagnostics = importDiagnostics(jsDiagnostics)
+    val totalProblems = jsSummary.totalProblemCount
     return ConfigurationCacheReportPage.Model(
-        heading = headingPrettyText(jsModel),
-        summary = summaryPrettyText(jsModel, diagnostics),
-        learnMore = LearnMore("Gradle Configuration Cache", jsModel.documentationLink),
+        heading = headingPrettyText(jsSummary),
+        summary = summaryPrettyText(jsSummary, diagnostics),
+        learnMore = LearnMore("Gradle Configuration Cache", jsSummary.documentationLink),
         messageTree = treeModelFor(
             ProblemNode.Label(ConfigurationCacheReportPage.Tab.ByMessage.text),
             problemNodesByMessage(diagnostics.problems)
@@ -91,7 +94,7 @@ fun String.capitalize() =
 
 
 private
-fun headingPrettyText(model: JsModel): PrettyText {
+fun headingPrettyText(model: JsConfigurationCacheSummary): PrettyText {
     val buildName = model.buildName
     val requestedTasks = model.requestedTasks
     val manyTasks = requestedTasks?.contains(" ") ?: true
@@ -106,10 +109,10 @@ fun headingPrettyText(model: JsModel): PrettyText {
 
 
 private
-fun summaryPrettyText(jsModel: JsModel, diagnostics: ImportedDiagnostics): List<PrettyText> {
-    val cacheActionDescription = jsModel.cacheActionDescription?.let(::toPrettyText)
+fun summaryPrettyText(jsSummary: JsConfigurationCacheSummary, diagnostics: ImportedDiagnostics): List<PrettyText> {
+    val cacheActionDescription = jsSummary.cacheActionDescription?.let(::toPrettyText)
     val inputsSummary = PrettyText.ofText(inputsSummary(diagnostics))
-    val problemsSummary = PrettyText.ofText(problemsSummary(jsModel))
+    val problemsSummary = PrettyText.ofText(problemsSummary(jsSummary))
 
     return listOfNotNull(
         cacheActionDescription,
@@ -130,10 +133,10 @@ fun inputsSummary(diagnostics: ImportedDiagnostics): String {
 
 
 private
-fun problemsSummary(jsModel: JsModel): String {
-    val totalProblems = jsModel.totalProblemCount
-    val uniqueProblems = jsModel.uniqueProblemCount
-    val consideredProblems = jsModel.totalProblemCount - jsModel.overflownProblemCount
+fun problemsSummary(jsSummary: JsConfigurationCacheSummary): String {
+    val totalProblems = jsSummary.totalProblemCount
+    val uniqueProblems = jsSummary.uniqueProblemCount
+    val consideredProblems = jsSummary.totalProblemCount - jsSummary.overflownProblemCount
 
     return found(totalProblems, "problem").let {
         if (consideredProblems < totalProblems) "$it; only the first $consideredProblems ${wasOrWere(consideredProblems)} considered"
