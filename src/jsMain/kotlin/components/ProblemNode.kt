@@ -100,7 +100,6 @@ open class ProblemNode {
      *   message") but is not itself part of the problem data.
      * - input category prefixes extracted from the first text fragment of an input message
      *   (e.g. "read system property")
-     * - the fallback trace label "Gradle runtime" for unrecognized trace kinds
      */
     data class Label(val text: String) : ProblemNode()
 }
