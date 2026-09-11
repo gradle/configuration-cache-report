@@ -35,6 +35,22 @@ interface JsonSource {
 
 
 /**
+ * The summary of a report: everything the report says about itself that isn't one of the streamed
+ * diagnostics. A report has exactly one summary, and which kind it is decides how the report is
+ * rendered.
+ */
+interface JsReportSummary : JsonSource
+
+
+/**
+ * One of the items a report is about: a configuration cache diagnostic or a reported problem,
+ * depending on the kind of report. Producers stream these into the report as they arrive, before
+ * they know the [summary][JsReportSummary].
+ */
+interface JsReportDiagnostic : JsonSource
+
+
+/**
  * A fragment of a formatted message. A message is a sequence of such fragments, each being either a
  * run of prose ([text]) or a code-style reference such as a class name, task path or property name
  * ([name]). Exactly one of the two is set for a given fragment.
