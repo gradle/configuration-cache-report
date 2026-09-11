@@ -24,17 +24,17 @@ import elmish.tree.Tree
 import org.gradle.problems.internal.report.model.JsLocation
 import org.gradle.problems.internal.report.model.JsProblem
 import org.gradle.problems.internal.report.model.JsProblemIdElement
-import org.gradle.problems.internal.report.model.ProblemReportJsModel
+import org.gradle.problems.internal.report.model.JsProblemsSummary
 import problemReport.ProblemApiNode.ProblemIdNode
 import reporting.ProblemTreeModel
 
 
 internal
-fun problemsReportPageModelFromJsModel(problemReportJsModel: ProblemReportJsModel, problems: List<JsProblem>) =
+fun problemsReportPageModelFromJsModel(jsSummary: JsProblemsSummary, problems: List<JsProblem>) =
     ProblemsReportPage.Model(
         heading = PrettyText.ofText("Problems Report"),
-        summary = createSummary(problemReportJsModel, problems),
-        learnMore = LearnMore("reporting problems", problemReportJsModel.documentationLink),
+        summary = createSummary(jsSummary, problems),
+        learnMore = LearnMore("reporting problems", jsSummary.documentationLink),
         messageTree = createMessageTree(problems),
         groupTree = createGroupTree(problems),
         fileLocationTree = createLocationTree(problems, LocationType.FILE),
@@ -59,23 +59,23 @@ enum class Tab(val text: String) {
 
 
 private
-fun createSummary(problemReportJsModel: ProblemReportJsModel, problems: List<JsProblem>) =
+fun createSummary(jsSummary: JsProblemsSummary, problems: List<JsProblem>) =
     buildList {
         add(
             PrettyText.build {
                 text("${problems.size} problem${if (problems.size == 1) " has" else "s have"} been reported during the execution")
-                problemReportJsModel.buildName?.let { buildName ->
+                jsSummary.buildName?.let { buildName ->
                     text(" of build ")
                     ref(buildName)
                 }
-                problemReportJsModel.requestedTasks?.let { requestedTasks ->
+                jsSummary.requestedTasks?.let { requestedTasks ->
                     text(" for the following tasks:")
                     ref(requestedTasks)
                 }
             }
         )
         val skippedLocations = problems.count { it.locations == null }
-        val skippedProblems = problemReportJsModel.summaries.sumOf { it.count }
+        val skippedProblems = jsSummary.summaries.sumOf { it.count }
         if (skippedLocations > 0 || skippedProblems > 0) {
             add(PrettyText.ofText(buildString {
                 if (skippedLocations > 0) {

@@ -14,15 +14,19 @@
  * limitations under the License.
  */
 
-package org.gradle.problems.internal.report.model
-
-import data.PrettyText
+package org.gradle.problems.internal.report
 
 
-fun toPrettyText(message: List<JsMessageFragment>): PrettyText =
-    PrettyText.build {
-        message.forEach { fragment ->
-            fragment.text?.let { text(it) }
-            fragment.name?.let { ref(it) }
-        }
-    }
+/**
+ * The `<script>` element that carries one piece of report data in an html report file.
+ *
+ * [HtmlReportWriter] writes the tags on lines of their own, and readers of a written report find a
+ * piece by looking for those lines, so both ends agree through this one definition rather than
+ * through separately spelled-out markup.
+ */
+object ReportDataElement {
+
+    const val CLOSING_TAG = "</script>"
+
+    fun openingTag(elementId: String) = """<script type="application/json" id="$elementId">"""
+}

@@ -11,23 +11,26 @@ It's consumed by `gradle/gradle`'s
 
 ## Architecture
 
-The interface between `:configuration-cache` and
-`:configuration-cache-report` is a JavaScript global function named
-`configurationCacheProblems`, which returns the report model collected at
-configuration time. In the HTML template it stands in as a `<script>` element
-referencing `configuration-cache-report-data.js`; when a build writes a report,
-that element is replaced by the generated function.
+The interface between `:configuration-cache` and `:configuration-cache-report`
+is a set of `<script type="application/json">` elements the page finds by id:
+the reported items under `diagnostics`, and the summary of the report under an
+id that says which kind of report it is. Each element carries the JSON of that
+piece, so the page hands it straight to a parser without ever building a
+JavaScript object of the whole report. In the HTML template these elements
+stand in as a `<script>` element referencing `configuration-cache-report-data.js`;
+when a build writes a report, that element is replaced by the real data.
 
 Both ends of this interface live in this project:
 [the model classes](./src/commonMain/kotlin/org/gradle/problems/internal/report/model)
 in `commonMain`, and
 [`HtmlReportWriter`](./src/jvmMain/kotlin/org/gradle/problems/internal/report/HtmlReportWriter.kt)
-in `jvmMain`, which splits the template and emits the function into it. `gradle/gradle`
+in `jvmMain`, which splits the template and writes the data into it. `gradle/gradle`
 uses the writer through the published jar, so the report data format can be changed here
 without changing both repositories in lockstep.
 
 An [example file](./src/jsMain/resources/configuration-cache-report-data.js)
-is kept for documentation and testing purposes.
+builds the same elements from sample data authored as objects, for development
+and testing purposes.
 
 The app itself is built according to
 [the Elm architecture](https://guide.elm-lang.org/architecture/).
