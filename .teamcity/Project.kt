@@ -3,7 +3,9 @@ import jetbrains.buildServer.configs.kotlin.BuildType
 import jetbrains.buildServer.configs.kotlin.CheckoutMode
 import jetbrains.buildServer.configs.kotlin.Project
 import jetbrains.buildServer.configs.kotlin.RelativeId
+import jetbrains.buildServer.configs.kotlin.buildFeatures.PullRequests
 import jetbrains.buildServer.configs.kotlin.buildFeatures.commitStatusPublisher
+import jetbrains.buildServer.configs.kotlin.buildFeatures.pullRequests
 import jetbrains.buildServer.configs.kotlin.buildSteps.gradle
 import jetbrains.buildServer.configs.kotlin.triggers.vcs
 
@@ -43,7 +45,13 @@ object Check : AbstractCheck({
 
     triggers {
         vcs {
-            branchFilter = "+:*"
+            branchFilter = """
+                +:<default>
+                +:devprod/*
+                -:dependabot/*
+                +pr: github_role=MEMBER
+                -pr: source=dependabot/*
+            """.trimIndent()
         }
     }
 
@@ -62,6 +70,15 @@ object Check : AbstractCheck({
                 authType = personalToken {
                     token = "%github.bot-teamcity.token%"
                 }
+            }
+        }
+
+        pullRequests {
+            vcsRootExtId = "Gradle_ConfigurationCacheReport"
+            provider = github {
+                authType = vcsRoot()
+                filterAuthorRole = PullRequests.GitHubRoleFilter.EVERYBODY
+                ignoreDrafts = false
             }
         }
     }
