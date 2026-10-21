@@ -85,8 +85,9 @@ open class ProblemNode {
     /**
      * A named group that contains child nodes, e.g. "Solutions" or a problem category
      * name from the problem id hierarchy ("deprecation", "dependency-version-catalog").
+     * A problem group may come with a [description] of what its problems are about.
      */
-    data class TreeNode(val prettyText: PrettyText) : ProblemNode()
+    data class TreeNode(val prettyText: PrettyText, val description: String? = null) : ProblemNode()
 
     /**
      * A documentation link pointing at the given URL.

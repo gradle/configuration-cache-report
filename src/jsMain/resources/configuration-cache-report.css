@@ -620,6 +620,12 @@ code + .copy-button {
     color: #686868;
 }
 
+.group-description {
+    color: #686868;
+    font-size: 13px;
+    margin: 0 0 0 16px;
+}
+
 .problem-detail {
     color: #02303A;
     font-size: 14px;

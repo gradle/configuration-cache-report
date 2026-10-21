@@ -23,6 +23,7 @@ import data.PrettyText
 import elmish.tree.Tree
 import org.gradle.problems.internal.report.model.JsLocation
 import org.gradle.problems.internal.report.model.JsProblem
+import org.gradle.problems.internal.report.model.JsProblemGroupIndex
 import org.gradle.problems.internal.report.model.JsProblemIdElement
 import org.gradle.problems.internal.report.model.JsProblemsSummary
 import problemReport.ProblemApiNode.ProblemIdNode
@@ -36,7 +37,7 @@ fun problemsReportPageModelFromJsModel(jsSummary: JsProblemsSummary, problems: L
         summary = createSummary(jsSummary, problems),
         learnMore = LearnMore("reporting problems", jsSummary.documentationLink),
         messageTree = createMessageTree(problems),
-        groupTree = createGroupTree(problems),
+        groupTree = createGroupTree(problems, JsProblemGroupIndex(jsSummary.groups)),
         fileLocationTree = createLocationTree(problems, LocationType.FILE),
         pluginLocationTree = createLocationTree(problems, LocationType.PLUGIN),
         taskLocationTree = createLocationTree(problems, LocationType.TASK),
@@ -131,7 +132,7 @@ fun createMessageTree(problems: List<JsProblem>): ProblemTreeModel =
 
 private
 val List<JsProblemIdElement>.messageTreeGroupingString: String
-    get() = joinToString(":") { "${it.name}|${it.displayName}" }
+    get() = joinToString(":") { "${it.name}|${it.label}" }
 
 
 //endregion
@@ -141,7 +142,7 @@ val List<JsProblemIdElement>.messageTreeGroupingString: String
 
 
 private
-fun createGroupTree(problems: List<JsProblem>): ProblemTreeModel {
+fun createGroupTree(problems: List<JsProblem>, groupIndex: JsProblemGroupIndex): ProblemTreeModel {
 
     val problemsByGroupId: Map<List<JsProblemIdElement>, MutableList<JsProblem>> = buildMap {
         problems.forEach { problem ->
@@ -155,7 +156,8 @@ fun createGroupTree(problems: List<JsProblem>): ProblemTreeModel {
             label = ProblemApiNode.Text("group tree root"),
             children = createGroupTreeChildren(
                 groupIds = problemsByGroupId.keys,
-                problemsByGroupId = problemsByGroupId
+                problemsByGroupId = problemsByGroupId,
+                groupIndex = groupIndex
             )
         )
     )
@@ -166,28 +168,38 @@ private
 fun createGroupTreeChildren(
     previousGroupId: List<JsProblemIdElement> = emptyList(),
     groupIds: Set<List<JsProblemIdElement>>,
-    problemsByGroupId: Map<List<JsProblemIdElement>, List<JsProblem>>
+    problemsByGroupId: Map<List<JsProblemIdElement>, List<JsProblem>>,
+    groupIndex: JsProblemGroupIndex
 ): List<Tree<ProblemNode>> =
     groupIds.mapNotNull { id -> id.firstOrNull() }
         .distinct()
-        .sortedBy { it.displayName }
+        .sortedWith(compareBy(groupIndex.siblingOrder) { segment: JsProblemIdElement -> (previousGroupId + segment).namePath })
         .map { groupIdSegment ->
             val currentGroupId = previousGroupId + groupIdSegment
             Tree(
-                label = ProblemNode.TreeNode(PrettyText.ofText(groupIdSegment.displayName)),
+                label = ProblemNode.TreeNode(
+                    PrettyText.ofText(groupIdSegment.label),
+                    groupIndex.description(currentGroupId.namePath)
+                ),
                 children = createGroupTreeChildren(
                     previousGroupId = currentGroupId,
                     groupIds = groupIds
                         .filter { id -> id.firstOrNull() == groupIdSegment }
                         .map { id -> id.drop(1) }
                         .toSet(),
-                    problemsByGroupId = problemsByGroupId
+                    problemsByGroupId = problemsByGroupId,
+                    groupIndex = groupIndex
                 ) + createGroupTreeProblemChildren(
                     groupId = currentGroupId,
                     problemsByGroupId = problemsByGroupId
                 )
             )
         }
+
+
+private
+val List<JsProblemIdElement>.namePath: List<String>
+    get() = map { it.name }
 
 
 private
@@ -325,7 +337,7 @@ fun JsProblem.getPrimaryLabelText(useContextualAsPrimary: Boolean): String =
 
 private
 val JsProblem.displayName: String
-    get() = problemId.last().displayName
+    get() = problemId.last().label
 
 
 private
