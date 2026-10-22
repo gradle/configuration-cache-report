@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-package org.gradle.problems.internal.report.model
+package problemReport
+
+import org.gradle.problems.internal.report.model.JsProblemGroup
+import org.gradle.problems.internal.report.model.JsProblemsSummary
 
 
 /**
@@ -25,7 +28,7 @@ package org.gradle.problems.internal.report.model
  * page follows it. A group missing from the list comes after the listed ones, ordered by name; the
  * producer lists every group, so this only guards against an incomplete list.
  */
-class JsProblemGroupIndex(groups: List<JsProblemGroup>) {
+class ProblemGroupIndex(groups: List<JsProblemGroup>) {
 
     private
     val positions: Map<List<String>, Int> = groups.withIndex().associate { (index, group) -> group.path to index }

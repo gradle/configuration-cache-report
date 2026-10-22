@@ -111,7 +111,7 @@ data class JsProblemIdElement(
  *
  * The summary lists every group that holds a reported problem, and every ancestor of such a group, in
  * the order the report shows them: a group comes after its parent, and sibling groups come in the
- * order they are shown in. See [JsProblemGroupIndex] for how the page reads the list.
+ * order they are shown in.
  *
  * @param path the names of the group's segments, from the root group down to the group itself; the
  * same names as in [JsProblem.problemId].

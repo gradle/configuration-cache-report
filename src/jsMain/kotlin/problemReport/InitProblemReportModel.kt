@@ -23,7 +23,6 @@ import data.PrettyText
 import elmish.tree.Tree
 import org.gradle.problems.internal.report.model.JsLocation
 import org.gradle.problems.internal.report.model.JsProblem
-import org.gradle.problems.internal.report.model.JsProblemGroupIndex
 import org.gradle.problems.internal.report.model.JsProblemIdElement
 import org.gradle.problems.internal.report.model.JsProblemsSummary
 import problemReport.ProblemApiNode.ProblemIdNode
@@ -37,7 +36,7 @@ fun problemsReportPageModelFromJsModel(jsSummary: JsProblemsSummary, problems: L
         summary = createSummary(jsSummary, problems),
         learnMore = LearnMore("reporting problems", jsSummary.documentationLink),
         messageTree = createMessageTree(problems),
-        groupTree = createGroupTree(problems, JsProblemGroupIndex(jsSummary.groups)),
+        groupTree = createGroupTree(problems, ProblemGroupIndex(jsSummary.groups)),
         fileLocationTree = createLocationTree(problems, LocationType.FILE),
         pluginLocationTree = createLocationTree(problems, LocationType.PLUGIN),
         taskLocationTree = createLocationTree(problems, LocationType.TASK),
@@ -142,7 +141,7 @@ val List<JsProblemIdElement>.messageTreeGroupingString: String
 
 
 private
-fun createGroupTree(problems: List<JsProblem>, groupIndex: JsProblemGroupIndex): ProblemTreeModel {
+fun createGroupTree(problems: List<JsProblem>, groupIndex: ProblemGroupIndex): ProblemTreeModel {
 
     val problemsByGroupId: Map<List<JsProblemIdElement>, MutableList<JsProblem>> = buildMap {
         problems.forEach { problem ->
@@ -169,7 +168,7 @@ fun createGroupTreeChildren(
     previousGroupId: List<JsProblemIdElement> = emptyList(),
     groupIds: Set<List<JsProblemIdElement>>,
     problemsByGroupId: Map<List<JsProblemIdElement>, List<JsProblem>>,
-    groupIndex: JsProblemGroupIndex
+    groupIndex: ProblemGroupIndex
 ): List<Tree<ProblemNode>> =
     groupIds.mapNotNull { id -> id.firstOrNull() }
         .distinct()

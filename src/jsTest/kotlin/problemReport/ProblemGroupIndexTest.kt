@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package org.gradle.problems.internal.report.model
+package problemReport
 
+import org.gradle.problems.internal.report.model.JsProblemGroup
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 
-class JsProblemGroupIndexTest {
+class ProblemGroupIndexTest {
 
     private
-    val index = JsProblemGroupIndex(
+    val index = ProblemGroupIndex(
         listOf(
             JsProblemGroup(listOf("Gradle"), "Gradle runtime."),
             JsProblemGroup(listOf("Gradle", "Deprecation"), "Deprecated usage."),
@@ -60,7 +61,7 @@ class JsProblemGroupIndexTest {
     fun `without a list, groups are ordered by name`() {
         assertEquals(
             listOf(listOf("Compilation"), listOf("Dependencies"), listOf("Gradle")),
-            listOf(listOf("Gradle"), listOf("Compilation"), listOf("Dependencies")).sortedWith(JsProblemGroupIndex(emptyList()).siblingOrder)
+            listOf(listOf("Gradle"), listOf("Compilation"), listOf("Dependencies")).sortedWith(ProblemGroupIndex(emptyList()).siblingOrder)
         )
     }
 
