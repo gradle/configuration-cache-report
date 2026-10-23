@@ -344,7 +344,8 @@ ul .tree-btn {
     margin-top: -0.1em;
 }
 
-.documentation-button {
+.documentation-button,
+.group-description-button {
     cursor: pointer;
     display: inline-block;
     width: 13px;
@@ -620,10 +621,8 @@ code + .copy-button {
     color: #686868;
 }
 
-.group-description {
-    color: #686868;
-    font-size: 13px;
-    margin: 0 0 0 16px;
+.group-description-button {
+    cursor: help;
 }
 
 .problem-detail {

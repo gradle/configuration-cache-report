@@ -375,9 +375,11 @@ object ProblemsReportPage : Component<ProblemsReportPage.Model, BaseIntent> {
 
     private
     fun viewGroupDescription(text: String): View<BaseIntent> =
-        div(
-            attributes { className("group-description") },
-            text
+        span(
+            attributes {
+                className("group-description-button")
+                title(text)
+            }
         )
 
     private
