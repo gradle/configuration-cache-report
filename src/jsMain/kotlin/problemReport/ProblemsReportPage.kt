@@ -317,7 +317,11 @@ object ProblemsReportPage : Component<ProblemsReportPage.Model, BaseIntent> {
                 div(enumIcon, viewPrettyText(label.prettyText))
 
             is ProblemNode.TreeNode ->
-                div(treeButtonFor(focus, treeIntent), viewPrettyText(label.prettyText))
+                div(
+                    treeButtonFor(focus, treeIntent),
+                    viewPrettyText(label.prettyText),
+                    label.description?.let(::viewGroupDescription) ?: empty
+                )
 
             is ProblemNode.Error ->
                 treeLabel(
@@ -367,6 +371,15 @@ object ProblemsReportPage : Component<ProblemsReportPage.Model, BaseIntent> {
         pre(
             attributes { className("problem-detail") },
             text
+        )
+
+    private
+    fun viewGroupDescription(text: String): View<BaseIntent> =
+        span(
+            attributes {
+                className("group-description-button")
+                title(text)
+            }
         )
 
     private

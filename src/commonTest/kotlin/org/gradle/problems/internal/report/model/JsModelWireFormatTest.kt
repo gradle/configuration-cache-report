@@ -104,7 +104,13 @@ class JsModelWireFormatTest {
         buildName = "problems-playground",
         requestedTasks = "help",
         documentationLink = "https://docs/problems",
-        summaries = listOf(JsProblemIdSummary(listOf(JsProblemIdElement("deprecation", "Deprecation")), 3))
+        summaries = listOf(JsProblemIdSummary(listOf(JsProblemIdElement("deprecation", "Deprecation")), 3)),
+        groups = listOf(
+            JsProblemGroup(listOf("Compilation"), "Code compilation."),
+            JsProblemGroup(listOf("Compilation", "Java"), "Java code compilation."),
+            JsProblemGroup(listOf("Others")),
+            JsProblemGroup(listOf("Others", "My plugin"))
+        )
     )
 
     private
@@ -124,7 +130,7 @@ class JsModelWireFormatTest {
             )
         ),
         JsProblem(
-            problemId = listOf(JsProblemIdElement("compiler-err", "Java compilation error")),
+            problemId = listOf(JsProblemIdElement("Compilation"), JsProblemIdElement("Java"), JsProblemIdElement("Java compilation error")),
             severity = "ERROR"
         )
     )
@@ -178,7 +184,7 @@ class JsModelWireFormatTest {
     @Test
     fun `problems summary is written as one object`() {
         assertEquals(
-            """{"buildName":"problems-playground","requestedTasks":"help","documentationLink":"https://docs/problems","summaries":[{"problemId":[{"name":"deprecation","displayName":"Deprecation"}],"count":3}]}""",
+            """{"buildName":"problems-playground","requestedTasks":"help","documentationLink":"https://docs/problems","summaries":[{"problemId":[{"name":"deprecation","displayName":"Deprecation"}],"count":3}],"groups":[{"path":["Compilation"],"description":"Code compilation."},{"path":["Compilation","Java"],"description":"Java code compilation."},{"path":["Others"]},{"path":["Others","My plugin"]}]}""",
             problemsSummary.toJson(producerJson)
         )
         assertEquals(
@@ -192,7 +198,7 @@ class JsModelWireFormatTest {
         assertEquals(
             listOf(
                 """{"problemId":[{"name":"compilation","displayName":"Compilation"},{"name":"unused-variable","displayName":"Unused variable"}],"documentationLink":"https://docs/unused","severity":"WARNING","error":{"parts":[{"text":"user frame"}]},"problemDetails":"The variable is assigned but never read","contextualLabel":"Variable 'x' is never used","solutions":["Remove the unused variable"],"locations":[{"path":"src/main/java/MyClass.java","line":42,"column":8,"length":1},{"pluginId":"java"},{"taskPath":":compileJava"}]}""",
-                """{"problemId":[{"name":"compiler-err","displayName":"Java compilation error"}],"severity":"ERROR"}"""
+                """{"problemId":[{"name":"Compilation"},{"name":"Java"},{"name":"Java compilation error"}],"severity":"ERROR"}"""
             ),
             problems.map { it.toJson(producerJson) }
         )
@@ -220,6 +226,10 @@ class JsModelWireFormatTest {
         assertNull(problem.problemDetails)
         assertNull(problem.documentationLink)
         assertNull(problem.error)
+        assertEquals(listOf(null, null, null), problem.problemId.map { it.displayName })
+        assertEquals(listOf("Compilation", "Java", "Java compilation error"), problem.problemId.map { it.label })
+        assertEquals(emptyList(), parseProblemsSummary("""{"documentationLink":"https://docs/problems"}""").groups)
+        assertNull(parseProblemsSummary(problemsSummary.toJson(producerJson)).groups[2].description)
 
         // An error written as `{}` is an error without details, not a missing one.
         val diagnostic = parseCcDiagnostics(listOf(ccDiagnostics[3]).asDiagnosticsArray()).single()

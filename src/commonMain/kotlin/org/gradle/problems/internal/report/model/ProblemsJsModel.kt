@@ -40,7 +40,9 @@ data class JsProblemsSummary(
     /** A link to the documentation about reporting problems. */
     val documentationLink: String,
     /** Counts of problems that were aggregated by their id instead of being reported individually. */
-    val summaries: List<JsProblemIdSummary> = emptyList()
+    val summaries: List<JsProblemIdSummary> = emptyList(),
+    /** The groups of the reported problems, in the order the report shows them. See [JsProblemGroup]. */
+    val groups: List<JsProblemGroup> = emptyList()
 ) : JsReportSummary {
     override val elementId: String
         get() = ELEMENT_ID
@@ -91,12 +93,34 @@ data class JsProblem(
  * problem itself as the final segment.
  *
  * @param name the stable, machine-readable identifier of the segment.
- * @param displayName the human-readable name of the segment.
+ * @param displayName the human-readable name of the segment, or null when it is the same as [name].
  */
 @Serializable
 data class JsProblemIdElement(
     val name: String,
-    val displayName: String
+    val displayName: String? = null
+) {
+    /** The text shown for this segment. */
+    val label: String
+        get() = displayName ?: name
+}
+
+
+/**
+ * A problem group, as listed in [JsProblemsSummary.groups].
+ *
+ * The summary lists every group that holds a reported problem, and every ancestor of such a group, in
+ * the order the report shows them: a group comes after its parent, and sibling groups come in the
+ * order they are shown in.
+ *
+ * @param path the names of the group's segments, from the root group down to the group itself; the
+ * same names as in [JsProblem.problemId].
+ * @param description what the problems in the group are about, if the group has a description.
+ */
+@Serializable
+data class JsProblemGroup(
+    val path: List<String>,
+    val description: String? = null
 )
 
 

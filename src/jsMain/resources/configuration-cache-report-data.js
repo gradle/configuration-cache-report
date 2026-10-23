@@ -19,7 +19,18 @@ function sampleReportData() {
         "buildName": "problems-playground",
         "requestedTasks": "help",
         "documentationLink": "https://docs.gradle.org/9.2.0/userguide/reporting_problems.html",
-        "summaries": []
+        "summaries": [],
+        // Gradle lists every group; this sample lists some, so the rest show after them, by name.
+        "groups": [
+            {"path": ["dependencies"], "description": "Declaration, resolution, locking, and verification of dependencies required by projects or the Gradle runtime."},
+            {"path": ["dependencies", "variant-resolution"]},
+            {"path": ["dependencies", "resolution"]},
+            {"path": ["compilation"], "description": "Code compilation, including the compiler's configuration, compiler invocation, or compiler plugins."},
+            {"path": ["compilation", "java"], "description": "Java code compilation, including the compiler's configuration, compiler invocation, or compiler plugins."},
+            {"path": ["compilation", "kotlin"], "description": "Kotlin code compilation, including the compiler's configuration, compiler invocation, or compiler plugins."},
+            {"path": ["compilation", "cpp"], "description": "C++ code compilation, including the compiler's configuration, compiler invocation, or compiler plugins."},
+            {"path": ["verification"]}
+        ]
     };
 
     if (useProblemsReport) {
@@ -459,7 +470,7 @@ function sampleReportData() {
                 "contextualLabel": "An unexpected error occurred during build execution",
                 "problemId": [
                     {"name": "miscellaneous", "displayName": "Miscellaneous"},
-                    {"name": "unknown-error", "displayName": "Unknown error"}
+                    {"name": "Unknown error"}
                 ],
                 "solutions": ["Check the build logs for more details"]
             }, {
