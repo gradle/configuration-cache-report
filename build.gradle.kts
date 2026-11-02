@@ -9,7 +9,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0") {
+                api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0") {
                     because("Exposes serialization types in the wire model classes")
                 }
             }
